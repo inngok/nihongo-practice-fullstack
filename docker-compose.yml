@@ -19,7 +19,7 @@ services:
       dockerfile: Dockerfile
     container_name: practice_nihongo_app
     ports:
-      - "8080:8080"
+      - "80:8080"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/practice_nihongo_db
       - SPRING_DATASOURCE_USERNAME=postgres
