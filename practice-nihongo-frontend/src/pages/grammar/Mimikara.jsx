@@ -6,7 +6,7 @@ import {
   HelpCircle, MoreHorizontal, ArrowLeft, Headphones, Volume2, Target
 } from 'lucide-react';
 
-import { grammarData } from './data/mimikaraData';
+import apiClient from '../../api/apiClient';
 
 
 export default function Mimikara() {
@@ -33,6 +33,27 @@ export default function Mimikara() {
     try { return saved ? JSON.parse(saved) : []; } catch { return []; }
   });
   const containerRef = useRef(null);
+  const [grammarData, setGrammarData] = useState([]);
+
+  // Fetch dữ liệu từ API thay cho file tĩnh
+  useEffect(() => {
+    apiClient.get('/grammars')
+      .then(res => {
+        const mapped = res.data.map(item => ({
+          ...item,
+          pattern: item.structure,
+          unit: 1, // Mặc định Unit 1 nếu DB chưa có trường Unit
+          examples: [{ jp: item.exampleSentence, vn: item.exampleMeaning }],
+          quiz: { 
+            sentence: item.exampleSentence, 
+            translation: item.exampleMeaning, 
+            answer: item.structure 
+          }
+        }));
+        setGrammarData(mapped);
+      })
+      .catch(console.error);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('mimikara_completed', JSON.stringify(completedIds));
@@ -53,7 +74,7 @@ export default function Mimikara() {
     if (selectedUnit === 'all') return grammarData;
     const unitNum = parseInt(selectedUnit);
     return grammarData.filter(i => i.unit === unitNum);
-  }, [selectedUnit]);
+  }, [selectedUnit, grammarData]);
 
   const currentItem = useMemo(() => studyData[currentIndex] || {}, [studyData, currentIndex]);
 
