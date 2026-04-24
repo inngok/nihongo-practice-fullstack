@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Brain, CheckCircle, Layers, List, Search,
   ChevronRight, ChevronLeft, Check, RotateCcw,
   HelpCircle, MoreHorizontal, ArrowLeft, Headphones, Volume2, Target
 } from 'lucide-react';
 
-import apiClient from '../../api/apiClient';
+import grammarService from '../../api/grammarService';
 
 
 export default function Mimikara() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const bookId = searchParams.get('bookId');
+
   const [activeMode, setActiveMode] = useState('menu');
+  // ... rest of state
   const [prevMode, setPrevMode] = useState(null);
   const [selectedUnit, setSelectedUnit] = useState('all');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -37,9 +41,15 @@ export default function Mimikara() {
 
   // Fetch dữ liệu từ API thay cho file tĩnh
   useEffect(() => {
-    apiClient.get('/grammars')
+    grammarService.getAll()
       .then(res => {
-        const mapped = res.data.map(item => ({
+        let data = res.data;
+        // Lọc theo Book ID nếu có
+        if (bookId) {
+          data = data.filter(item => item.book && String(item.book.id) === String(bookId));
+        }
+
+        const mapped = data.map(item => ({
           ...item,
           pattern: item.structure,
           unit: 1, // Mặc định Unit 1 nếu DB chưa có trường Unit
@@ -53,7 +63,7 @@ export default function Mimikara() {
         setGrammarData(mapped);
       })
       .catch(console.error);
-  }, []);
+  }, [bookId]);
 
   useEffect(() => {
     localStorage.setItem('mimikara_completed', JSON.stringify(completedIds));
@@ -744,8 +754,12 @@ export default function Mimikara() {
     >
       <div className="w-full max-w-6xl mb-12 flex justify-between items-end">
         <div>
-          <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-2">Mimikara Oboeru • N3</p>
-          <h1 className="text-5xl font-black tracking-tighter italic">Mimikara</h1>
+          <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-2">
+            {grammarData[0]?.book?.levelLabel || 'TRÌNH ĐỘ N3'}
+          </p>
+          <h1 className="text-5xl font-black tracking-tighter italic">
+            {grammarData[0]?.book?.title || 'Mimikara'}
+          </h1>
         </div>
         <button
           onClick={() => {

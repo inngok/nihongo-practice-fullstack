@@ -32,4 +32,8 @@ public class Grammar {
     private String exampleMeaning; // Nghĩa của câu ví dụ
 
     private String level; // Cấp độ (N5, N4, N3, N2, N1)
+
+    @ManyToOne
+    @JoinColumn(name = "book_id")
+    private Book book;
 }

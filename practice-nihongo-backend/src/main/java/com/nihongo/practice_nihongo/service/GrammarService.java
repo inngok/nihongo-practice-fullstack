@@ -22,6 +22,27 @@ public class GrammarService {
         return grammarRepository.save(grammar);
     }
 
+    public Grammar getGrammarById(Long id) {
+        return grammarRepository.findById(id).orElseThrow(() -> new RuntimeException("Grammar not found with id: " + id));
+    }
+
+    public Grammar updateGrammar(Long id, Grammar grammarDetails) {
+        Grammar grammar = getGrammarById(id);
+        grammar.setStructure(grammarDetails.getStructure());
+        grammar.setMeaning(grammarDetails.getMeaning());
+        grammar.setExplanation(grammarDetails.getExplanation());
+        grammar.setExampleSentence(grammarDetails.getExampleSentence());
+        grammar.setExampleMeaning(grammarDetails.getExampleMeaning());
+        grammar.setLevel(grammarDetails.getLevel());
+        grammar.setBook(grammarDetails.getBook());
+        return grammarRepository.save(grammar);
+    }
+
+    public void deleteGrammar(Long id) {
+        Grammar grammar = getGrammarById(id);
+        grammarRepository.delete(grammar);
+    }
+
     public List<Grammar> getByLevel(String level) {
         return grammarRepository.findByLevel(level);
     }

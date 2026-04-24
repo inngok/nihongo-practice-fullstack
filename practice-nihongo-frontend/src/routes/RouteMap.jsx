@@ -19,13 +19,14 @@ const ExamJLPT = lazy(() => import("../pages/exam/jlpt/ExamJLPT"));
 const SentenceSort = lazy(() => import("../pages/exam/jlpt/SentenceSort"));
 const ExamVocab = lazy(() => import("../pages/exam/components/ExamVocab"));
 const KanjiPC8Selector = lazy(() => import("../pages/exam/dong-du/KanjiPC8Selector"));
-const TempVocabTest = lazy(() => import("../pages/exam/components/TempVocabTest"));
 const TryN3 = lazy(() => import("../pages/vocabulary/TryN3/TryN3"));
 const MimikaraVocab = lazy(() => import("../pages/vocabulary/MimikaraVocab/MimikaraVocab"));
 const DekiruVocab = lazy(() => import("../pages/vocabulary/DekiruVocab/DekiruVocab"));
 const Translator = lazy(() => import("../pages/translator/Translator"));
 const Tips = lazy(() => import("../pages/tips/Tips"));
 const ConfusingGrammar = lazy(() => import("../pages/grammar/ConfusingGrammar"));
+const GrammarManager = lazy(() => import("../pages/grammar/GrammarManager"));
+const BookManager = lazy(() => import("../pages/grammar/BookManager"));
 
 const PageLoader = () => (
   <div className="min-h-[calc(100vh-80px)] mt-20 flex items-center justify-center bg-white">
@@ -100,7 +101,6 @@ export default function RouteMap() {
         <Route path="/exam-pc7" element={<ExamPC7 />} />
         <Route path="/exam-pc7/vocab-comprehensive" element={<ExamVocab type="comprehensive" />} />
         <Route path="/exam-pc7/kanji-comprehensive" element={<ExamVocab type="kanji-comprehensive" />} />
-        <Route path="/exam-pc7/goi-test" element={<TempVocabTest />} />
         <Route path="/dong-du" element={<DongDu />} />
         <Route path="/exam-pc8" element={<ExamPC8 />} />
         <Route path="/exam-pc8/kanji" element={<KanjiPC8Selector />} />
@@ -109,6 +109,8 @@ export default function RouteMap() {
         <Route path="/exam-jlpt/sentence-sort" element={<SentenceSort />} />
         <Route path="/translator" element={<Translator />} />
         <Route path="/grammar/confusing" element={<ConfusingGrammar />} />
+        <Route path="/grammar/manage" element={<GrammarManager />} />
+        <Route path="/grammar/books" element={<BookManager />} />
         <Route path="/tips" element={<Tips />} />
         <Route path="*" element={<Fallback />} />
       </Route>
