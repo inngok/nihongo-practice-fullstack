@@ -1,7 +1,17 @@
 -- Xóa bảng cũ nếu tồn tại để khởi tạo lại
 DROP TABLE IF EXISTS grammars;
+DROP TABLE IF EXISTS books;
 DROP TABLE IF EXISTS kanjis;
 DROP TABLE IF EXISTS vocabularies;
+
+-- Tạo bảng Books trước để Grammar có thể tham chiếu
+CREATE TABLE books (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    japanese_title VARCHAR(255),
+    level_label VARCHAR(255),
+    num VARCHAR(10)
+);
 
 -- Tạo bảng Grammar
 CREATE TABLE grammars (
@@ -11,7 +21,8 @@ CREATE TABLE grammars (
     explanation TEXT,
     example_sentence TEXT,
     example_meaning TEXT,
-    level VARCHAR(10)
+    level VARCHAR(10),
+    book_id INTEGER REFERENCES books(id) ON DELETE SET NULL
 );
 
 -- Tạo bảng Kanji
