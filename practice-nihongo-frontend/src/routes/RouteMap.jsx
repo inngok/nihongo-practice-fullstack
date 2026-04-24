@@ -27,6 +27,8 @@ const Tips = lazy(() => import("../pages/tips/Tips"));
 const ConfusingGrammar = lazy(() => import("../pages/grammar/ConfusingGrammar"));
 const GrammarManager = lazy(() => import("../pages/grammar/GrammarManager"));
 const BookManager = lazy(() => import("../pages/grammar/BookManager"));
+const VocabManager = lazy(() => import("../pages/vocabulary/VocabManager"));
+const KanjiManager = lazy(() => import("../pages/kanji/KanjiManager"));
 
 const PageLoader = () => (
   <div className="min-h-[calc(100vh-80px)] mt-20 flex items-center justify-center bg-white">
@@ -111,6 +113,8 @@ export default function RouteMap() {
         <Route path="/grammar/confusing" element={<ConfusingGrammar />} />
         <Route path="/grammar/manage" element={<GrammarManager />} />
         <Route path="/grammar/books" element={<BookManager />} />
+        <Route path="/vocabulary/manage" element={<VocabManager />} />
+        <Route path="/kanji/manage" element={<KanjiManager />} />
         <Route path="/tips" element={<Tips />} />
         <Route path="*" element={<Fallback />} />
       </Route>

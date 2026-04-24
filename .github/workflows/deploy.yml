@@ -50,13 +50,10 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/pracice-nihongo
-            # XÓA SẠCH CONTAINER VÀ VOLUME CŨ (Cực kỳ quan trọng để reset mật khẩu DB)
+            
+            # Clean up old containers, networks, and volumes to ensure a fresh state
             sudo docker-compose down -v || true
             sudo docker system prune -af --volumes || true
             
-            # KHỞI ĐỘNG LẠI
+            # Start the application and database
             sudo docker-compose up -d --build
-            
-            echo "--- WAITING FOR APP ---"
-            sleep 20
-            sudo docker-compose logs --tail 50 backend
