@@ -1,10 +1,10 @@
-package com.nihongo.nihongo_renshyuu;
+package com.nihongo.practice_nihongo;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class NihongoRenshyuuApplicationTests {
+class PracticeNihongoApplicationTests {
 
 	@Test
 	void contextLoads() {
