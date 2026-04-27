@@ -30,6 +30,10 @@ const BookManager = lazy(() => import("../pages/grammar/BookManager"));
 const VocabManager = lazy(() => import("../pages/vocabulary/VocabManager"));
 const KanjiManager = lazy(() => import("../pages/kanji/KanjiManager"));
 
+// Auth pages
+const Login = lazy(() => import("../pages/auth/Login"));
+const Register = lazy(() => import("../pages/auth/Register"));
+
 const PageLoader = () => (
   <div className="min-h-[calc(100vh-80px)] mt-20 flex items-center justify-center bg-white">
     <div className="w-6 h-6 border-2 border-slate-100 border-t-black rounded-full animate-spin"></div>
@@ -91,6 +95,8 @@ export default function RouteMap() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="grammar" element={<Grammar />} />
         <Route path="grammar/mimikara" element={<Mimikara />} />
         <Route path="/vocabulary" element={<Vocabulary />} />
