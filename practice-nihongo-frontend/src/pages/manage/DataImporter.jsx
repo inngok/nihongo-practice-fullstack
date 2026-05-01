@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { message } from 'antd';
 import * as XLSX from 'xlsx';
 import { FileExcelOutlined, UploadOutlined } from '@ant-design/icons';
+import { API_BASE_URL } from '../../config';
 
 export default function DataImporter() {
   const [dataType, setDataType] = useState('kanjis');
@@ -29,7 +30,7 @@ export default function DataImporter() {
 
     setIsLoading(true);
     try {
-      const response = await fetchWithAuth(`http://localhost:8080/api/${dataType}/bulk`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/${dataType}/bulk`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertCircle, Info, CheckCircle2, Gauge, BookOpen, Star, Crown, HelpCircle } from 'lucide-react';
-import { keigoMasterGuide } from './data/keigoData';
+const keigoMasterGuide = { sections: [] };
 
 const confusionData = [
   {

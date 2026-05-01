@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Table, Button, Modal, Form, Input, Select, message, Popconfirm, Tag, Space } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { API_BASE_URL } from '../../config';
 
 export default function UserManager() {
   const [users, setUsers] = useState([]);
@@ -12,7 +13,7 @@ export default function UserManager() {
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
 
-  const API_URL = 'http://localhost:8080/api/users';
+  const API_URL = `${API_BASE_URL}/users`;
 
   const fetchUsers = async () => {
     try {

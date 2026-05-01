@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { message } from 'antd';
 
+import { API_BASE_URL } from '../config';
+
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -12,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [messageApi, contextHolder] = message.useMessage();
 
-  const API_URL = 'http://localhost:8080/api/auth';
+  const API_URL = `${API_BASE_URL}/auth`;
 
   useEffect(() => {
     const user = localStorage.getItem('nihongo_user');

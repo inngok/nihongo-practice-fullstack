@@ -1,14 +1,23 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { ChevronLeft, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { sentenceSortData } from '../data/sentenceSortData';
+// import { sentenceSortData } from '../data/sentenceSortData';
+const sentenceSortData = [];
 
 export default function SentenceSort() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedSlots, setSelectedSlots] = useState([null, null, null, null]);
   const [isChecked, setIsChecked] = useState(false);
   
-  const currentQ = useMemo(() => sentenceSortData[currentIndex], [currentIndex]);
+  const currentQ = useMemo(() => sentenceSortData[currentIndex] || {}, [currentIndex]);
+  
+  if (sentenceSortData.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white text-slate-400 font-bold">
+        Dữ liệu đang được cập nhật...
+      </div>
+    );
+  }
   
   // Tránh vòng lặp if rườm rà, dùng toán tử && và map 
   const handleSelectOption = useCallback((opt) => {

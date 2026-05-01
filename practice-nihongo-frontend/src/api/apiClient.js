@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-const isLocal = window.location.hostname === 'localhost';
-const baseURL = isLocal ? 'http://localhost:8080/api' : 'http://3.107.17.42/api';
+import { API_BASE_URL } from '../config';
+
+const baseURL = API_BASE_URL;
 
 const apiClient = axios.create({
   baseURL: baseURL,
