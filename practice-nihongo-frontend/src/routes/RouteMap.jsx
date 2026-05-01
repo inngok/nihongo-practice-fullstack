@@ -23,7 +23,7 @@ const PersonalVocab = lazy(() => import("../pages/vocabulary/PersonalVocab"));
 
 // Kanji
 const Kanji = lazy(() => import("../pages/kanji/Kanji"));
-const KanjiSet4 = lazy(() => import("../pages/kanji/KanjiSet4/KanjiSet4"));
+
 
 // Exams & Specialized
 const ExamJLPT = lazy(() => import("../pages/exam/jlpt/ExamJLPT"));
@@ -56,7 +56,7 @@ const UserLayout = () => (
   <div className="flex flex-col min-h-screen bg-white relative">
     <ScrollToTopButton />
     <Header />
-    
+
     {/* Slogan Badge */}
     <div className="fixed right-6 top-24 z-[1001] hidden lg:block pointer-events-none select-none">
       <div className="bg-white/80 backdrop-blur-md border border-slate-100 px-4 py-2 rounded-xl shadow-sm flex items-center gap-3">
@@ -112,7 +112,7 @@ export default function RouteMap() {
         <Route index element={<Home />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
-        
+
         {/* Grammar Section */}
         <Route path="grammar">
           <Route index element={<Grammar />} />
@@ -128,7 +128,6 @@ export default function RouteMap() {
         {/* Kanji Section */}
         <Route path="kanji">
           <Route index element={<Kanji />} />
-          <Route path="set-4" element={<KanjiSet4 />} />
         </Route>
 
         {/* Exams & Study Tools */}
