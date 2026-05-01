@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       const data = await response.json();
-      const user = { id: data.id, name: data.name, email: data.email };
+      const user = { id: data.id, name: data.name, email: data.email, role: data.role };
       
       setCurrentUser(user);
       localStorage.setItem('nihongo_user', JSON.stringify(user));
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       const data = await response.json();
-      const user = { id: data.id, name: data.name, email: data.email };
+      const user = { id: data.id, name: data.name, email: data.email, role: data.role };
       
       setCurrentUser(user);
       localStorage.setItem('nihongo_user', JSON.stringify(user));

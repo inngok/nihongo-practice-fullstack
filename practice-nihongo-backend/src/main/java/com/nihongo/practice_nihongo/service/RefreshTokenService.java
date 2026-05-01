@@ -31,6 +31,7 @@ public class RefreshTokenService {
 
         // Remove old tokens for the user to keep the table clean
         refreshTokenRepository.deleteByUser(refreshToken.getUser());
+        refreshTokenRepository.flush(); // Ensure deletion happens before insertion
 
         refreshToken = refreshTokenRepository.save(refreshToken);
         return refreshToken;

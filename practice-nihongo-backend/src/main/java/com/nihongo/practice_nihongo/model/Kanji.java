@@ -21,10 +21,14 @@ public class Kanji {
 
     private String kunyomi;
     private String onyomi;
+    private String hanviet;
     private String meaning;
     
     @Column(columnDefinition = "TEXT")
     private String examples;
+
+    private Integer week;
+    private Integer day;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "book_id")

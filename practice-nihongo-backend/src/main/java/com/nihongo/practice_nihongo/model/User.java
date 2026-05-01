@@ -22,10 +22,15 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(columnDefinition = "varchar(255) default 'STUDENT'")
+    @Builder.Default
+    private String role = "STUDENT";
 
     @PrePersist
     protected void onCreate() {

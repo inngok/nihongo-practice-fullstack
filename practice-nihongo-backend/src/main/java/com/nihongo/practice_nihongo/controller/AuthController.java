@@ -61,7 +61,7 @@ public class AuthController {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
-            return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail()));
+            return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail(), user.getRole()));
         }
         
         return ResponseEntity.badRequest().body("User not found");
@@ -86,7 +86,7 @@ public class AuthController {
         final String jwt = jwtUtil.generateToken(userDetails);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-        return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail()));
+        return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail(), user.getRole()));
     }
 
     @PostMapping("/refresh")

@@ -19,7 +19,15 @@ public class VocabController {
     }
 
     @GetMapping
-    public List<Vocab> getAllVocabs() {
+    public List<Vocab> getAllVocabs(
+            @RequestParam(required = false) Long bookId,
+            @RequestParam(required = false) Integer week,
+            @RequestParam(required = false) Integer day) {
+        if (bookId != null && week != null && day != null) {
+            return vocabService.getVocabsByBookWeekDay(bookId, week, day);
+        } else if (bookId != null) {
+            return vocabService.getVocabsByBook(bookId);
+        }
         return vocabService.getAllVocabs();
     }
 

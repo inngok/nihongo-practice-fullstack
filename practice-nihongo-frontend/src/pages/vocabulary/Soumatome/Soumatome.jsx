@@ -1,13 +1,8 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Brain, RotateCcw, List } from 'lucide-react';
-import { week1Data } from './week1';
-import { week6Data } from './week6';
-
-const allData = { 
-  ...week1Data, 
-  ...week6Data 
-};
+import vocabService from '../../../api/vocabService';
+import bookService from '../../../api/bookService';
 
 export default function Soumatome() {
   const navigate = useNavigate();
@@ -31,9 +26,39 @@ export default function Soumatome() {
   const [showResults, setShowResults] = useState(false);
   const inputRef = useRef(null);
 
-  const currentData = useMemo(() => {
-    return allData[activeWeek]?.[activeDay] || { title: '', words: [] };
+  const [words, setWords] = useState([]);
+  const [bookInfo, setBookInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch Book Info
+  useEffect(() => {
+    const bookId = new URLSearchParams(window.location.search).get('bookId');
+    if (bookId) {
+      bookService.getById(bookId).then(res => setBookInfo(res.data)).catch(console.error);
+    }
+  }, []);
+
+  // Fetch Words for current week/day
+  useEffect(() => {
+    const bookId = new URLSearchParams(window.location.search).get('bookId');
+    if (bookId) {
+      setLoading(true);
+      vocabService.getAll({ bookId, week: activeWeek, day: activeDay })
+        .then(res => {
+          setWords(res.data);
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    }
   }, [activeWeek, activeDay]);
+
+  const currentData = useMemo(() => {
+    return { 
+      title: bookInfo?.title || 'Đang tải...', 
+      japanese: bookInfo?.japaneseTitle || '',
+      words: words 
+    };
+  }, [bookInfo, words]);
 
   // Actions
   const startQuiz = useCallback((type = 'jp-to-vn') => {
@@ -81,10 +106,9 @@ export default function Soumatome() {
       isCorrect = input === answer;
     } else {
       // vn-to-jp: Allow kanji, kana or alternative accepts
-      const kanji = currentWord.kanji.toLowerCase().trim();
-      const kana = currentWord.kana.toLowerCase().trim();
-      const accepts = (currentWord.accepts || []).map(a => a.toLowerCase().trim());
-      isCorrect = input === kanji || input === kana || accepts.includes(input);
+      const word = currentWord.word.toLowerCase().trim();
+      const reading = currentWord.reading.toLowerCase().trim();
+      isCorrect = input === word || input === reading;
     }
 
     if (isCorrect) {
@@ -241,14 +265,14 @@ export default function Soumatome() {
             <div className="w-full border-t border-slate-100 pt-8 animate-in fade-in duration-700">
               <div className="grid grid-cols-1 gap-1">
                 {currentData.words.map((word, index) => (
-                  <div key={index} className="group flex flex-col md:flex-row md:items-center py-4 px-4 hover:bg-slate-50 transition-all rounded-2xl border border-transparent hover:border-slate-100">
+                  <div key={word.id || index} className="group flex flex-col md:flex-row md:items-center py-4 px-4 hover:bg-slate-50 transition-all rounded-2xl border border-transparent hover:border-slate-100">
                     <div className="w-10 text-[10px] font-black text-slate-200 group-hover:text-slate-400 mb-2 md:mb-0">{(index + 1).toString().padStart(2, '0')}</div>
                     <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-8 items-center">
                       <div className="flex flex-col">
-                        <span className="text-2xl font-black text-slate-900 leading-tight">{word.kanji}</span>
+                        <span className="text-2xl font-black text-slate-900 leading-tight">{word.word}</span>
                       </div>
                       <div className="flex items-center md:justify-center">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{word.kana}</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{word.reading}</span>
                       </div>
                       <div className="flex items-center md:justify-end">
                         <span className="text-sm md:text-base font-bold text-slate-600 bg-slate-50/50 group-hover:bg-white group-hover:shadow-sm px-4 py-1.5 rounded-xl border border-transparent group-hover:border-slate-100 transition-all">
@@ -258,7 +282,8 @@ export default function Soumatome() {
                     </div>
                   </div>
                 ))}
-                {currentData.words.length === 0 && <div className="py-20 text-center text-slate-400 font-medium italic">Dữ liệu đang được cập nhật...</div>}
+                {loading && <div className="py-20 text-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-black rounded-full animate-spin mx-auto"></div></div>}
+                {!loading && currentData.words.length === 0 && <div className="py-20 text-center text-slate-400 font-medium italic">Chưa có dữ liệu từ vựng cho ngày này.</div>}
               </div>
             </div>
           </>
@@ -273,13 +298,13 @@ export default function Soumatome() {
             <div className="group perspective w-full aspect-[16/10] md:max-h-[400px] cursor-pointer" onClick={() => setIsFlipped(!isFlipped)}>
               <div className={`relative w-full h-full duration-500 preserve-3d shadow-xl rounded-[3rem] ${isFlipped ? 'rotate-y-180' : ''}`}>
                 <div className="absolute inset-0 backface-hidden bg-white border border-slate-100 rounded-[3rem] flex flex-col items-center justify-center p-12">
-                  <div className="text-6xl md:text-8xl font-black text-slate-900 text-center leading-tight">{currentData.words[cardIndex].kanji}</div>
+                  <div className="text-6xl md:text-8xl font-black text-slate-900 text-center leading-tight">{currentData.words[cardIndex].word}</div>
                   <div className="mt-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest italic decoration-slate-100 underline underline-offset-8">NHẤN ĐỂ LẬT</div>
                 </div>
                 <div className="absolute inset-0 backface-hidden bg-white border-2 border-slate-950 text-slate-950 rounded-[3rem] rotate-y-180 flex flex-col items-center justify-center p-12">
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Nghĩa tiếng Việt</div>
                   <div className="text-3xl md:text-5xl font-black text-center italic leading-tight">{currentData.words[cardIndex].meaning}</div>
-                  <div className="mt-6 text-xl font-bold text-slate-400 font-japanese">{currentData.words[cardIndex].kana}</div>
+                  <div className="mt-6 text-xl font-bold text-slate-400 font-japanese">{currentData.words[cardIndex].reading}</div>
                 </div>
               </div>
             </div>
@@ -300,8 +325,8 @@ export default function Soumatome() {
               <div className="space-y-4">
                 {quizType === 'jp-to-vn' ? (
                   <>
-                    <div className="text-6xl md:text-8xl font-black text-slate-900 leading-tight italic">{quizData[quizIndex].kanji}</div>
-                    <div className="text-2xl font-bold text-slate-300 italic uppercase tracking-widest">{quizData[quizIndex].kana}</div>
+                    <div className="text-6xl md:text-8xl font-black text-slate-900 leading-tight italic">{quizData[quizIndex].word}</div>
+                    <div className="text-2xl font-bold text-slate-300 italic uppercase tracking-widest">{quizData[quizIndex].reading}</div>
                   </>
                 ) : (
                   <div className="text-4xl md:text-6xl font-black text-slate-900 leading-tight italic">"{quizData[quizIndex].meaning}"</div>
@@ -328,7 +353,7 @@ export default function Soumatome() {
                   )}
                   {showHint && !feedback && (
                     <div className="bg-slate-50 p-4 rounded-xl text-xs font-bold text-slate-400 italic">
-                      Gợi ý: {quizType === 'jp-to-vn' ? quizData[quizIndex].meaning.substring(0, 2) : quizData[quizIndex].kana.substring(0, 2)}...
+                      Gợi ý: {quizType === 'jp-to-vn' ? quizData[quizIndex].meaning.substring(0, 2) : quizData[quizIndex].reading.substring(0, 2)}...
                     </div>
                   )}
                   {feedback === 'incorrect' && (
@@ -338,8 +363,8 @@ export default function Soumatome() {
                         <p className="text-3xl font-black text-emerald-700 italic">"{quizData[quizIndex].meaning}"</p>
                       ) : (
                         <div className="flex flex-col">
-                          <p className="text-3xl font-black text-emerald-700 italic">{quizData[quizIndex].kanji}</p>
-                          <p className="text-lg font-bold text-emerald-600">{quizData[quizIndex].kana}</p>
+                          <p className="text-3xl font-black text-emerald-700 italic">{quizData[quizIndex].word}</p>
+                          <p className="text-lg font-bold text-emerald-600">{quizData[quizIndex].reading}</p>
                         </div>
                       )}
 

@@ -23,6 +23,14 @@ public class KanjiService {
         return kanjiRepository.findAll();
     }
 
+    public List<Kanji> getKanjisByBook(Long bookId) {
+        return kanjiRepository.findByBookId(bookId);
+    }
+
+    public List<Kanji> getKanjisByBookWeekDay(Long bookId, Integer week, Integer day) {
+        return kanjiRepository.findByBookIdAndWeekAndDay(bookId, week, day);
+    }
+
     public Kanji getKanjiById(Long id) {
         return kanjiRepository.findById(id).orElse(null);
     }

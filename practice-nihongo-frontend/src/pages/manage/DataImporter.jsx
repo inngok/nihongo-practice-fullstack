@@ -55,11 +55,17 @@ export default function DataImporter() {
   };
 
   return (
-    <div className="flex-grow max-w-4xl w-full mx-auto p-4 sm:p-6 lg:p-8 mt-20">
-      {contextHolder}
-      <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-100">
-        <h1 className="text-2xl font-black uppercase tracking-tighter mb-2">Data Importer (Dành cho Admin)</h1>
-        <p className="text-slate-500 mb-8 font-medium">Nhờ AI gen ra dữ liệu dưới dạng JSON Array (Mảng Object) và dán vào đây để Import hàng loạt vào Database.</p>
+    <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500">
+      <div className="max-w-4xl mx-auto">
+        {contextHolder}
+        
+        {/* Simple Header */}
+        <div className="mb-12">
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Data Importer</h1>
+          <p className="text-slate-400 text-[13px] font-medium">Nhập dữ liệu hàng loạt từ JSON (AI Generated)</p>
+        </div>
+
+        <div className="bg-white border border-slate-100 rounded-xl p-10">
 
         <div className="mb-6">
           <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
@@ -68,21 +74,19 @@ export default function DataImporter() {
           <div className="flex gap-4">
             <button
               onClick={() => setDataType('kanjis')}
-              className={`px-6 py-3 rounded-xl font-bold transition-all ${
-                dataType === 'kanjis' 
-                  ? 'bg-black text-white shadow-md' 
+              className={`px-6 py-3 rounded-xl font-bold transition-all ${dataType === 'kanjis'
+                  ? 'bg-black text-white shadow-md'
                   : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-              }`}
+                }`}
             >
               Hán Tự (Kanji)
             </button>
             <button
               onClick={() => setDataType('vocabs')}
-              className={`px-6 py-3 rounded-xl font-bold transition-all ${
-                dataType === 'vocabs' 
-                  ? 'bg-black text-white shadow-md' 
+              className={`px-6 py-3 rounded-xl font-bold transition-all ${dataType === 'vocabs'
+                  ? 'bg-black text-white shadow-md'
                   : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-              }`}
+                }`}
             >
               Từ Vựng (Vocab)
             </button>
@@ -92,7 +96,7 @@ export default function DataImporter() {
         <div className="mb-6">
           <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2 flex justify-between">
             <span>Dữ liệu JSON</span>
-            <button 
+            <button
               onClick={() => setJsonData(getPlaceholder())}
               className="text-blue-500 hover:text-blue-700 normal-case"
             >
@@ -126,5 +130,6 @@ export default function DataImporter() {
         </button>
       </div>
     </div>
-  );
+  </div>
+);
 }

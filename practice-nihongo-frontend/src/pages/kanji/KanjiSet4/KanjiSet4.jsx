@@ -1,12 +1,16 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, BookOpen, Brain, CheckCircle, ChevronLeft, ChevronRight, RotateCcw, HelpCircle, Trophy, List } from 'lucide-react';
-
-// Import data from the central data folder
-import { kanjiData } from './data';
+import { useSearchParams } from 'react-router-dom';
+import kanjiService from '../../../api/kanjiService';
 
 export default function KanjiSet4() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const bookId = searchParams.get('bookId');
+  
+  const [kanjis, setKanjis] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activePage, setActivePage] = useState('all');
   const [viewMode, setViewMode] = useState('list'); // 'list', 'flashcard', 'quiz'
   const [flashcardIndex, setFlashcardIndex] = useState(0);
@@ -24,21 +28,24 @@ export default function KanjiSet4() {
   const [showResults, setShowResults] = useState(false);
   const inputRef = useRef(null);
 
-  // Swipe Support State
-  const [touchStartX, setTouchStartX] = useState(0);
-  const [touchEndX, setTouchEndX] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
+  useEffect(() => {
+    if (bookId) {
+      kanjiService.getAll({ bookId })
+        .then(res => setKanjis(res.data))
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    }
+  }, [bookId]);
 
   // Filter and memoize current page data
   const currentData = useMemo(() => {
     if (activePage === 'all') {
-      return Object.values(kanjiData).flat();
+      return kanjis;
     }
-    return kanjiData[activePage] || [];
-  }, [activePage]);
-  
+    return kanjis.filter(k => k.week === parseInt(activePage));
+  }, [activePage, kanjis]);
+
   // Sync studyData whenever currentData or isShuffle changes
-  // This ensures that switching pages while in Flashcard/Quiz mode updates the data correctly
   useEffect(() => {
     let data = [...currentData];
     if (isShuffle) {
@@ -56,10 +63,10 @@ export default function KanjiSet4() {
   }, [currentData, isShuffle]);
 
   // Page selection logic (automatically sorted numerically)
-  const availablePages = useMemo(() => 
-    Object.keys(kanjiData).map(Number).sort((a, b) => a - b),
-    [kanjiData]
-  );
+  const availablePages = useMemo(() => {
+    const weeks = [...new Set(kanjis.map(k => k.week).filter(w => w != null))];
+    return weeks.sort((a, b) => a - b);
+  }, [kanjis]);
 
   // Initialize Quiz/Flashcard
   const startMode = useCallback((mode) => {
@@ -149,7 +156,7 @@ export default function KanjiSet4() {
   // Quiz Logic
   const checkAnswer = () => {
     const currentItem = studyData[quizIndex];
-    const answer = currentItem.hano.toLowerCase().trim();
+    const answer = currentItem.hanviet?.toLowerCase().trim();
     const input = userInput.toLowerCase().trim();
     
     if (input === answer) {
@@ -237,9 +244,9 @@ export default function KanjiSet4() {
                 </div>
               </div>
               <h1 className="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter leading-tight flex flex-wrap items-baseline gap-4">
-                Hán tự 4
+                Hán tự
                 <span className="text-base md:text-2xl font-bold text-slate-200 tracking-tight italic">
-                  ({activePage === 'all' ? Object.values(kanjiData).flat().length : (kanjiData[activePage]?.length || 0)} chữ)
+                  ({currentData.length} chữ)
                 </span>
               </h1>
             </div>
@@ -286,12 +293,12 @@ export default function KanjiSet4() {
                   </span>
                   
                   <div className="text-5xl font-semibold text-slate-900 group-hover:scale-110 transition-transform duration-500 py-1 font-kanji">
-                    {item.kanji}
+                    {item.character}
                   </div>
                   
                   <div className="w-full text-center pt-3 border-t border-slate-50">
                     <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
-                      {item.hano}
+                      {item.hanviet}
                     </p>
                     <p className="text-[9px] font-medium text-slate-400 mt-0.5 line-clamp-1 group-hover:text-slate-500 transition-colors">
                       {item.meaning}
@@ -346,7 +353,7 @@ export default function KanjiSet4() {
                   {/* Front Side */}
                   <div className="absolute inset-0 backface-hidden bg-white border border-slate-100 rounded-3xl md:rounded-[3rem] flex flex-col items-center justify-center p-8">
                      <div className="absolute top-8 text-[9px] font-bold text-slate-200 uppercase tracking-[0.4em]">Hán tự</div>
-                     <div className="text-[7rem] md:text-[12rem] font-semibold text-slate-900 select-none leading-none font-kanji">{studyData[flashcardIndex].kanji}</div>
+                     <div className="text-[7rem] md:text-[12rem] font-semibold text-slate-900 select-none leading-none font-kanji">{studyData[flashcardIndex].character}</div>
                      <div className="absolute bottom-8 flex items-center justify-center w-full px-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest decoration-slate-100 italic">
                        NHẤN ĐỂ LẬT
                      </div>
@@ -355,13 +362,13 @@ export default function KanjiSet4() {
                   {/* Back Side */}
                   <div className="absolute inset-0 backface-hidden bg-white border-2 border-slate-900 text-slate-950 rounded-3xl md:rounded-[3rem] rotate-y-180 flex flex-col items-center justify-center p-8 md:p-12 overflow-hidden">
                      <div className="absolute -top-10 -right-10 text-[25vw] font-black text-slate-50 rotate-12 select-none pointer-events-none leading-none opacity-50">
-                       {studyData[flashcardIndex].kanji}
+                       {studyData[flashcardIndex].character}
                      </div>
                      
                      <div className="space-y-8 text-center relative z-10">
                        <div className="space-y-2">
                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em]">Âm Hán Việt</p>
-                         <h3 className="text-5xl md:text-7xl font-black text-slate-900 italic leading-tight">{studyData[flashcardIndex].hano}</h3>
+                         <h3 className="text-5xl md:text-7xl font-black text-slate-900 italic leading-tight">{studyData[flashcardIndex].hanviet}</h3>
                        </div>
                        <div className="w-12 h-px bg-slate-200 mx-auto" />
                        <div className="space-y-2">
@@ -435,7 +442,7 @@ export default function KanjiSet4() {
              <div className="text-center space-y-8 w-full">
                 <div className="space-y-4 relative group">
                   <div className="text-[8rem] md:text-[10rem] font-semibold text-slate-900 leading-none select-none drop-shadow-sm transition-transform group-hover:scale-105 duration-500 font-kanji">
-                    {studyData[quizIndex].kanji}
+                    {studyData[quizIndex].character}
                   </div>
                   <div className="flex flex-col items-center">
                     <span className="inline-block px-4 py-1.5 bg-slate-100 rounded-full text-[9px] font-black text-slate-400 uppercase tracking-[0.3em]">Hán Việt</span>
@@ -492,7 +499,7 @@ export default function KanjiSet4() {
                       {feedback === 'incorrect' && (
                         <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 animate-in slide-in-from-top-4 duration-500">
                            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Đáp án đúng</p>
-                           <p className="text-3xl font-black text-emerald-700 uppercase">{studyData[quizIndex].hano}</p>
+                           <p className="text-3xl font-black text-emerald-700 uppercase">{studyData[quizIndex].hanviet}</p>
                         </div>
                       )}
                    </div>

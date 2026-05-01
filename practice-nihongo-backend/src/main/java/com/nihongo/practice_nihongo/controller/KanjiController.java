@@ -19,7 +19,15 @@ public class KanjiController {
     }
 
     @GetMapping
-    public List<Kanji> getAllKanjis() {
+    public List<Kanji> getAllKanjis(
+            @RequestParam(required = false) Long bookId,
+            @RequestParam(required = false) Integer week,
+            @RequestParam(required = false) Integer day) {
+        if (bookId != null && week != null && day != null) {
+            return kanjiService.getKanjisByBookWeekDay(bookId, week, day);
+        } else if (bookId != null) {
+            return kanjiService.getKanjisByBook(bookId);
+        }
         return kanjiService.getAllKanjis();
     }
 

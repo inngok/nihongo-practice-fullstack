@@ -23,6 +23,14 @@ public class VocabService {
         return vocabRepository.findAll();
     }
 
+    public List<Vocab> getVocabsByBook(Long bookId) {
+        return vocabRepository.findByBookId(bookId);
+    }
+
+    public List<Vocab> getVocabsByBookWeekDay(Long bookId, Integer week, Integer day) {
+        return vocabRepository.findByBookIdAndWeekAndDay(bookId, week, day);
+    }
+
     public Vocab getVocabById(Long id) {
         return vocabRepository.findById(id).orElse(null);
     }
