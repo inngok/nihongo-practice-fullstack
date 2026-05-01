@@ -34,6 +34,11 @@ public class KanjiController {
         return kanjiService.createKanji(kanji);
     }
 
+    @PostMapping("/bulk")
+    public ResponseEntity<List<Kanji>> createKanjisBulk(@RequestBody List<Kanji> kanjis) {
+        return ResponseEntity.ok(kanjiService.createKanjisBulk(kanjis));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Kanji> updateKanji(@PathVariable Long id, @RequestBody Kanji kanji) {
         Kanji updated = kanjiService.updateKanji(id, kanji);

@@ -30,6 +30,9 @@ const BookManager = lazy(() => import("../pages/grammar/BookManager"));
 const VocabManager = lazy(() => import("../pages/vocabulary/VocabManager"));
 const KanjiManager = lazy(() => import("../pages/kanji/KanjiManager"));
 
+// Admin/Manage pages
+const DataImporter = lazy(() => import("../pages/manage/DataImporter"));
+
 // Auth pages
 const Login = lazy(() => import("../pages/auth/Login"));
 const Register = lazy(() => import("../pages/auth/Register"));
@@ -121,6 +124,7 @@ export default function RouteMap() {
         <Route path="/grammar/books" element={<BookManager />} />
         <Route path="/vocabulary/manage" element={<VocabManager />} />
         <Route path="/kanji/manage" element={<KanjiManager />} />
+        <Route path="/manage/import" element={<DataImporter />} />
         <Route path="/tips" element={<Tips />} />
         <Route path="*" element={<Fallback />} />
       </Route>

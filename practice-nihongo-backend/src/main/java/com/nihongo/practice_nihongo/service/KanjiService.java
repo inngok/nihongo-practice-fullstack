@@ -35,6 +35,16 @@ public class KanjiService {
         return kanjiRepository.save(kanji);
     }
 
+    public List<Kanji> createKanjisBulk(List<Kanji> kanjis) {
+        for (Kanji kanji : kanjis) {
+            if (kanji.getBook() != null && kanji.getBook().getId() != null) {
+                Book book = bookRepository.findById(kanji.getBook().getId()).orElse(null);
+                kanji.setBook(book);
+            }
+        }
+        return kanjiRepository.saveAll(kanjis);
+    }
+
     public Kanji updateKanji(Long id, Kanji kanji) {
         if (kanjiRepository.existsById(id)) {
             kanji.setId(id);

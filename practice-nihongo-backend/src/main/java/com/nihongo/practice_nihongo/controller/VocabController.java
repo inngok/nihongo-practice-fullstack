@@ -34,6 +34,11 @@ public class VocabController {
         return vocabService.createVocab(vocab);
     }
 
+    @PostMapping("/bulk")
+    public ResponseEntity<List<Vocab>> createVocabsBulk(@RequestBody List<Vocab> vocabs) {
+        return ResponseEntity.ok(vocabService.createVocabsBulk(vocabs));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Vocab> updateVocab(@PathVariable Long id, @RequestBody Vocab vocab) {
         Vocab updated = vocabService.updateVocab(id, vocab);

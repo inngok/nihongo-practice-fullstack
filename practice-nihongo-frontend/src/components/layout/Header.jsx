@@ -23,7 +23,8 @@ export default function Header() {
           { path: '/grammar', label: 'Ngữ pháp' },
           { path: '/vocabulary', label: 'Từ vựng' },
           { path: '/kanji', label: 'Hán tự' },
-          { path: '/grammar/manage', label: 'Quản lý' }
+          { path: '/grammar/manage', label: 'Quản lý' },
+          { path: '/manage/import', label: 'Import' }
         ].map(nav => (
           <Link
             key={nav.path}

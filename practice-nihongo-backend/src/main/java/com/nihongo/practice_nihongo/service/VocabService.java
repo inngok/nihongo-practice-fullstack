@@ -35,6 +35,16 @@ public class VocabService {
         return vocabRepository.save(vocab);
     }
 
+    public List<Vocab> createVocabsBulk(List<Vocab> vocabs) {
+        for (Vocab vocab : vocabs) {
+            if (vocab.getBook() != null && vocab.getBook().getId() != null) {
+                Book book = bookRepository.findById(vocab.getBook().getId()).orElse(null);
+                vocab.setBook(book);
+            }
+        }
+        return vocabRepository.saveAll(vocabs);
+    }
+
     public Vocab updateVocab(Long id, Vocab vocab) {
         if (vocabRepository.existsById(id)) {
             vocab.setId(id);
