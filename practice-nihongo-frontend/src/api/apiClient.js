@@ -11,7 +11,17 @@ const apiClient = axios.create({
   },
 });
 
-// Bạn có thể thêm interceptors ở đây nếu sau này có dùng Token/Auth
+// Request interceptor to add Token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('nihongo_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {

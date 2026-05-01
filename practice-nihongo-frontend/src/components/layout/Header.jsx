@@ -46,11 +46,12 @@ export default function Header() {
           { path: '/grammar', label: 'Ngữ pháp' },
           { path: '/vocabulary', label: 'Từ vựng' },
           { path: '/kanji', label: 'Hán tự' },
+          ...(currentUser ? [{ path: '/my-vocab', label: 'Sổ tay' }] : []),
         ].map(nav => (
           <Link
             key={nav.path}
             to={nav.path}
-            className={`transition-all whitespace-nowrap py-1 border-b-2 ${(nav.path === '/' && pathname === '/') || (nav.path !== '/' && pathname.startsWith(nav.path))
+            className={`transition-all whitespace-nowrap py-1 border-b-2 ${(nav.path === '/' && pathname === '/') || (nav.path !== '/' && (pathname === nav.path || pathname.startsWith(nav.path + '/')))
                 ? 'text-black border-black'
                 : 'border-transparent hover:text-black hover:border-slate-200'
               }`}

@@ -61,7 +61,7 @@ export default function Grammar() {
             {books.map((book) => (
               <div
                 key={book.id}
-                onClick={() => navigate(`/grammar/mimikara?bookId=${book.id}`)}
+                onClick={() => navigate(`/grammar/study?bookId=${book.id}`)}
                 className="group relative bg-white border border-slate-200 rounded-2xl p-7 flex flex-col justify-between transition-all duration-300 hover:border-slate-400 hover:shadow-md hover:-translate-y-1 cursor-pointer"
               >
                 {/* Top Row */}

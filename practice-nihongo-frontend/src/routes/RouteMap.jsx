@@ -15,15 +15,11 @@ const Register = lazy(() => import("../pages/auth/Register"));
 
 // Grammar
 const Grammar = lazy(() => import("../pages/grammar/Grammar"));
-const Mimikara = lazy(() => import("../pages/grammar/Mimikara"));
 const ConfusingGrammar = lazy(() => import("../pages/grammar/ConfusingGrammar"));
 
 // Vocabulary
 const Vocabulary = lazy(() => import("../pages/vocabulary/Vocabulary"));
-const Soumatome = lazy(() => import("../pages/vocabulary/Soumatome/Soumatome"));
-const TryN3 = lazy(() => import("../pages/vocabulary/TryN3/TryN3"));
-const MimikaraVocab = lazy(() => import("../pages/vocabulary/MimikaraVocab/MimikaraVocab"));
-const DekiruVocab = lazy(() => import("../pages/vocabulary/DekiruVocab/DekiruVocab"));
+const PersonalVocab = lazy(() => import("../pages/vocabulary/PersonalVocab"));
 
 // Kanji
 const Kanji = lazy(() => import("../pages/kanji/Kanji"));
@@ -120,18 +116,14 @@ export default function RouteMap() {
         {/* Grammar Section */}
         <Route path="grammar">
           <Route index element={<Grammar />} />
-          <Route path="mimikara" element={<Mimikara />} />
           <Route path="confusing" element={<ConfusingGrammar />} />
         </Route>
 
         {/* Vocabulary Section */}
         <Route path="vocabulary">
           <Route index element={<Vocabulary />} />
-          <Route path="soumatome" element={<Soumatome />} />
-          <Route path="try-n3" element={<TryN3 />} />
-          <Route path="mimikara" element={<MimikaraVocab />} />
-          <Route path="dekiru" element={<DekiruVocab />} />
         </Route>
+        <Route path="my-vocab" element={<PersonalVocab />} />
 
         {/* Kanji Section */}
         <Route path="kanji">

@@ -5,11 +5,13 @@ import com.nihongo.practice_nihongo.service.KanjiService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/kanjis")
 @CrossOrigin(origins = "*")
+@Tag(name = "Kanji Management")
 public class KanjiController {
 
     private final KanjiService kanjiService;

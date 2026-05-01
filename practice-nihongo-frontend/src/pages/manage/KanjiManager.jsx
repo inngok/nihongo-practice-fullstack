@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import kanjiService from '../../api/kanjiService';
 import bookService from '../../api/bookService';
 import { Modal, message } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined } from '@ant-design/icons';
 
 export default function KanjiManager() {
   const navigate = useNavigate();
@@ -14,6 +14,9 @@ export default function KanjiManager() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Filter State
+  const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -32,9 +35,15 @@ export default function KanjiManager() {
   useEffect(() => {
     fetchData();
     if (bookIdParam) {
-      setFormData(prev => ({ ...prev, bookId: bookIdParam }));
+      setSelectedBookId(bookIdParam);
     }
   }, [bookIdParam]);
+
+  // Filtered List
+  const filteredKanjis = React.useMemo(() => {
+    if (!selectedBookId) return kanjis;
+    return kanjis.filter(k => k.bookId?.toString() === selectedBookId.toString() || k.book?.id?.toString() === selectedBookId.toString());
+  }, [kanjis, selectedBookId]);
 
   const fetchData = async () => {
     try {
@@ -76,6 +85,10 @@ export default function KanjiManager() {
 
   const openAddModal = () => {
     resetForm();
+    if (selectedBookId) {
+      setFormData(prev => ({ ...prev, bookId: selectedBookId }));
+    }
+    setEditingId(null);
     setIsModalOpen(true);
   };
 
@@ -114,8 +127,8 @@ export default function KanjiManager() {
       fetchData();
       message.success(editingId ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
     } catch (err) {
-      message.error('Đã có lỗi xảy ra!');
       console.error(err);
+      message.error('Đã có lỗi xảy ra!');
     }
   };
 
@@ -158,6 +171,32 @@ export default function KanjiManager() {
           </button>
         </div>
 
+        {/* Filter Bar */}
+        <div className="flex gap-4 mb-8 p-6 bg-slate-50 border border-slate-100 rounded-2xl items-center">
+          <div className="flex items-center gap-2 text-slate-400">
+            <FilterOutlined className="text-xs" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Bộ lọc nhanh:</span>
+          </div>
+          <select
+            value={selectedBookId}
+            onChange={(e) => setSelectedBookId(e.target.value)}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:ring-2 focus:ring-black/5 outline-none transition-all"
+          >
+            <option value="">-- Tất cả giáo trình --</option>
+            {books.map(b => (
+              <option key={b.id} value={b.id}>{b.title}</option>
+            ))}
+          </select>
+          {selectedBookId && (
+            <button 
+              onClick={() => setSelectedBookId('')}
+              className="text-[10px] font-bold text-slate-300 hover:text-red-500 uppercase tracking-tighter transition-colors"
+            >
+              Xóa lọc
+            </button>
+          )}
+        </div>
+
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="w-6 h-6 border-2 border-slate-100 border-t-black rounded-full animate-spin"></div>
@@ -175,7 +214,7 @@ export default function KanjiManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {kanjis.map((item) => (
+                {filteredKanjis.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="px-6 py-5 font-bold text-slate-900 text-2xl leading-none">{item.character}</td>
                     <td className="px-6 py-5">
@@ -220,7 +259,17 @@ export default function KanjiManager() {
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
             <div className="p-8 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-slate-900">{editingId ? 'Chỉnh sửa Hán tự' : 'Thêm Hán tự mới'}</h2>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">{editingId ? 'Chỉnh sửa Hán tự' : 'Thêm Hán tự mới'}</h2>
+                {selectedBookId && !editingId && (
+                  <div className="mt-1">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Thêm vào: </span>
+                    <span className="text-[11px] font-black text-black uppercase tracking-tight">
+                      {books.find(b => b.id.toString() === selectedBookId.toString())?.title}
+                    </span>
+                  </div>
+                )}
+              </div>
               <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:text-black transition-colors">Đóng</button>
             </div>
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
@@ -235,17 +284,19 @@ export default function KanjiManager() {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Bộ sách</label>
-                  <select name="bookId" value={formData.bookId} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                    <option value="">-- Chọn --</option>
-                    {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-2">
+                <div className={`space-y-2 ${selectedBookId && !editingId ? 'md:col-span-2' : ''}`}>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ý nghĩa</label>
                   <input type="text" name="meaning" value={formData.meaning} onChange={handleInputChange} required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
                 </div>
+                {(!selectedBookId || editingId) && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Bộ sách</label>
+                    <select name="bookId" value={formData.bookId} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                      <option value="">-- Chọn --</option>
+                      {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -265,12 +316,16 @@ export default function KanjiManager() {
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tuần</label>
-                  <input type="number" name="week" value={formData.week} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tuần (1-10)</label>
+                  <select name="week" value={formData.week} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                    {[...Array(10)].map((_, i) => <option key={i+1} value={i+1}>Tuần {i+1}</option>)}
+                  </select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ngày</label>
-                  <input type="number" name="day" value={formData.day} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ngày (1-7)</label>
+                  <select name="day" value={formData.day} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                    {[...Array(7)].map((_, i) => <option key={i+1} value={i+1}>Ngày {i+1}</option>)}
+                  </select>
                 </div>
               </div>
               <div className="pt-4 flex gap-4">

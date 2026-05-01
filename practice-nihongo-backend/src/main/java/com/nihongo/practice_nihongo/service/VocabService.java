@@ -23,6 +23,14 @@ public class VocabService {
         return vocabRepository.findAll();
     }
 
+    public List<Vocab> getPersonalVocabs(Long userId) {
+        return vocabRepository.findByUserId(userId);
+    }
+
+    public List<Vocab> getSystemAndPersonalVocabs(Long userId) {
+        return vocabRepository.findByUserIdOrUserIsNull(userId);
+    }
+
     public List<Vocab> getVocabsByBook(Long bookId) {
         return vocabRepository.findByBookId(bookId);
     }

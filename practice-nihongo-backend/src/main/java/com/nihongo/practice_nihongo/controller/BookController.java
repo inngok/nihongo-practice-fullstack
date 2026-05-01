@@ -12,7 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/books")
 @CrossOrigin(origins = "*")
-@Tag(name = "Book Management", description = "APIs để quản lý các giáo trình ngữ pháp (Mimikara, Soumatome, v.v.)")
+@Tag(name = "Book Management")
 public class BookController {
 
     @Autowired

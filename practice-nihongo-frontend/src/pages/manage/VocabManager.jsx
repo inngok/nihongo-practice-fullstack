@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import vocabService from '../../api/vocabService';
 import bookService from '../../api/bookService';
 import { Modal, message } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined } from '@ant-design/icons';
 
 export default function VocabManager() {
   const navigate = useNavigate();
@@ -14,6 +14,9 @@ export default function VocabManager() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Filter State
+  const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
   
   // Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -32,9 +35,15 @@ export default function VocabManager() {
   useEffect(() => {
     fetchData();
     if (bookIdParam) {
-      setFormData(prev => ({ ...prev, bookId: bookIdParam }));
+      setSelectedBookId(bookIdParam);
     }
   }, [bookIdParam]);
+
+  // Filtered List
+  const filteredVocabs = React.useMemo(() => {
+    if (!selectedBookId) return vocabs;
+    return vocabs.filter(v => v.bookId?.toString() === selectedBookId.toString() || v.book?.id?.toString() === selectedBookId.toString());
+  }, [vocabs, selectedBookId]);
 
   const fetchData = async () => {
     try {
@@ -75,6 +84,10 @@ export default function VocabManager() {
 
   const openAddModal = () => {
     resetForm();
+    if (selectedBookId) {
+      setFormData(prev => ({ ...prev, bookId: selectedBookId }));
+    }
+    setEditingId(null);
     setIsModalOpen(true);
   };
 
@@ -164,6 +177,32 @@ export default function VocabManager() {
           </div>
         </div>
 
+        {/* Filter Bar */}
+        <div className="flex gap-4 mb-8 p-6 bg-slate-50 border border-slate-100 rounded-2xl items-center">
+          <div className="flex items-center gap-2 text-slate-400">
+            <FilterOutlined className="text-xs" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Bộ lọc nhanh:</span>
+          </div>
+          <select
+            value={selectedBookId}
+            onChange={(e) => setSelectedBookId(e.target.value)}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:ring-2 focus:ring-black/5 outline-none transition-all"
+          >
+            <option value="">-- Tất cả giáo trình --</option>
+            {books.map(b => (
+              <option key={b.id} value={b.id}>{b.title}</option>
+            ))}
+          </select>
+          {selectedBookId && (
+            <button 
+              onClick={() => setSelectedBookId('')}
+              className="text-[10px] font-bold text-slate-300 hover:text-red-500 uppercase tracking-tighter transition-colors"
+            >
+              Xóa lọc
+            </button>
+          )}
+        </div>
+
         {/* Content */}
         {loading ? (
           <div className="flex justify-center py-20">
@@ -182,8 +221,8 @@ export default function VocabManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {vocabs.length > 0 ? (
-                  vocabs.map((item) => (
+                {filteredVocabs.length > 0 ? (
+                  filteredVocabs.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-5">
                         <div className="font-bold text-slate-900 text-lg leading-tight">{item.word}</div>
@@ -234,6 +273,14 @@ export default function VocabManager() {
               <h2 className="text-2xl font-bold text-slate-900">
                 {editingId ? 'Chỉnh sửa từ vựng' : 'Thêm từ vựng mới'}
               </h2>
+              {selectedBookId && !editingId && (
+                <div className="mt-1">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Thêm vào: </span>
+                  <span className="text-[11px] font-black text-black uppercase tracking-tight">
+                    {books.find(b => b.id.toString() === selectedBookId.toString())?.title}
+                  </span>
+                </div>
+              )}
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="p-2 text-slate-400 hover:text-black transition-colors"
@@ -272,7 +319,7 @@ export default function VocabManager() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
+                <div className={`space-y-2 ${selectedBookId && !editingId ? 'md:col-span-2' : ''}`}>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Ý nghĩa (VN)</label>
                   <input
                     type="text"
@@ -284,42 +331,48 @@ export default function VocabManager() {
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Giáo trình</label>
-                  <select
-                    name="bookId"
-                    value={formData.bookId}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none"
-                  >
-                    <option value="">-- Chọn giáo trình --</option>
-                    {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
-                  </select>
-                </div>
+                {(!selectedBookId || editingId) && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Giáo trình</label>
+                    <select
+                      name="bookId"
+                      value={formData.bookId}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none"
+                    >
+                      <option value="">-- Chọn giáo trình --</option>
+                      {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Tuần (1-6)</label>
-                  <input
-                    type="number"
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Tuần (1-10)</label>
+                  <select
                     name="week"
                     value={formData.week}
                     onChange={handleInputChange}
-                    placeholder="Ví dụ: 1"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
-                  />
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none"
+                  >
+                    {[...Array(10)].map((_, i) => (
+                      <option key={i + 1} value={i + 1}>Tuần {i + 1}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Ngày (1-7)</label>
-                  <input
-                    type="number"
+                  <select
                     name="day"
                     value={formData.day}
                     onChange={handleInputChange}
-                    placeholder="Ví dụ: 1"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
-                  />
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none"
+                  >
+                    {[...Array(7)].map((_, i) => (
+                      <option key={i + 1} value={i + 1}>Ngày {i + 1}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

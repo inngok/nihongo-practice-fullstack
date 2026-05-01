@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import grammarService from '../../api/grammarService';
 import bookService from '../../api/bookService';
 import { Modal, message } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined } from '@ant-design/icons';
 
 export default function GrammarManager() {
   const navigate = useNavigate();
@@ -14,6 +14,9 @@ export default function GrammarManager() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Filter State
+  const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
   
   // Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,17 +28,43 @@ export default function GrammarManager() {
     exampleSentence: '',
     exampleMeaning: '',
     level: 'N3',
-    bookId: ''
+    bookId: '',
+    week: 1,
+    day: 1
   });
+
+  const levelStyles = {
+    N1: 'text-red-600 bg-red-50',
+    N2: 'text-orange-600 bg-orange-50',
+    N3: 'text-blue-600 bg-blue-50',
+    N4: 'text-green-600 bg-green-50',
+    N5: 'text-slate-500 bg-slate-100',
+  };
 
   const levels = ['N1', 'N2', 'N3', 'N4', 'N5'];
 
   useEffect(() => {
     fetchData();
     if (bookIdParam) {
-      setFormData(prev => ({ ...prev, bookId: bookIdParam }));
+      setSelectedBookId(bookIdParam);
     }
   }, [bookIdParam]);
+
+  // Auto-fill Level from Book
+  useEffect(() => {
+    if (formData.bookId) {
+      const selectedBook = books.find(b => b.id.toString() === formData.bookId.toString());
+      if (selectedBook && selectedBook.levelLabel) {
+        setFormData(prev => ({ ...prev, level: selectedBook.levelLabel }));
+      }
+    }
+  }, [formData.bookId, books]);
+
+  // Filtered List
+  const filteredGrammars = React.useMemo(() => {
+    if (!selectedBookId) return grammars;
+    return grammars.filter(g => g.bookId?.toString() === selectedBookId.toString() || g.book?.id?.toString() === selectedBookId.toString());
+  }, [grammars, selectedBookId]);
 
   const fetchData = async () => {
     try {
@@ -68,13 +97,19 @@ export default function GrammarManager() {
       exampleSentence: '',
       exampleMeaning: '',
       level: 'N3',
-      bookId: ''
+      bookId: '',
+      week: 1,
+      day: 1
     });
     setEditingId(null);
   };
 
   const openAddModal = () => {
     resetForm();
+    if (selectedBookId) {
+      setFormData(prev => ({ ...prev, bookId: selectedBookId }));
+    }
+    setEditingId(null);
     setIsModalOpen(true);
   };
 
@@ -86,7 +121,9 @@ export default function GrammarManager() {
       exampleSentence: grammar.exampleSentence,
       exampleMeaning: grammar.exampleMeaning,
       level: grammar.level,
-      bookId: grammar.book?.id || ''
+      bookId: grammar.book?.id || '',
+      week: grammar.week || 1,
+      day: grammar.day || 1
     });
     setEditingId(grammar.id);
     setIsModalOpen(true);
@@ -163,6 +200,32 @@ export default function GrammarManager() {
           </div>
         </div>
 
+        {/* Filter Bar */}
+        <div className="flex gap-4 mb-8 p-6 bg-slate-50 border border-slate-100 rounded-2xl items-center">
+          <div className="flex items-center gap-2 text-slate-400">
+            <FilterOutlined className="text-xs" />
+            <span className="text-[10px] font-bold uppercase tracking-widest">Bộ lọc nhanh:</span>
+          </div>
+          <select
+            value={selectedBookId}
+            onChange={(e) => setSelectedBookId(e.target.value)}
+            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:ring-2 focus:ring-black/5 outline-none transition-all"
+          >
+            <option value="">-- Tất cả giáo trình --</option>
+            {books.map(b => (
+              <option key={b.id} value={b.id}>{b.title}</option>
+            ))}
+          </select>
+          {selectedBookId && (
+            <button 
+              onClick={() => setSelectedBookId('')}
+              className="text-[10px] font-bold text-slate-300 hover:text-red-500 uppercase tracking-tighter transition-colors"
+            >
+              Xóa lọc
+            </button>
+          )}
+        </div>
+
         {/* Content */}
         {loading ? (
           <div className="flex justify-center py-20">
@@ -174,29 +237,26 @@ export default function GrammarManager() {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Cấu trúc</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Giáo trình</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Ý nghĩa</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Level</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Bài học</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-right">Hành động</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {grammars.length > 0 ? (
-                  grammars.map((item) => (
+                {filteredGrammars.length > 0 ? (
+                  filteredGrammars.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-5 font-bold text-slate-900">{item.structure}</td>
-                      <td className="px-6 py-5">
-                        <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">
-                          {item.book?.title || '—'}
-                        </span>
-                      </td>
                       <td className="px-6 py-5 text-slate-500 text-[13px] italic">{item.meaning}</td>
                       <td className="px-6 py-5">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold 
-                          ${item.level === 'N1' ? 'text-red-600 bg-red-50' : 
-                            item.level === 'N2' ? 'text-orange-600 bg-orange-50' : 
-                            item.level === 'N3' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 bg-slate-100'}`}>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${levelStyles[item.level] || levelStyles.N5}`}>
                           {item.level}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className="text-[11px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">
+                          Tuần {item.week || '?'} · Ngày {item.day || '?'}
                         </span>
                       </td>
                       <td className="px-6 py-5 text-right">
@@ -234,10 +294,20 @@ export default function GrammarManager() {
       {isModalOpen && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-slate-900">
-                {editingId ? 'Chỉnh sửa ngữ pháp' : 'Thêm ngữ pháp mới'}
-              </h2>
+            <div className="p-8 border-b border-slate-100 flex justify-between items-center text-left">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  {editingId ? 'Chỉnh sửa ngữ pháp' : 'Thêm ngữ pháp mới'}
+                </h2>
+                {selectedBookId && !editingId && (
+                  <div className="mt-1">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Thêm vào: </span>
+                    <span className="text-[11px] font-black text-black uppercase tracking-tight">
+                      {books.find(b => b.id.toString() === selectedBookId.toString())?.title}
+                    </span>
+                  </div>
+                )}
+              </div>
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="p-2 text-slate-400 hover:text-black transition-colors"
@@ -250,7 +320,7 @@ export default function GrammarManager() {
             
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
+                <div className={`space-y-2 ${selectedBookId && !editingId ? 'md:col-span-2' : ''}`}>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Cấu trúc</label>
                   <input
                     type="text"
@@ -262,22 +332,24 @@ export default function GrammarManager() {
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Giáo trình</label>
-                  <select
-                    name="bookId"
-                    value={formData.bookId}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none"
-                  >
-                    <option value="">-- Chọn giáo trình --</option>
-                    {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
-                  </select>
-                </div>
+                {(!selectedBookId || editingId) && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Giáo trình</label>
+                    <select
+                      name="bookId"
+                      value={formData.bookId}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none"
+                    >
+                      <option value="">-- Chọn giáo trình --</option>
+                      {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
+                <div className={`space-y-2 ${selectedBookId && !editingId ? 'md:col-span-2' : ''}`}>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Ý nghĩa</label>
                   <input
                     type="text"
@@ -289,15 +361,46 @@ export default function GrammarManager() {
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
                   />
                 </div>
+                {(!selectedBookId || editingId) && (
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Level</label>
+                    <select
+                      name="level"
+                      value={formData.level}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none"
+                    >
+                      {levels.map(l => <option key={l} value={l}>{l}</option>)}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Level</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Tuần (1-10)</label>
                   <select
-                    name="level"
-                    value={formData.level}
+                    name="week"
+                    value={formData.week}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none"
                   >
-                    {levels.map(l => <option key={l} value={l}>{l}</option>)}
+                    {[...Array(10)].map((_, i) => (
+                      <option key={i + 1} value={i + 1}>Tuần {i + 1}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Ngày (1-7)</label>
+                  <select
+                    name="day"
+                    value={formData.day}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none"
+                  >
+                    {[...Array(7)].map((_, i) => (
+                      <option key={i + 1} value={i + 1}>Ngày {i + 1}</option>
+                    ))}
                   </select>
                 </div>
               </div>

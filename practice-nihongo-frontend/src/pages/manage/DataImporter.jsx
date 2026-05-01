@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { message } from 'antd';
+import * as XLSX from 'xlsx';
+import { FileExcelOutlined, UploadOutlined } from '@ant-design/icons';
 
 export default function DataImporter() {
   const [dataType, setDataType] = useState('kanjis');
@@ -8,6 +10,7 @@ export default function DataImporter() {
   const [isLoading, setIsLoading] = useState(false);
   const { fetchWithAuth } = useAuth();
   const [messageApi, contextHolder] = message.useMessage();
+  const fileInputRef = React.useRef(null);
 
   const handleImport = async () => {
     if (!jsonData.trim()) {
@@ -45,6 +48,34 @@ export default function DataImporter() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        
+        if (data.length === 0) {
+          return messageApi.warning('File không có dữ liệu');
+        }
+
+        setJsonData(JSON.stringify(data, null, 2));
+        messageApi.success(`Đã đọc ${data.length} dòng từ file. B ấn Import để lưu vào Database nhé!`);
+      } catch (err) {
+        messageApi.error('Lỗi khi đọc file: ' + err.message);
+      }
+    };
+    reader.readAsBinaryString(file);
+    // Reset input to allow same file selection
+    e.target.value = '';
   };
 
   const getPlaceholder = () => {
@@ -89,6 +120,23 @@ export default function DataImporter() {
                 }`}
             >
               Từ Vựng (Vocab)
+            </button>
+            
+            <div className="flex-grow"></div>
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept=".xlsx, .xls, .csv"
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current.click()}
+              className="flex items-center gap-2 px-6 py-3 bg-green-50 text-green-600 border border-green-100 rounded-xl font-bold hover:bg-green-100 transition-all"
+            >
+              <FileExcelOutlined />
+              Tải file Excel/CSV
             </button>
           </div>
         </div>
