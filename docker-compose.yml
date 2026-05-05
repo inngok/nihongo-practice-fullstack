@@ -25,8 +25,9 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/practice_nihongo_db?characterEncoding=UTF-8
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=12345
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=none
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SPRING_SQL_INIT_MODE=always
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - postgres
 
