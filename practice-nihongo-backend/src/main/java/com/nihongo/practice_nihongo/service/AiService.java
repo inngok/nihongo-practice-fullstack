@@ -9,7 +9,7 @@ import java.util.*;
 @Service
 public class AiService {
 
-    @Value("${gemini.api.key:}")
+    @Value("${GEMINI_API_KEY:}")
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
@@ -40,7 +40,7 @@ public class AiService {
     }
 
     private String callGemini(String prompt) throws Exception {
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + apiKey;
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
         Map<String, Object> requestBody = Map.of(
             "contents", List.of(
@@ -50,6 +50,9 @@ public class AiService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        if (apiKey != null && !apiKey.trim().isEmpty()) {
+            headers.set("x-goog-api-key", apiKey.trim());
+        }
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
         ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);

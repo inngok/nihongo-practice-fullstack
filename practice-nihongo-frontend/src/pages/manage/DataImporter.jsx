@@ -123,53 +123,34 @@ export default function DataImporter() {
   };
 
   return (
-    <div className="flex-grow w-full py-12 px-6 md:px-12 bg-slate-50/30 min-h-screen">
-      <div className="max-w-5xl mx-auto space-y-10">
+    <div className="min-h-screen w-full bg-white flex flex-col items-center pt-24 pb-16 px-6 font-sans selection:bg-slate-200">
+      <div className="w-full max-w-5xl">
         {contextHolder}
         
-        {/* Modern Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-black rounded-2xl flex items-center justify-center shadow-lg shadow-black/10">
-                <UploadOutlined className="text-white text-xl" />
-              </div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">Data Importer</h1>
-            </div>
-            <p className="text-slate-400 text-sm font-medium pl-1">Công cụ nhập liệu thông minh cho quản trị viên</p>
-          </div>
-
-          <div className="flex gap-3">
-             <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-              accept=".xlsx, .xls, .csv"
-              className="hidden"
-            />
-            <button
-              onClick={() => fileInputRef.current.click()}
-              className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold hover:border-black hover:text-black transition-all shadow-sm"
-            >
-              <FileExcelOutlined />
-              Tải Excel/CSV
-            </button>
-          </div>
+        {/* Header Section */}
+        <div className="mb-12">
+          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
+            Quản lý dữ liệu
+          </h1>
+          <p className="text-sm text-slate-500 max-w-xl leading-relaxed">
+            Sử dụng AI để chuẩn hóa và nạp dữ liệu nhanh chóng vào hệ thống.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           
-          {/* Left Panel: Raw Input & Options */}
-          <div className="lg:col-span-5 space-y-8">
-            <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm">
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">
-                1. Cấu hình loại dữ liệu
-              </label>
-              <div className="grid grid-cols-2 gap-3 mb-8">
+          {/* Configuration & Input */}
+          <div className="space-y-8">
+            <div className="bg-white border border-slate-200 rounded-2xl p-8">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-6">
+                1. Cấu hình & Dữ liệu thô
+              </h2>
+              
+              <div className="flex gap-4 mb-8">
                 <button
                   onClick={() => setDataType('kanjis')}
-                  className={`py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${dataType === 'kanjis'
-                      ? 'bg-black text-white shadow-xl shadow-black/20'
+                  className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${dataType === 'kanjis'
+                      ? 'bg-slate-900 text-white'
                       : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                     }`}
                 >
@@ -177,8 +158,8 @@ export default function DataImporter() {
                 </button>
                 <button
                   onClick={() => setDataType('vocabs')}
-                  className={`py-4 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all ${dataType === 'vocabs'
-                      ? 'bg-black text-white shadow-xl shadow-black/20'
+                  className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${dataType === 'vocabs'
+                      ? 'bg-slate-900 text-white'
                       : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                     }`}
                 >
@@ -186,83 +167,73 @@ export default function DataImporter() {
                 </button>
               </div>
 
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4 flex justify-between items-center">
-                2. Nhập dữ liệu thô (AI Smart)
-                <ThunderboltOutlined className="text-amber-400 animate-pulse" />
-              </label>
-              <textarea
-                value={rawInput}
-                onChange={(e) => setRawInput(e.target.value)}
-                placeholder="Dán dữ liệu lộn xộn vào đây...&#10;Ví dụ: &#10;Taberu - Ăn&#10;Gakkou (Trường học)&#10;..."
-                className="w-full h-64 p-5 bg-slate-50 border border-slate-100 rounded-2xl focus:border-black outline-none transition-all resize-none text-sm font-medium placeholder:text-slate-300"
-              ></textarea>
-
-              <button
-                onClick={handleAISmartFormat}
-                disabled={isProcessingAI || !rawInput.trim()}
-                className="w-full mt-6 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
-              >
-                {isProcessingAI ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
+              <div className="space-y-4">
+                <textarea
+                  value={rawInput}
+                  onChange={(e) => setRawInput(e.target.value)}
+                  placeholder="Dán dữ liệu thô vào đây... (Ví dụ: Taberu - Ăn)"
+                  className="w-full h-48 p-5 bg-slate-50 border border-slate-100 rounded-xl focus:border-slate-400 outline-none transition-all resize-none text-sm font-medium"
+                ></textarea>
+                
+                <button
+                  onClick={handleAISmartFormat}
+                  disabled={isProcessingAI || !rawInput.trim()}
+                  className="w-full py-4 bg-white border-2 border-slate-900 text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all disabled:opacity-30 flex items-center justify-center gap-3"
+                >
                   <ThunderboltOutlined />
-                )}
-                AI Smart Format
-              </button>
+                  {isProcessingAI ? 'Đang xử lý...' : 'Xử lý bằng AI'}
+                </button>
+              </div>
             </div>
+
+            <button
+              onClick={() => fileInputRef.current.click()}
+              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl font-bold text-xs uppercase tracking-widest hover:border-slate-400 hover:text-slate-900 transition-all"
+            >
+              <FileExcelOutlined />
+              Tải file Excel / CSV
+              <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx, .xls, .csv" className="hidden" />
+            </button>
           </div>
 
-          {/* Right Panel: JSON Review & Import */}
-          <div className="lg:col-span-7 space-y-8">
-            <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm flex flex-col h-full">
-              <div className="flex justify-between items-center mb-6">
-                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                  3. Kiểm tra JSON kết quả
-                </label>
-                <div className="flex gap-4">
-                  <button
-                    onClick={() => setJsonData(getPlaceholder())}
-                    className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest hover:underline"
-                  >
-                    Xem mẫu
-                  </button>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(jsonData);
-                      messageApi.success('Đã copy vào clipboard');
-                    }}
-                    className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-black flex items-center gap-1.5"
-                  >
-                    <CopyOutlined />
-                    Copy
-                  </button>
-                </div>
-              </div>
-              
-              <textarea
-                value={jsonData}
-                onChange={(e) => setJsonData(e.target.value)}
-                placeholder={getPlaceholder()}
-                className="flex-grow w-full min-h-[400px] p-6 font-mono text-xs bg-slate-900 text-emerald-400 rounded-2xl border-none outline-none selection:bg-emerald-500/20 scrollbar-hide"
-              ></textarea>
+          {/* Review & Import */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-8 flex flex-col h-full">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                2. Kiểm tra & Lưu trữ
+              </h2>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(jsonData);
+                  messageApi.success('Đã copy JSON');
+                }}
+                className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-900 flex items-center gap-1.5"
+              >
+                <CopyOutlined />
+                Copy JSON
+              </button>
+            </div>
+            
+            <textarea
+              value={jsonData}
+              onChange={(e) => setJsonData(e.target.value)}
+              placeholder="Kết quả JSON sẽ hiện ở đây..."
+              className="flex-grow w-full min-h-[350px] p-5 font-mono text-xs bg-slate-50 text-slate-600 rounded-xl border border-slate-100 outline-none focus:border-slate-300 transition-all"
+            ></textarea>
 
-              <div className="mt-8 pt-8 border-t border-slate-50">
-                <button
-                  onClick={handleImport}
-                  disabled={isLoading || !jsonData.trim()}
-                  className="w-full py-5 bg-black text-white rounded-2xl font-black text-[12px] uppercase tracking-[0.3em] shadow-2xl shadow-black/20 hover:bg-slate-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center gap-4"
-                >
-                  {isLoading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  ) : (
-                    <CheckCircleOutlined className="text-lg" />
-                  )}
-                  {isLoading ? 'Đang thực thi...' : 'Xác nhận Import'}
-                </button>
-                <p className="text-center mt-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest">
-                  Dữ liệu sẽ được lưu trực tiếp vào Database
-                </p>
-              </div>
+            <div className="mt-8">
+              <button
+                onClick={handleImport}
+                disabled={isLoading || !jsonData.trim()}
+                className="w-full py-5 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-black transition-all disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center gap-3"
+              >
+                {isLoading ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <CheckCircleOutlined className="text-base" />
+                )}
+                {isLoading ? 'Đang thực thi...' : 'Xác nhận Import'}
+              </button>
             </div>
           </div>
 
