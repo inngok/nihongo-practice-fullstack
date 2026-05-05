@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { message } from 'antd';
+import { message, Select } from 'antd';
 import * as XLSX from 'xlsx';
 import { FileExcelOutlined, ThunderboltOutlined, CopyOutlined, CheckCircleOutlined, UploadOutlined } from '@ant-design/icons';
 import { API_BASE_URL } from '../../config';
@@ -11,13 +11,35 @@ export default function DataImporter() {
   const [rawInput, setRawInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessingAI, setIsProcessingAI] = useState(false);
+  const [books, setBooks] = useState([]);
+  const [selectedBook, setSelectedBook] = useState(null);
   const { fetchWithAuth } = useAuth();
   const [messageApi, contextHolder] = message.useMessage();
   const fileInputRef = React.useRef(null);
 
+  useEffect(() => {
+    fetchBooks();
+  }, []);
+
+  const fetchBooks = async () => {
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/books`);
+      if (response.ok) {
+        const data = await response.json();
+        setBooks(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch books:', error);
+    }
+  };
+
   const handleImport = async () => {
     if (!jsonData.trim()) {
       return messageApi.error('Vui lòng nhập dữ liệu JSON');
+    }
+
+    if (!selectedBook) {
+      return messageApi.error('Vui lòng chọn giáo trình trước khi Import');
     }
 
     let parsedData;
@@ -30,6 +52,12 @@ export default function DataImporter() {
       return messageApi.error(`Lỗi JSON: ${e.message}`);
     }
 
+    // Inject selected book into each item
+    const finalData = parsedData.map(item => ({
+      ...item,
+      book: { id: selectedBook }
+    }));
+
     setIsLoading(true);
     try {
       const response = await fetchWithAuth(`${API_BASE_URL}/${dataType}/bulk`, {
@@ -37,7 +65,7 @@ export default function DataImporter() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(parsedData),
+        body: JSON.stringify(finalData),
       });
 
       if (!response.ok) {
@@ -221,7 +249,19 @@ export default function DataImporter() {
               className="flex-grow w-full min-h-[350px] p-5 font-mono text-xs bg-slate-50 text-slate-600 rounded-xl border border-slate-100 outline-none focus:border-slate-300 transition-all"
             ></textarea>
 
-            <div className="mt-8">
+            <div className="mt-8 space-y-4">
+              <Select
+                showSearch
+                placeholder="Chọn giáo trình..."
+                className="w-full h-12"
+                onChange={setSelectedBook}
+                value={selectedBook}
+                options={books.map(book => ({ value: book.id, label: book.title }))}
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+              />
+
               <button
                 onClick={handleImport}
                 disabled={isLoading || !jsonData.trim()}

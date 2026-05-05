@@ -16,7 +16,7 @@ export default function AdminSidebar() {
   const { logout } = useAuth();
 
   const menuItems = [
-    { path: '/', label: 'User Site' },
+    { path: '/', label: 'Về trang chủ' },
     { type: 'divider' },
     { path: '/grammar/manage', label: 'Ngữ pháp' },
     { path: '/vocabulary/manage', label: 'Từ vựng' },
