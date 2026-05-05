@@ -12,7 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/grammars")
 @CrossOrigin(origins = "*")
-@Tag(name = "Grammar Management", description = "APIs để quản lý các cấu trúc ngữ pháp tiếng Nhật")
+@Tag(name = "Grammar Management")
 public class GrammarController {
 
     @Autowired

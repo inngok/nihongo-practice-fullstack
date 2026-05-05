@@ -1,8 +1,9 @@
 -- Xóa bảng cũ nếu tồn tại để khởi tạo lại
-DROP TABLE IF EXISTS grammars;
-DROP TABLE IF EXISTS books;
-DROP TABLE IF EXISTS kanjis;
-DROP TABLE IF EXISTS vocabularies;
+DROP TABLE IF EXISTS grammars CASCADE;
+DROP TABLE IF EXISTS books CASCADE;
+DROP TABLE IF EXISTS kanjis CASCADE;
+DROP TABLE IF EXISTS vocabularies CASCADE;
+DROP TABLE IF EXISTS vocabs CASCADE;
 
 -- Tạo bảng Books trước để Grammar có thể tham chiếu
 CREATE TABLE books (

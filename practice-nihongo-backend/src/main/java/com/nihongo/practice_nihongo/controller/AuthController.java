@@ -19,11 +19,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
+@Tag(name = "Authentication")
 public class AuthController {
 
     @Autowired
@@ -61,7 +63,7 @@ public class AuthController {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
-            return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail()));
+            return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail(), user.getRole()));
         }
         
         return ResponseEntity.badRequest().body("User not found");
@@ -86,7 +88,7 @@ public class AuthController {
         final String jwt = jwtUtil.generateToken(userDetails);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-        return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail()));
+        return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail(), user.getRole()));
     }
 
     @PostMapping("/refresh")

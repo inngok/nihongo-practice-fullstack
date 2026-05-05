@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-const isLocal = window.location.hostname === 'localhost';
-const baseURL = isLocal ? 'http://localhost:8080/api' : 'http://3.107.17.42/api';
+import { API_BASE_URL } from '../config';
+
+const baseURL = API_BASE_URL;
 
 const apiClient = axios.create({
   baseURL: baseURL,
@@ -11,7 +12,17 @@ const apiClient = axios.create({
   },
 });
 
-// Bạn có thể thêm interceptors ở đây nếu sau này có dùng Token/Auth
+// Request interceptor to add Token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('nihongo_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {

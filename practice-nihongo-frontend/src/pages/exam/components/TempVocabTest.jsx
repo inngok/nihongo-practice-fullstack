@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ArrowRight, CheckCircle, XCircle, Volume2, LayoutGrid } from 'lucide-react';
-import { tempVocabTests } from '../data/tempVocabTestData';
+// import { tempVocabTests } from '../data/tempVocabTestData';
+const tempVocabTests = [];
 
 export default function TempVocabTest() {
   const navigate = useNavigate();
@@ -53,8 +54,16 @@ export default function TempVocabTest() {
   }
 
   // --- Màn hình Đang làm Test ---
-  const activeTest = tempVocabTests.find(t => t.id === activeTestId);
-  const tempVocabTest = activeTest.data;
+  const activeTest = tempVocabTests.find(t => t.id === activeTestId) || { title: '', data: [] };
+  const tempVocabTest = activeTest.data || [];
+  
+  if (tempVocabTest.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white text-slate-400 font-bold">
+        Dữ liệu đang được cập nhật...
+      </div>
+    );
+  }
 
   const currentQuestion = tempVocabTest[currentIndex];
   const hasAnsweredCurrent = answers[currentIndex] !== undefined;

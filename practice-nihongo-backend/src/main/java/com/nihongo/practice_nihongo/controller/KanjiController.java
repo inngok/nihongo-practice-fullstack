@@ -5,11 +5,13 @@ import com.nihongo.practice_nihongo.service.KanjiService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/kanjis")
 @CrossOrigin(origins = "*")
+@Tag(name = "Kanji Management")
 public class KanjiController {
 
     private final KanjiService kanjiService;
@@ -19,7 +21,15 @@ public class KanjiController {
     }
 
     @GetMapping
-    public List<Kanji> getAllKanjis() {
+    public List<Kanji> getAllKanjis(
+            @RequestParam(required = false) Long bookId,
+            @RequestParam(required = false) Integer week,
+            @RequestParam(required = false) Integer day) {
+        if (bookId != null && week != null && day != null) {
+            return kanjiService.getKanjisByBookWeekDay(bookId, week, day);
+        } else if (bookId != null) {
+            return kanjiService.getKanjisByBook(bookId);
+        }
         return kanjiService.getAllKanjis();
     }
 
@@ -32,6 +42,11 @@ public class KanjiController {
     @PostMapping
     public Kanji createKanji(@RequestBody Kanji kanji) {
         return kanjiService.createKanji(kanji);
+    }
+
+    @PostMapping("/bulk")
+    public ResponseEntity<List<Kanji>> createKanjisBulk(@RequestBody List<Kanji> kanjis) {
+        return ResponseEntity.ok(kanjiService.createKanjisBulk(kanjis));
     }
 
     @PutMapping("/{id}")

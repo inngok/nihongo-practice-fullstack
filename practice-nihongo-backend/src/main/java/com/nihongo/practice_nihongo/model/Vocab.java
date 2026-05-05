@@ -28,7 +28,14 @@ public class Vocab {
     @Column(columnDefinition = "TEXT")
     private String exampleMeaning;
 
+    private Integer week;
+    private Integer day;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "book_id")
     private Book book;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 }

@@ -23,6 +23,22 @@ public class VocabService {
         return vocabRepository.findAll();
     }
 
+    public List<Vocab> getPersonalVocabs(Long userId) {
+        return vocabRepository.findByUserId(userId);
+    }
+
+    public List<Vocab> getSystemAndPersonalVocabs(Long userId) {
+        return vocabRepository.findByUserIdOrUserIsNull(userId);
+    }
+
+    public List<Vocab> getVocabsByBook(Long bookId) {
+        return vocabRepository.findByBookId(bookId);
+    }
+
+    public List<Vocab> getVocabsByBookWeekDay(Long bookId, Integer week, Integer day) {
+        return vocabRepository.findByBookIdAndWeekAndDay(bookId, week, day);
+    }
+
     public Vocab getVocabById(Long id) {
         return vocabRepository.findById(id).orElse(null);
     }
@@ -33,6 +49,16 @@ public class VocabService {
             vocab.setBook(book);
         }
         return vocabRepository.save(vocab);
+    }
+
+    public List<Vocab> createVocabsBulk(List<Vocab> vocabs) {
+        for (Vocab vocab : vocabs) {
+            if (vocab.getBook() != null && vocab.getBook().getId() != null) {
+                Book book = bookRepository.findById(vocab.getBook().getId()).orElse(null);
+                vocab.setBook(book);
+            }
+        }
+        return vocabRepository.saveAll(vocabs);
     }
 
     public Vocab updateVocab(Long id, Vocab vocab) {

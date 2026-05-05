@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { examVocabData } from '../data/examData';
 import { ChevronLeft, ArrowRight, List, Brain, CheckCircle, RefreshCcw } from 'lucide-react';
+const examVocabData = {};
 
 export default function ExamVocab({ type = 'comprehensive' }) {
   const navigate = useNavigate();
@@ -30,7 +30,7 @@ export default function ExamVocab({ type = 'comprehensive' }) {
   const isAll = searchParams.get('all') === 'true';
 
   const currentData = useMemo(() => {
-    const rawData = examVocabData[type] || { title: '', words: [] };
+    const rawData = (examVocabData && examVocabData[type]) || { title: 'Đang cập nhật...', words: [] };
     
     if (type === 'kanji-pc8' && weekParam && !isAll) {
       const filteredWords = rawData.words.filter(w => 

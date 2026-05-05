@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Headset, CheckCircle, ArrowRight, Clock, AlertCircle, Target, Zap, Lightbulb, Search, Lock, BookOpen, Eye, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import ReadingTipsData from './ReadingTipsData';
+// Removed missing import
 
 export default function Tips() {
   const navigate = useNavigate();
@@ -281,9 +281,10 @@ export default function Tips() {
         )}
 
         {activeTab === 'reading' && (
-          <div className="animate-in fade-in duration-500 pt-4">
-            {/* Phần nội dung Đọc Hiểu N3 */}
-            <ReadingTipsData />
+          <div className="animate-in fade-in duration-500 pt-4 text-center py-20 bg-white rounded-3xl border border-slate-100">
+             <Lightbulb className="w-12 h-12 text-slate-200 mx-auto mb-4" />
+             <h3 className="text-xl font-bold text-slate-900 mb-2">Bí kíp Đọc hiểu đang được cập nhật</h3>
+             <p className="text-sm text-slate-400">Vui lòng quay lại sau để xem nội dung chi tiết.</p>
           </div>
         )}
 
