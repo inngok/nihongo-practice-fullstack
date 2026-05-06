@@ -261,7 +261,7 @@ export default function DataImporter() {
 
       const formattedJson = await response.text();
       setJsonData(formattedJson);
-      messageApi.success('AI đã xử lý xong! Bác kiểm tra lại JSON bên dưới rồi nhấn Import nhé.');
+      messageApi.success('AI đã xử lý xong! Bạn vui lòng kiểm tra lại JSON bên dưới rồi nhấn Import nhé.');
     } catch (err) {
       console.error(err);
       messageApi.error('Lỗi khi xử lý AI: ' + err.message);
@@ -337,7 +337,7 @@ export default function DataImporter() {
             <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div className="space-y-0.5">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Chuẩn bị File nguồn:</span>
-                <p className="text-[11px] text-slate-500 font-medium">Bác nên dùng file định dạng có các tiêu đề cột đúng tiêu chuẩn.</p>
+                <p className="text-[11px] text-slate-500 font-medium">Bạn nên dùng file định dạng có các tiêu đề cột đúng tiêu chuẩn.</p>
               </div>
               <button
                 onClick={downloadTemplate}

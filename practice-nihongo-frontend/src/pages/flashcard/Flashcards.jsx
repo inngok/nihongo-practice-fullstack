@@ -161,8 +161,8 @@ export default function Flashcards() {
             <h1 className="text-3xl font-black text-slate-950 uppercase tracking-tight">HOÀN THÀNH BUỔI HỌC</h1>
             <p className="text-xs text-slate-500 font-bold uppercase tracking-wider max-w-sm mx-auto leading-relaxed">
               {viewType === 'due' 
-                ? 'Bác đã hoàn thành tất cả các thẻ ôn tập giãn cách đến hạn hôm nay rồi! Bộ não của bác đang nhớ cực kỳ sâu!'
-                : 'Bác đã lật xem qua toàn bộ danh sách thẻ yêu thích đã lưu trong sổ tay cá nhân rồi nhé!'}
+                ? 'Bạn đã hoàn thành tất cả các thẻ ôn tập giãn cách đến hạn hôm nay rồi! Bộ não của bạn đang nhớ cực kỳ sâu!'
+                : 'Bạn đã lật xem qua toàn bộ danh sách thẻ yêu thích đã lưu trong sổ tay cá nhân rồi nhé!'}
             </p>
 
             <div className="bg-white border border-slate-150 rounded-2xl p-6 max-w-sm mx-auto grid grid-cols-2 gap-4">
@@ -327,7 +327,7 @@ export default function Flashcards() {
                 /* Flipped State: Show SM-2 Rating scores */
                 <div className="space-y-4 w-full animate-slide-up">
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 text-center mb-1">
-                    Bác tự đánh giá mức độ nhớ của từ này nhé:
+                    Bạn hãy tự đánh giá mức độ nhớ của từ này nhé:
                   </p>
                   
                   <div className="grid grid-cols-4 gap-3">

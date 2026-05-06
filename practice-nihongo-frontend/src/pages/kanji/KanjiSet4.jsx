@@ -241,10 +241,10 @@ export default function KanjiSet4() {
     try {
       await flashcardService.add(null, kanji.id);
       setAddedKanjiIds(prev => new Set([...prev, kanji.id]));
-      message.success(`Đã lưu chữ Hán "${kanji.character}" vào sổ tay ôn tập ❤️!`);
+      message.success(`Đã lưu chữ Hán "${kanji.character}" vào sổ tay ôn tập!`);
     } catch (err) {
       setAddedKanjiIds(prev => new Set([...prev, kanji.id]));
-      message.info('Hán tự này đã có trong Sổ tay ôn tập rồi nhé bác!');
+      message.info('Hán tự này đã có trong Sổ tay ôn tập rồi nhé!');
     }
   };
 
@@ -481,7 +481,7 @@ export default function KanjiSet4() {
                 <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto shadow-inner border border-slate-100">
                   <span className="text-3xl font-black text-slate-800">{quizScore}/{quizQuestions.length}</span>
                 </div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Bác đã xuất sắc trả lời đúng {Math.round((quizScore / quizQuestions.length) * 100)}% số câu hỏi!</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Bạn đã xuất sắc trả lời đúng {Math.round((quizScore / quizQuestions.length) * 100)}% số câu hỏi!</p>
                 <button onClick={generateQuiz} className="bg-black text-white hover:bg-slate-800 w-full py-4 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center justify-center">Luyện tập lại</button>
               </div>
             ) : (
@@ -524,7 +524,7 @@ export default function KanjiSet4() {
             ) : typingFinished ? (
               <div className="bg-slate-50 border border-slate-100 rounded-[2.5rem] p-10 md:p-12 text-center space-y-6 max-w-md mx-auto shadow-sm">
                 <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">HOÀN THÀNH LUYỆN GÕ</h3>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider leading-relaxed">Quá xuất sắc! Bác đã luyện gõ thành công toàn bộ danh sách {filteredKanjis.length} chữ Hán tự bài này!</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider leading-relaxed">Quá xuất sắc! Bạn đã luyện gõ thành công toàn bộ danh sách {filteredKanjis.length} chữ Hán tự bài này!</p>
                 <button
                   onClick={() => {
                     setTypingIndex(0);
@@ -577,7 +577,7 @@ export default function KanjiSet4() {
 
                 {typingFeedback === 'incorrect' && (
                   <div className="p-4 bg-amber-50/70 border border-amber-100 rounded-2xl text-center">
-                    <p className="text-xs text-amber-800 font-bold leading-relaxed">❌ Nhập sai rồi bác! Gợi ý đáp án đúng: <span className="uppercase text-sm font-black text-slate-900 tracking-wider underline">{filteredKanjis[typingIndex]?.hanviet}</span></p>
+                    <p className="text-xs text-amber-800 font-bold leading-relaxed">❌ Nhập chưa chính xác! Gợi ý đáp án đúng: <span className="uppercase text-sm font-black text-slate-900 tracking-wider underline">{filteredKanjis[typingIndex]?.hanviet}</span></p>
                   </div>
                 )}
               </div>

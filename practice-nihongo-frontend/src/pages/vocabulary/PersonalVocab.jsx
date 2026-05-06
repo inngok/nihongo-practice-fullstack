@@ -110,8 +110,8 @@ export default function PersonalVocab() {
   const handleDeletePersonal = (id) => {
     Modal.confirm({
       title: 'Xóa từ vựng',
-      content: 'Bác có chắc muốn bỏ từ này khỏi sổ tay?',
-      okText: 'Xác nhận xóa',
+      content: 'Bạn có chắc muốn bỏ từ này khỏi sổ tay?',
+      okText: 'Xóa',
       okType: 'danger',
       cancelText: 'Hủy',
       onOk: async () => {
@@ -128,8 +128,8 @@ export default function PersonalVocab() {
 
   const handleDeleteSaved = (flashcardId) => {
     Modal.confirm({
-      title: 'Bỏ thả tim',
-      content: 'Bác có muốn bỏ chữ/từ này ra khỏi sổ tay ôn tập?',
+      title: 'Xóa khỏi sổ tay',
+      content: 'Bạn có chắc muốn bỏ chữ/từ này ra khỏi sổ tay ôn tập?',
       okText: 'Đồng ý',
       okType: 'danger',
       cancelText: 'Hủy',
@@ -137,7 +137,7 @@ export default function PersonalVocab() {
         try {
           await flashcardService.delete(flashcardId);
           fetchData();
-          message.success('Đã bỏ thích');
+          message.success('Đã xóa khỏi sổ tay');
         } catch (err) {
           message.error('Không thể thực hiện');
         }
@@ -176,20 +176,20 @@ export default function PersonalVocab() {
               Sổ tay cá nhân
             </h1>
             <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-              Tổng cộng {savedVocabs.length + savedKanjis.length + personalVocabs.length} mục đã thả tim & tự lưu trữ
+              Tổng cộng {savedVocabs.length + savedKanjis.length + personalVocabs.length} mục đã được lưu trữ
             </p>
           </div>
           
           <div className="flex flex-wrap gap-4">
             <button
               onClick={() => navigate('/flashcards')}
-              className="bg-rose-500 hover:bg-rose-600 text-white px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-rose-500/15 active:scale-95"
+              className="bg-black hover:bg-slate-800 text-white px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-black/10 active:scale-95"
             >
-              Sổ tay Ôn tập ❤️
+              Luyện Flashcard
             </button>
             <button
               onClick={openAddModal}
-              className="bg-black hover:bg-slate-800 text-white px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-black/10 active:scale-95"
+              className="border border-slate-200 hover:border-black hover:bg-slate-50 text-slate-800 px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest active:scale-95"
             >
               Thêm từ mới
             </button>
@@ -255,9 +255,9 @@ export default function PersonalVocab() {
                   </div>
                   <button 
                     onClick={() => handleDeleteSaved(item.flashcardId)} 
-                    className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-500 transition-colors"
+                    className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-slate-950 transition-colors"
                   >
-                    Bỏ thích ❤️
+                    Bỏ lưu
                   </button>
                 </div>
                 
@@ -292,9 +292,9 @@ export default function PersonalVocab() {
                   </div>
                   <button 
                     onClick={() => handleDeleteSaved(item.flashcardId)} 
-                    className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-500 transition-colors"
+                    className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-slate-950 transition-colors"
                   >
-                    Bỏ thích ❤️
+                    Bỏ lưu
                   </button>
                 </div>
                 
