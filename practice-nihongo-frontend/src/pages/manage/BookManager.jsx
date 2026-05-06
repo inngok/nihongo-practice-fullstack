@@ -4,6 +4,19 @@ import bookService from '../../api/bookService';
 import { Modal, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 
+// Static lookup maps for premium typographical tags, eliminating conditional if-else branches in JSX
+const CATEGORY_STYLES = {
+  KANJI: 'bg-amber-50 text-amber-600 border-amber-100',
+  GRAMMAR: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+  VOCABULARY: 'bg-emerald-50 text-emerald-600 border-emerald-100'
+};
+
+const CATEGORY_LABELS = {
+  KANJI: 'Hán Tự',
+  GRAMMAR: 'Ngữ Pháp',
+  VOCABULARY: 'Từ Vựng'
+};
+
 export default function BookManager() {
   const navigate = useNavigate();
   const [books, setBooks] = useState([]);
@@ -166,15 +179,15 @@ export default function BookManager() {
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex flex-wrap gap-1.5">
-                          {item.type && item.type.split(',').map(t => (
-                            <span key={t} className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
-                              t === 'KANJI' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                              t === 'GRAMMAR' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
-                              'bg-emerald-50 text-emerald-600 border-emerald-100'
-                            }`}>
-                              {t === 'KANJI' ? 'Hán Tự' : t === 'GRAMMAR' ? 'Ngữ Pháp' : 'Từ Vựng'}
-                            </span>
-                          ))}
+                          {item.type && item.type.split(',').map(t => {
+                            const styleClass = CATEGORY_STYLES[t] || CATEGORY_STYLES.VOCABULARY;
+                            const labelText = CATEGORY_LABELS[t] || CATEGORY_LABELS.VOCABULARY;
+                            return (
+                              <span key={t} className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${styleClass}`}>
+                                {labelText}
+                              </span>
+                            );
+                          })}
                         </div>
                       </td>
                       <td className="px-6 py-5">
