@@ -17,7 +17,8 @@ export default function BookManager() {
     title: '',
     japaneseTitle: '',
     levelLabel: '',
-    num: ''
+    num: '',
+    types: ['VOCABULARY']
   });
 
   useEffect(() => {
@@ -48,7 +49,8 @@ export default function BookManager() {
       title: '',
       japaneseTitle: '',
       levelLabel: '',
-      num: ''
+      num: '',
+      types: ['VOCABULARY']
     });
     setEditingId(null);
   };
@@ -59,11 +61,13 @@ export default function BookManager() {
   };
 
   const openEditModal = (book) => {
+    const bookTypes = book.type ? book.type.split(',') : ['VOCABULARY'];
     setFormData({
       title: book.title,
       japaneseTitle: book.japaneseTitle,
       levelLabel: book.levelLabel,
-      num: book.num
+      num: book.num,
+      types: bookTypes
     });
     setEditingId(book.id);
     setIsModalOpen(true);
@@ -72,10 +76,18 @@ export default function BookManager() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        title: formData.title,
+        japaneseTitle: formData.japaneseTitle,
+        levelLabel: formData.levelLabel,
+        num: formData.num,
+        type: formData.types.join(',')
+      };
+
       if (editingId) {
-        await bookService.update(editingId, formData);
+        await bookService.update(editingId, payload);
       } else {
-        await bookService.create(formData);
+        await bookService.create(payload);
       }
       setIsModalOpen(false);
       resetForm();
@@ -138,6 +150,7 @@ export default function BookManager() {
                 <tr className="bg-slate-50 border-b border-slate-100">
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">STT</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Tên giáo trình</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Phân loại</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Nhãn level</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-right">Hành động</th>
                 </tr>
@@ -150,6 +163,19 @@ export default function BookManager() {
                       <td className="px-6 py-5">
                         <div className="font-bold text-slate-900 leading-tight">{item.title}</div>
                         <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{item.japaneseTitle}</div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex flex-wrap gap-1.5">
+                          {item.type && item.type.split(',').map(t => (
+                            <span key={t} className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${
+                              t === 'KANJI' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                              t === 'GRAMMAR' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' :
+                              'bg-emerald-50 text-emerald-600 border-emerald-100'
+                            }`}>
+                              {t === 'KANJI' ? 'Hán Tự' : t === 'GRAMMAR' ? 'Ngữ Pháp' : 'Từ Vựng'}
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td className="px-6 py-5">
                         <span className="text-[10px] font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded">
@@ -253,6 +279,43 @@ export default function BookManager() {
                 />
               </div>
 
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Phân loại giáo trình (Chọn nhiều loại nếu sách tích hợp)</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { key: 'VOCABULARY', label: 'Từ Vựng' },
+                    { key: 'KANJI', label: 'Hán Tự' },
+                    { key: 'GRAMMAR', label: 'Ngữ Pháp' }
+                  ].map(item => {
+                    const isActive = formData.types.includes(item.key);
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => {
+                          const newTypes = isActive
+                            ? formData.types.filter(t => t !== item.key)
+                            : [...formData.types, item.key];
+                          // Ensure at least one category is checked
+                          if (newTypes.length > 0) {
+                            setFormData(prev => ({ ...prev, types: newTypes }));
+                          } else {
+                            message.warning('Giáo trình phải thuộc ít nhất một phân loại!');
+                          }
+                        }}
+                        className={`py-3 rounded-xl font-bold text-xs uppercase tracking-wider border transition-all ${
+                          isActive
+                            ? 'bg-black text-white border-black'
+                            : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Nhãn Level (Hiển thị ở trang chủ)</label>
                 <select
@@ -260,7 +323,7 @@ export default function BookManager() {
                   value={formData.levelLabel}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none font-bold text-xs"
                 >
                   <option value="">-- Chọn level --</option>
                   {['N1', 'N2', 'N3', 'N4', 'N5'].map(lvl => (

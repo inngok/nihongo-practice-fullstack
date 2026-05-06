@@ -26,14 +26,14 @@ public class AiService {
 
     private String buildPrompt(String rawData, String type) {
         String schema = type.equals("kanjis") 
-            ? "[{\"character\": \"...\", \"kunyomi\": \"...\", \"onyomi\": \"...\", \"hanviet\": \"...\", \"meaning\": \"...\", \"examples\": \"...\", \"week\": null, \"day\": null}]"
-            : "[{\"word\": \"...\", \"reading\": \"...\", \"meaning\": \"...\", \"example\": \"...\", \"exampleMeaning\": \"...\", \"week\": null, \"day\": null}]";
+            ? "[{\"character\": \"...\", \"kunyomi\": \"...\", \"onyomi\": \"...\", \"hanviet\": \"...\", \"meaning\": \"...\", \"examples\": \"...\", \"week\": null, \"day\": null, \"page\": null}]"
+            : "[{\"word\": \"...\", \"reading\": \"...\", \"meaning\": \"...\", \"example\": \"...\", \"exampleMeaning\": \"...\", \"week\": null, \"day\": null, \"page\": null}]";
 
         return "You are a professional Japanese data formatter. Convert the following messy data into a valid JSON array strictly following this schema: " + schema + 
                ". \n\nInput data:\n" + rawData + 
                "\n\nRules:\n" +
                "1. Return ONLY the JSON array. No other text.\n" +
-               "2. Ensure all fields are present. Use null for numeric fields (week, day) and empty strings for text fields if information is missing.\n" +
+               "2. Ensure all fields are present. Use null for numeric fields (week, day, page) and empty strings for text fields if information is missing.\n" +
                "3. For Kanji, separate kunyomi and onyomi correctly if possible. If only one reading is provided, try to identify if it is Kun or On.\n" +
                "4. For Examples, please format as: 'Word (Reading): Meaning'.\n" +
                "5. Ensure the JSON is valid and encoded in UTF-8.";

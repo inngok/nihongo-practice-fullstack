@@ -53,7 +53,7 @@ export default function VocabManager() {
         bookService.getAll()
       ]);
       setVocabs(vocabRes.data);
-      setBooks(bookRes.data);
+      setBooks(bookRes.data.filter(b => b.type && b.type.includes('VOCABULARY')));
       setError(null);
     } catch (err) {
       setError('Không thể tải dữ liệu.');
@@ -217,6 +217,7 @@ export default function VocabManager() {
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Cách đọc</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Ý nghĩa</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Bài học</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Giáo trình</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-right">Hành động</th>
                 </tr>
               </thead>
@@ -233,6 +234,11 @@ export default function VocabManager() {
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
                           T{item.week || '-'} / N{item.day || '-'}
                         </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100/70 text-slate-600 px-2.5 py-1.5 rounded-lg uppercase tracking-wider">
+                          {item.book?.title || 'Chưa phân loại'}
+                        </span>
                       </td>
                       <td className="px-6 py-5 text-right">
                         <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

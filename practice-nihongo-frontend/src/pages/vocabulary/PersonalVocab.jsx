@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import vocabService from '../../api/vocabService';
-import { Modal, message, Empty } from 'antd';
-import { useAuth } from '../../context/AuthContext';
+import flashcardService from '../../api/flashcardService';
+import { Modal, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
 export default function PersonalVocab() {
   const navigate = useNavigate();
-  const [vocabs, setVocabs] = useState([]);
+  const [personalVocabs, setPersonalVocabs] = useState([]);
+  const [savedVocabs, setSavedVocabs] = useState([]);
+  const [savedKanjis, setSavedKanjis] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { currentUser } = useAuth();
   
+  const [activeTab, setActiveTab] = useState('saved-vocab'); // 'saved-vocab' | 'saved-kanji' | 'personal'
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
@@ -21,21 +23,41 @@ export default function PersonalVocab() {
   });
 
   useEffect(() => {
-    fetchPersonalVocabs();
+    fetchData();
   }, []);
 
-  const fetchPersonalVocabs = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await vocabService.getPersonal();
-      setVocabs(response.data);
+      const [personalRes, allSavedRes] = await Promise.all([
+        vocabService.getPersonal().catch(() => ({ data: [] })),
+        flashcardService.getAll().catch(() => ({ data: [] }))
+      ]);
+
+      setPersonalVocabs(personalRes.data);
+
+      // Split saved flashcards into Vocab and Kanji categories
+      const flashcards = allSavedRes.data;
+      
+      const vocabsOnly = flashcards
+        .filter(fc => fc.vocab !== null && fc.vocab !== undefined)
+        .map(fc => ({
+          ...fc.vocab,
+          flashcardId: fc.id
+        }));
+
+      const kanjisOnly = flashcards
+        .filter(fc => fc.kanji !== null && fc.kanji !== undefined)
+        .map(fc => ({
+          ...fc.kanji,
+          flashcardId: fc.id
+        }));
+
+      setSavedVocabs(vocabsOnly);
+      setSavedKanjis(kanjisOnly);
     } catch (err) {
       console.error(err);
-      if (err.response?.status === 401) {
-        message.error('Vui lòng đăng nhập lại.');
-      } else {
-        message.error('Không thể tải dữ liệu.');
-      }
+      message.error('Không thể tải dữ liệu.');
     } finally {
       setLoading(false);
     }
@@ -79,13 +101,13 @@ export default function PersonalVocab() {
         message.success('Đã thêm từ mới');
       }
       setIsModalOpen(false);
-      fetchPersonalVocabs();
+      fetchData();
     } catch (err) {
       message.error('Lỗi hệ thống');
     }
   };
 
-  const handleDelete = (id) => {
+  const handleDeletePersonal = (id) => {
     Modal.confirm({
       title: 'Xóa từ vựng',
       content: 'Bác có chắc muốn bỏ từ này khỏi sổ tay?',
@@ -95,14 +117,45 @@ export default function PersonalVocab() {
       onOk: async () => {
         try {
           await vocabService.delete(id);
-          fetchPersonalVocabs();
-          message.success('Đã xóa');
+          fetchData();
+          message.success('Đã xóa từ tự thêm');
         } catch (err) {
           message.error('Không thể xóa');
         }
       },
     });
   };
+
+  const handleDeleteSaved = (flashcardId) => {
+    Modal.confirm({
+      title: 'Bỏ thả tim',
+      content: 'Bác có muốn bỏ chữ/từ này ra khỏi sổ tay ôn tập?',
+      okText: 'Đồng ý',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await flashcardService.delete(flashcardId);
+          fetchData();
+          message.success('Đã bỏ thích');
+        } catch (err) {
+          message.error('Không thể thực hiện');
+        }
+      },
+    });
+  };
+
+  // Helper to get active dataset for rendering
+  const getActiveData = () => {
+    const dataMap = {
+      'saved-vocab': savedVocabs,
+      'saved-kanji': savedKanjis,
+      'personal': personalVocabs
+    };
+    return dataMap[activeTab] || [];
+  };
+
+  const activeList = getActiveData();
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col items-center pt-24 md:pt-28 pb-16 px-6 font-sans relative overflow-hidden selection:bg-slate-200">
@@ -111,10 +164,9 @@ export default function PersonalVocab() {
         {/* Back Button */}
         <button
           onClick={() => navigate('/')}
-          className="group flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors mb-6 md:mb-8"
+          className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-950 transition-colors mb-6 md:mb-8 border border-slate-200 px-4 py-2 rounded-xl"
         >
-          <span className="transition-transform group-hover:-translate-x-1">←</span>
-          Quay lại
+          Quay lại trang chủ
         </button>
 
         {/* Title Section */}
@@ -123,63 +175,177 @@ export default function PersonalVocab() {
             <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
               Sổ tay cá nhân
             </h1>
-            <p className="text-sm md:text-base text-slate-500 max-w-xl leading-relaxed uppercase font-bold tracking-[0.1em] text-[10px]">
-              {vocabs.length} từ vựng đã lưu trữ
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+              Tổng cộng {savedVocabs.length + savedKanjis.length + personalVocabs.length} mục đã thả tim & tự lưu trữ
             </p>
           </div>
           
+          <div className="flex flex-wrap gap-4">
+            <button
+              onClick={() => navigate('/flashcards')}
+              className="bg-rose-500 hover:bg-rose-600 text-white px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-rose-500/15 active:scale-95"
+            >
+              Sổ tay Ôn tập ❤️
+            </button>
+            <button
+              onClick={openAddModal}
+              className="bg-black hover:bg-slate-800 text-white px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-black/10 active:scale-95"
+            >
+              Thêm từ mới
+            </button>
+          </div>
+        </div>
+
+        {/* Minimalist Switcher Tabs */}
+        <div className="flex flex-wrap gap-2.5 mb-10 border-b border-slate-100 pb-4">
           <button
-            onClick={openAddModal}
-            className="bg-black text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-slate-800 transition-all text-[11px] uppercase tracking-widest shadow-xl shadow-black/10 active:scale-95"
+            onClick={() => setActiveTab('saved-vocab')}
+            className={`text-[9px] font-black tracking-wider uppercase px-4 py-2.5 rounded-lg transition-all ${
+              activeTab === 'saved-vocab'
+                ? 'bg-slate-950 text-white shadow-sm'
+                : 'bg-slate-50 text-slate-400 hover:bg-slate-100 border border-slate-100'
+            }`}
           >
-            Thêm từ mới
+            Từ vựng đã lưu ({savedVocabs.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('saved-kanji')}
+            className={`text-[9px] font-black tracking-wider uppercase px-4 py-2.5 rounded-lg transition-all ${
+              activeTab === 'saved-kanji'
+                ? 'bg-slate-950 text-white shadow-sm'
+                : 'bg-slate-50 text-slate-400 hover:bg-slate-100 border border-slate-100'
+            }`}
+          >
+            Hán tự đã lưu ({savedKanjis.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('personal')}
+            className={`text-[9px] font-black tracking-wider uppercase px-4 py-2.5 rounded-lg transition-all ${
+              activeTab === 'personal'
+                ? 'bg-slate-950 text-white shadow-sm'
+                : 'bg-slate-50 text-slate-400 hover:bg-slate-100 border border-slate-100'
+            }`}
+          >
+            Từ tự thêm ({personalVocabs.length})
           </button>
         </div>
 
-        {/* Grid Section */}
+        {/* Main Content Grid */}
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="w-8 h-8 border-4 border-slate-200 border-t-black rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-3 border-slate-100 border-t-black rounded-full animate-spin"></div>
           </div>
-        ) : vocabs.length === 0 ? (
-          <div className="py-32 text-center border-2 border-dashed border-slate-100 rounded-[40px]">
-            <p className="text-slate-300 font-bold uppercase text-[10px] tracking-[0.3em]">Sổ tay hiện đang trống</p>
+        ) : activeList.length === 0 ? (
+          <div className="py-24 text-center border-2 border-dashed border-slate-100 rounded-[40px]">
+            <p className="text-slate-300 font-bold uppercase text-[10px] tracking-[0.3em]">Danh sách hiện đang trống</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {vocabs.map((item) => (
+            
+            {/* SAVED VOCAB LIST */}
+            {activeTab === 'saved-vocab' && activeList.map((item) => (
               <div 
-                key={item.id} 
-                className="group relative bg-white border border-slate-200 rounded-2xl p-7 flex flex-col transition-all duration-300 hover:border-slate-400 hover:shadow-md"
+                key={item.flashcardId} 
+                className="group relative bg-white border border-slate-150 rounded-2xl p-7 flex flex-col transition-all duration-300 hover:border-slate-300 hover:shadow-md"
               >
-                <div className="flex justify-between items-start mb-6">
+                <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="text-2xl font-bold text-slate-900 mb-1">{item.word}</h3>
                     <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest italic">{item.reading}</p>
                   </div>
-                  <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => openEditModal(item)} className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-black transition-colors">Sửa</button>
-                    <button onClick={() => handleDelete(item.id)} className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-red-500 transition-colors">Xóa</button>
-                  </div>
+                  <button 
+                    onClick={() => handleDeleteSaved(item.flashcardId)} 
+                    className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-500 transition-colors"
+                  >
+                    Bỏ thích ❤️
+                  </button>
                 </div>
                 
-                <div className="pt-5 border-t border-slate-50 space-y-4">
+                <div className="pt-4 border-t border-slate-50 space-y-3">
                   <p className="text-slate-700 font-bold text-base leading-relaxed">{item.meaning}</p>
                   
                   {item.example && (
-                    <div className="opacity-60 group-hover:opacity-100 transition-opacity pt-2">
-                      <p className="text-[13px] text-slate-500 font-medium leading-relaxed mb-1">{item.example}</p>
+                    <div className="pt-2">
+                      <p className="text-xs text-slate-500 font-semibold leading-relaxed mb-1">{item.example}</p>
                       <p className="text-[10px] text-slate-400 italic font-medium">{item.exampleMeaning}</p>
                     </div>
                   )}
                 </div>
               </div>
             ))}
+
+            {/* SAVED KANJI LIST */}
+            {activeTab === 'saved-kanji' && activeList.map((item) => (
+              <div 
+                key={item.flashcardId} 
+                className="group relative bg-white border border-slate-150 rounded-2xl p-6 flex flex-col transition-all duration-300 hover:border-slate-300 hover:shadow-md"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center">
+                      <span className="text-2xl font-black text-slate-900 select-none">{item.character}</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900 uppercase tracking-wider leading-none">{item.hanviet || 'CHƯA CÓ'}</h3>
+                      <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest italic truncate max-w-[120px] mt-1">{item.meaning || 'Chưa có nghĩa'}</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => handleDeleteSaved(item.flashcardId)} 
+                    className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-500 transition-colors"
+                  >
+                    Bỏ thích ❤️
+                  </button>
+                </div>
+                
+                <div className="pt-4 border-t border-slate-50 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Onyomi</span>
+                    <span className="font-bold text-slate-800">{item.onyomi || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Kunyomi</span>
+                    <span className="font-bold text-slate-800">{item.kunyomi || '—'}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* PERSONAL CUSTOM LIST */}
+            {activeTab === 'personal' && activeList.map((item) => (
+              <div 
+                key={item.id} 
+                className="group relative bg-white border border-slate-150 rounded-2xl p-7 flex flex-col transition-all duration-300 hover:border-slate-300 hover:shadow-md"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-1">{item.word}</h3>
+                    <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest italic">{item.reading}</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button onClick={() => openEditModal(item)} className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-black transition-colors">Sửa</button>
+                    <button onClick={() => handleDeletePersonal(item.id)} className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-red-500 transition-colors">Xóa</button>
+                  </div>
+                </div>
+                
+                <div className="pt-4 border-t border-slate-50 space-y-3">
+                  <p className="text-slate-700 font-bold text-base leading-relaxed">{item.meaning}</p>
+                  
+                  {item.example && (
+                    <div className="pt-2">
+                      <p className="text-xs text-slate-500 font-semibold leading-relaxed mb-1">{item.example}</p>
+                      <p className="text-[10px] text-slate-400 italic font-medium">{item.exampleMeaning}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
           </div>
         )}
       </div>
 
-      {/* Premium Modal */}
+      {/* Manual Add Custom Vocab Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-black/10 backdrop-blur-md">
           <div className="bg-white w-full max-w-lg rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-slate-100">

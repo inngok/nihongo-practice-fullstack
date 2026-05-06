@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { message, Select } from 'antd';
 import * as XLSX from 'xlsx';
-import { FileExcelOutlined, ThunderboltOutlined, CopyOutlined, CheckCircleOutlined, UploadOutlined } from '@ant-design/icons';
 import { API_BASE_URL } from '../../config';
 
 export default function DataImporter() {
@@ -16,10 +15,16 @@ export default function DataImporter() {
   const { fetchWithAuth } = useAuth();
   const [messageApi, contextHolder] = message.useMessage();
   const fileInputRef = React.useRef(null);
+  const aiFileInputRef = React.useRef(null);
 
   useEffect(() => {
     fetchBooks();
   }, []);
+
+  // Reset selected textbook when toggling import data categories (Kanji vs Vocab)
+  useEffect(() => {
+    setSelectedBook(null);
+  }, [dataType]);
 
   const fetchBooks = async () => {
     try {
@@ -52,8 +57,48 @@ export default function DataImporter() {
       return messageApi.error(`Lỗi JSON: ${e.message}`);
     }
 
+    // Normalize alternative keys (e.g., map 'kanji' -> 'character', 'hano' -> 'hanviet')
+    const normalizedData = parsedData.map(item => {
+      const normalized = { ...item };
+      
+      if (item.kanji && !item.character) {
+        normalized.character = item.kanji;
+      }
+      
+      if (item.hano && !item.hanviet) {
+        normalized.hanviet = item.hano;
+      } else if (item.han_viet && !item.hanviet) {
+        normalized.hanviet = item.han_viet;
+      } else if (item.hanViet && !item.hanviet) {
+        normalized.hanviet = item.hanViet;
+      }
+      
+      if (item.trang && !item.page) {
+        normalized.page = parseInt(item.trang);
+      } else if (item.trang_so && !item.page) {
+        normalized.page = parseInt(item.trang_so);
+      } else if (item.trangso && !item.page) {
+        normalized.page = parseInt(item.trangso);
+      }
+      
+      return normalized;
+    });
+
+    // Filter out invalid items (e.g., empty rows from CSV/Excel)
+    const validData = normalizedData.filter(item => {
+      if (dataType === 'kanjis') {
+        return item.character && String(item.character).trim() !== '';
+      } else {
+        return item.word && String(item.word).trim() !== '';
+      }
+    });
+
+    if (validData.length === 0) {
+      return messageApi.error('Không tìm thấy bản ghi hợp lệ nào chứa Chữ Hán hoặc Từ Vựng!');
+    }
+
     // Inject selected book into each item
-    const finalData = parsedData.map(item => ({
+    const finalData = validData.map(item => ({
       ...item,
       book: { id: selectedBook }
     }));
@@ -72,7 +117,7 @@ export default function DataImporter() {
         throw new Error(`Server trả về lỗi: ${response.status}`);
       }
 
-      messageApi.success(`Import thành công ${parsedData.length} bản ghi vào ${dataType}!`);
+      messageApi.success(`Import thành công ${finalData.length} bản ghi vào ${dataType}!`);
       setJsonData(''); // Clear after success
     } catch (error) {
       messageApi.error(`Lỗi khi import: ${error.message}`);
@@ -102,6 +147,88 @@ export default function DataImporter() {
         messageApi.success(`Đã đọc ${data.length} dòng từ file. Ấn Import để lưu vào Database nhé!`);
       } catch (err) {
         messageApi.error('Lỗi khi đọc file: ' + err.message);
+      }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = '';
+  };
+
+  const downloadTemplate = () => {
+    let headers = '';
+    let filename = '';
+    if (dataType === 'kanjis') {
+      headers = 'character,kunyomi,onyomi,hanviet,meaning,examples,week,day\n';
+      headers += '一,ひと.つ,イチ,NHẤT,một,"一人 (ひとり): một người\\n一日 (ついたch): ngày mùng một",1,1\n';
+      filename = 'kanji_template_standard.csv';
+    } else {
+      headers = 'word,reading,meaning,example,exampleMeaning,week,day\n';
+      headers += '食べる,たべる,Ăn,ご飯を食べる,Ăn cơm,1,1\n';
+      filename = 'vocab_template_standard.csv';
+    }
+
+    // Add UTF-8 Byte Order Mark (BOM) so Excel can read Vietnamese & Japanese characters perfectly
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), headers], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      messageApi.success('Đã tải xuống file mẫu chuẩn thành công!');
+    }
+  };
+
+  const handleAIFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsProcessingAI(true);
+    messageApi.loading({ content: 'AI đang đọc và giải mã cấu trúc file...', key: 'ai_file_load' });
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const rawDataArray = XLSX.utils.sheet_to_json(ws);
+        
+        if (rawDataArray.length === 0) {
+          messageApi.destroy('ai_file_load');
+          setIsProcessingAI(false);
+          return messageApi.warning('File tải lên không có dữ liệu');
+        }
+
+        const rawDataString = JSON.stringify(rawDataArray, null, 2);
+
+        const response = await fetchWithAuth(`${API_BASE_URL}/ai/format-import`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            rawData: rawDataString,
+            type: dataType
+          }),
+        });
+
+        if (!response.ok) {
+          const errorMsg = await response.text();
+          throw new Error(errorMsg || `Server error: ${response.status}`);
+        }
+
+        const formattedJson = await response.text();
+        setJsonData(formattedJson);
+        messageApi.success({ content: `AI đã chuẩn hóa thành công ${rawDataArray.length} dòng dữ liệu!`, key: 'ai_file_load', duration: 4 });
+      } catch (err) {
+        console.error(err);
+        messageApi.error({ content: 'Lỗi khi AI chuẩn hóa file: ' + err.message, key: 'ai_file_load', duration: 4 });
+      } finally {
+        setIsProcessingAI(false);
       }
     };
     reader.readAsBinaryString(file);
@@ -141,13 +268,6 @@ export default function DataImporter() {
     } finally {
       setIsProcessingAI(false);
     }
-  };
-
-  const getPlaceholder = () => {
-    if (dataType === 'kanjis') {
-      return `[\n  {\n    "character": "学",\n    "kunyomi": "まな.ぶ",\n    "onyomi": "ガク",\n    "meaning": "Học",\n    "examples": "学校 (Trường học)"\n  }\n]`;
-    }
-    return `[\n  {\n    "word": "食べる",\n    "reading": "たべる",\n    "meaning": "Ăn",\n    "exampleSentence": "ご飯을食べる",\n    "exampleMeaning": "Ăn cơm"\n  }\n]`;
   };
 
   return (
@@ -206,22 +326,50 @@ export default function DataImporter() {
                 <button
                   onClick={handleAISmartFormat}
                   disabled={isProcessingAI || !rawInput.trim()}
-                  className="w-full py-4 bg-white border-2 border-slate-900 text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all disabled:opacity-30 flex items-center justify-center gap-3"
+                  className="w-full py-4 bg-white border-2 border-slate-900 text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all disabled:opacity-30 flex items-center justify-center"
                 >
-                  <ThunderboltOutlined />
                   {isProcessingAI ? 'Đang xử lý...' : 'Xử lý bằng AI'}
                 </button>
               </div>
             </div>
 
-            <button
-              onClick={() => fileInputRef.current.click()}
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border border-slate-200 text-slate-500 rounded-2xl font-bold text-xs uppercase tracking-widest hover:border-slate-400 hover:text-slate-900 transition-all"
-            >
-              <FileExcelOutlined />
-              Tải file Excel / CSV
-              <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx, .xls, .csv" className="hidden" />
-            </button>
+            {/* Guide & Template Download */}
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="space-y-0.5">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Chuẩn bị File nguồn:</span>
+                <p className="text-[11px] text-slate-500 font-medium">Bác nên dùng file định dạng có các tiêu đề cột đúng tiêu chuẩn.</p>
+              </div>
+              <button
+                onClick={downloadTemplate}
+                className="px-4 py-2 bg-white border border-slate-200 text-indigo-600 hover:text-indigo-800 hover:border-indigo-300 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-sm active:scale-95 flex items-center"
+              >
+                <span>Tải File Mẫu Chuẩn</span>
+              </button>
+            </div>
+
+            {/* Upload Options Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Option 1: Standard Import */}
+              <button
+                onClick={() => fileInputRef.current.click()}
+                className="group flex flex-col items-center justify-center gap-1 p-6 bg-white border border-slate-200 text-slate-600 hover:border-slate-400 hover:text-slate-900 rounded-2xl font-bold transition-all shadow-sm hover:shadow-md active:scale-95"
+              >
+                <span className="text-xs uppercase tracking-widest mt-2">Import File Chuẩn</span>
+                <span className="text-[9px] text-slate-400 normal-case font-normal font-sans mb-2">Đúng tên các cột tiêu chuẩn</span>
+                <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx, .xls, .csv" className="hidden" />
+              </button>
+
+              {/* Option 2: AI Smart Import */}
+              <button
+                onClick={() => aiFileInputRef.current.click()}
+                disabled={isProcessingAI}
+                className="group flex flex-col items-center justify-center gap-1 p-6 bg-indigo-50/50 border border-indigo-100 text-indigo-600 hover:border-indigo-300 hover:text-indigo-800 rounded-2xl font-bold transition-all shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50"
+              >
+                <span className="text-xs uppercase tracking-widest flex items-center mt-2">File Bừa (AI Tự Xử)</span>
+                <span className="text-[9px] text-indigo-400 normal-case font-normal font-sans mb-2">File lộn xộn, AI tự nắn</span>
+                <input type="file" ref={aiFileInputRef} onChange={handleAIFileUpload} accept=".xlsx, .xls, .csv" className="hidden" />
+              </button>
+            </div>
           </div>
 
           {/* Review & Import */}
@@ -235,9 +383,8 @@ export default function DataImporter() {
                   navigator.clipboard.writeText(jsonData);
                   messageApi.success('Đã copy JSON');
                 }}
-                className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-slate-900 flex items-center gap-1.5"
+                className="text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-900"
               >
-                <CopyOutlined />
                 Copy JSON
               </button>
             </div>
@@ -256,7 +403,12 @@ export default function DataImporter() {
                 className="w-full h-12"
                 onChange={setSelectedBook}
                 value={selectedBook}
-                options={books.map(book => ({ value: book.id, label: book.title }))}
+                options={books
+                  .filter(book => {
+                    if (!book.type) return false;
+                    return dataType === 'kanjis' ? book.type.includes('KANJI') : book.type.includes('VOCABULARY');
+                  })
+                  .map(book => ({ value: book.id, label: book.title }))}
                 filterOption={(input, option) =>
                   (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                 }
@@ -265,12 +417,10 @@ export default function DataImporter() {
               <button
                 onClick={handleImport}
                 disabled={isLoading || !jsonData.trim()}
-                className="w-full py-5 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-black transition-all disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center gap-3"
+                className="w-full py-5 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-black transition-all disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center"
               >
-                {isLoading ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  <CheckCircleOutlined className="text-base" />
+                {isLoading && (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3"></div>
                 )}
                 {isLoading ? 'Đang thực thi...' : 'Xác nhận Import'}
               </button>

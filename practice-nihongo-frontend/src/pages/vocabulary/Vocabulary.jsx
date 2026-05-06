@@ -9,7 +9,10 @@ export default function Vocabulary() {
 
   useEffect(() => {
     bookService.getAll()
-      .then(res => setBooks(res.data))
+      .then(res => {
+        const vocabBooks = res.data.filter(book => book.type && book.type.includes('VOCABULARY'));
+        setBooks(vocabBooks);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

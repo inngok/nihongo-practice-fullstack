@@ -74,7 +74,7 @@ export default function GrammarManager() {
         bookService.getAll()
       ]);
       setGrammars(grammarRes.data);
-      setBooks(bookRes.data);
+      setBooks(bookRes.data.filter(b => b.type && b.type.includes('GRAMMAR')));
       setError(null);
     } catch (err) {
       setError('Không thể tải dữ liệu.');

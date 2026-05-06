@@ -27,6 +27,8 @@ public class Book {
 
     private String num; // Ví dụ: 01, 02
 
+    private String type; // KANJI, VOCABULARY, GRAMMAR
+
     @OneToMany(mappedBy = "book", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Grammar> grammars;

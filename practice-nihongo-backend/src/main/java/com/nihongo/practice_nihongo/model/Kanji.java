@@ -29,6 +29,7 @@ public class Kanji {
 
     private Integer week;
     private Integer day;
+    private Integer page;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "book_id")
