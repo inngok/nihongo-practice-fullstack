@@ -75,7 +75,6 @@ public class AiService {
     }
 
     private String simulateAiProcessing(String rawData, String type) {
-        // Simple fallback if no API key
         String[] lines = rawData.split("\n");
         StringBuilder sb = new StringBuilder("[");
         for (int i = 0; i < lines.length; i++) {

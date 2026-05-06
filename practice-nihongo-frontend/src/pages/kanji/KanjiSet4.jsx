@@ -6,6 +6,8 @@ import flashcardService from '../../api/flashcardService';
 import { useAuth } from '../../context/AuthContext';
 import { message, Modal } from 'antd';
 import { HeartOutlined, HeartFilled } from '@ant-design/icons';
+import KanjiCanvas from './KanjiCanvas';
+
 
 export default function KanjiSet4() {
   const navigate = useNavigate();
@@ -306,11 +308,12 @@ export default function KanjiSet4() {
           </div>
 
           {/* Premium Capsule Mode Switcher */}
-          <div className="bg-slate-50/70 p-1.5 rounded-2xl flex items-center border border-slate-100/50 self-start md:self-auto shadow-inner">
+          <div className="bg-slate-50/70 p-1.5 rounded-2xl flex flex-wrap items-center border border-slate-100/50 self-start md:self-auto shadow-inner gap-y-1">
             <button onClick={() => setActiveMode('list')} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${activeMode === 'list' ? 'bg-black text-white shadow-md' : 'text-slate-400 hover:text-black'}`}>Danh sách</button>
             <button onClick={() => setActiveMode('flashcard')} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${activeMode === 'flashcard' ? 'bg-black text-white shadow-md' : 'text-slate-400 hover:text-black'}`}>Flashcard</button>
             <button onClick={() => setActiveMode('quiz')} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${activeMode === 'quiz' ? 'bg-black text-white shadow-md' : 'text-slate-400 hover:text-black'}`}>Trắc nghiệm</button>
             <button onClick={() => setActiveMode('typing')} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${activeMode === 'typing' ? 'bg-black text-white shadow-md' : 'text-slate-400 hover:text-black'}`}>Gõ phím</button>
+            <button onClick={() => setActiveMode('drawing')} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${activeMode === 'drawing' ? 'bg-black text-white shadow-md' : 'text-slate-400 hover:text-black'}`}>Luyện viết</button>
           </div>
         </div>
 
@@ -583,6 +586,16 @@ export default function KanjiSet4() {
               </div>
             )}
           </div>
+        )}
+
+        {/* --- VIEW 5: LUYỆN VIẾT (KANJI CANVAS DRAWING VIEW) --- */}
+        {activeMode === 'drawing' && (
+          <KanjiCanvas
+            kanjiList={filteredKanjis}
+            addedKanjiIds={addedKanjiIds}
+            onAddFlashcard={handleAddFlashcard}
+            onClose={() => setActiveMode('list')}
+          />
         )}
 
       </div>
