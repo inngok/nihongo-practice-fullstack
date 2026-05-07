@@ -192,7 +192,8 @@ export default function PersonalVocab() {
     try {
       const res = await fetchWithAuth(`${API_BASE_URL}/ai/generate-vocab?word=${encodeURIComponent(formData.word)}`);
       if (!res.ok) {
-        throw new Error('Không thể tải từ AI');
+        const errorText = await res.text().catch(() => 'Không thể tải từ AI');
+        throw new Error(errorText);
       }
       const data = await res.json();
       setFormData(prev => ({
@@ -567,16 +568,16 @@ export default function PersonalVocab() {
 
       {/* Manual Add Custom Vocab Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-black/10 backdrop-blur-md">
-          <div className="bg-white w-full max-w-lg rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-slate-100">
-            <div className="p-10 border-b border-slate-50 flex justify-between items-center">
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 md:p-6 bg-black/10 backdrop-blur-md">
+          <div className="bg-white w-full max-w-lg rounded-[32px] shadow-2xl flex flex-col max-h-[95vh] md:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-300 border border-slate-100">
+            <div className="p-6 md:p-8 border-b border-slate-50 flex justify-between items-center shrink-0">
               <h2 className="text-[11px] font-black text-black uppercase tracking-[0.3em]">
                 {editingId ? 'Cập nhật từ vựng' : 'Thêm vào sổ tay'}
               </h2>
               <button onClick={() => setIsModalOpen(false)} className="text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:text-black transition-colors">Đóng</button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-10 space-y-8">
+            <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-6 md:space-y-8 overflow-y-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
@@ -666,16 +667,16 @@ export default function PersonalVocab() {
 
       {/* Folder Add Modal */}
       {isFolderModalOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-black/10 backdrop-blur-md">
-          <div className="bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-slate-100">
-            <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 md:p-6 bg-black/10 backdrop-blur-md">
+          <div className="bg-white w-full max-w-md rounded-[32px] shadow-2xl flex flex-col max-h-[95vh] md:max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-300 border border-slate-100">
+            <div className="p-6 md:p-8 border-b border-slate-50 flex justify-between items-center shrink-0">
               <h2 className="text-[11px] font-black text-black uppercase tracking-[0.3em]">
                 {editingFolderId ? 'Sửa Thư Mục' : (currentFolder ? 'Thêm Thư Mục Con' : 'Thêm Mục Lưu Trữ')}
               </h2>
               <button onClick={() => setIsFolderModalOpen(false)} className="text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:text-black transition-colors">Đóng</button>
             </div>
             
-            <form onSubmit={handleFolderSubmit} className="p-8 space-y-6">
+            <form onSubmit={handleFolderSubmit} className="p-6 md:p-8 space-y-6 overflow-y-auto">
               <div className="space-y-3">
                 <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Tên Thư Mục (VD: NHK)</label>
                 <input
