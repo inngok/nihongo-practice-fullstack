@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import vocabService from '../../api/vocabService';
 import flashcardService from '../../api/flashcardService';
+import vocabFolderService from '../../api/vocabFolderService';
 import { Modal, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,6 +13,11 @@ export default function PersonalVocab() {
   const [loading, setLoading] = useState(true);
   
   const [activeTab, setActiveTab] = useState('saved-vocab'); // 'saved-vocab' | 'saved-kanji' | 'personal'
+  const [folders, setFolders] = useState([]);
+  const [currentFolder, setCurrentFolder] = useState(null);
+  const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
+  const [folderFormData, setFolderFormData] = useState({ name: '', description: '', sourceUrl: '' });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
@@ -29,12 +35,14 @@ export default function PersonalVocab() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [personalRes, allSavedRes] = await Promise.all([
+      const [personalRes, allSavedRes, foldersRes] = await Promise.all([
         vocabService.getPersonal().catch(() => ({ data: [] })),
-        flashcardService.getAll().catch(() => ({ data: [] }))
+        flashcardService.getAll().catch(() => ({ data: [] })),
+        vocabFolderService.getMyFolders().catch(() => ({ data: [] }))
       ]);
 
       setPersonalVocabs(personalRes.data);
+      setFolders(foldersRes.data);
 
       // Split saved flashcards into Vocab and Kanji categories
       const flashcards = allSavedRes.data;
@@ -90,14 +98,66 @@ export default function PersonalVocab() {
     setIsModalOpen(true);
   };
 
+  const handleFolderInputChange = (e) => {
+    const { name, value } = e.target;
+    setFolderFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const openFolderModal = () => {
+    setFolderFormData({ name: '', description: '', sourceUrl: '' });
+    setIsFolderModalOpen(true);
+  };
+
+  const handleFolderSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        ...folderFormData,
+        parent: currentFolder ? { id: currentFolder.id } : null
+      };
+      await vocabFolderService.createFolder(payload);
+      message.success('Đã tạo mục lưu trữ');
+      setIsFolderModalOpen(false);
+      fetchData();
+    } catch (err) {
+      message.error('Lỗi tạo mục');
+    }
+  };
+
+  const handleDeleteFolder = (id) => {
+    Modal.confirm({
+      title: 'Xóa mục lưu trữ',
+      content: 'Bạn có chắc muốn xóa mục này cùng tất cả thư mục con và từ vựng trong đó?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await vocabFolderService.deleteFolder(id);
+          if (currentFolder && currentFolder.id === id) {
+            setCurrentFolder(null);
+          }
+          fetchData();
+          message.success('Đã xóa mục lưu trữ');
+        } catch (err) {
+          message.error('Không thể xóa');
+        }
+      },
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        ...formData,
+        folder: currentFolder ? { id: currentFolder.id } : null
+      };
       if (editingId) {
-        await vocabService.update(editingId, formData);
+        await vocabService.update(editingId, payload);
         message.success('Cập nhật thành công');
       } else {
-        await vocabService.create(formData);
+        await vocabService.create(payload);
         message.success('Đã thêm từ mới');
       }
       setIsModalOpen(false);
@@ -188,7 +248,19 @@ export default function PersonalVocab() {
               Luyện Flashcard
             </button>
             <button
-              onClick={openAddModal}
+              onClick={() => {
+                if (activeTab !== 'personal') setActiveTab('personal');
+                openFolderModal();
+              }}
+              className="border border-slate-200 hover:border-black hover:bg-slate-50 text-slate-800 px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest active:scale-95"
+            >
+              Thêm Thư Mục
+            </button>
+            <button
+              onClick={() => {
+                if (activeTab !== 'personal') setActiveTab('personal');
+                openAddModal();
+              }}
               className="border border-slate-200 hover:border-black hover:bg-slate-50 text-slate-800 px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest active:scale-95"
             >
               Thêm từ mới
@@ -235,7 +307,7 @@ export default function PersonalVocab() {
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 border-3 border-slate-100 border-t-black rounded-full animate-spin"></div>
           </div>
-        ) : activeList.length === 0 ? (
+        ) : (activeList.length === 0 && (activeTab !== 'personal' || folders.length === 0)) ? (
           <div className="py-24 text-center border-2 border-dashed border-slate-100 rounded-[40px]">
             <p className="text-slate-300 font-bold uppercase text-[10px] tracking-[0.3em]">Danh sách hiện đang trống</p>
           </div>
@@ -311,35 +383,103 @@ export default function PersonalVocab() {
               </div>
             ))}
 
-            {/* PERSONAL CUSTOM LIST */}
-            {activeTab === 'personal' && activeList.map((item) => (
-              <div 
-                key={item.id} 
-                className="group relative bg-white border border-slate-150 rounded-2xl p-7 flex flex-col transition-all duration-300 hover:border-slate-300 hover:shadow-md"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-2xl font-bold text-slate-900 mb-1">{item.word}</h3>
-                    <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest italic">{item.reading}</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <button onClick={() => openEditModal(item)} className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-black transition-colors">Sửa</button>
-                    <button onClick={() => handleDeletePersonal(item.id)} className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-red-500 transition-colors">Xóa</button>
-                  </div>
-                </div>
-                
-                <div className="pt-4 border-t border-slate-50 space-y-3">
-                  <p className="text-slate-700 font-bold text-base leading-relaxed">{item.meaning}</p>
-                  
-                  {item.example && (
-                    <div className="pt-2">
-                      <p className="text-xs text-slate-500 font-semibold leading-relaxed mb-1">{item.example}</p>
-                      <p className="text-[10px] text-slate-400 italic font-medium">{item.exampleMeaning}</p>
+            {/* PERSONAL CUSTOM LIST & FOLDERS */}
+            {activeTab === 'personal' && (
+              <>
+                {/* Folder Header/Back */}
+                {currentFolder && (
+                  <div className="col-span-full mb-4 flex flex-col md:flex-row md:items-center justify-between bg-slate-50 p-6 rounded-3xl border border-slate-200 shadow-sm gap-4">
+                    <div>
+                      <button onClick={() => setCurrentFolder(folders.find(f => f.id === currentFolder.parent?.id) || null)} className="text-[10px] font-bold uppercase tracking-widest text-slate-500 hover:text-black mb-2 block">
+                        ← Quay lại
+                      </button>
+                      <div className="flex items-end gap-3">
+                        <span className="font-extrabold text-2xl text-slate-900">{currentFolder.name}</span>
+                        {currentFolder.description && <span className="text-sm font-semibold text-slate-500 mb-1">{currentFolder.description}</span>}
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
-            ))}
+                    {currentFolder.sourceUrl && (
+                      <a href={currentFolder.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-800 hover:border-blue-200 transition-all shadow-sm">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        Nguồn / Link
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* Folders List */}
+                {folders
+                  .filter(f => currentFolder ? f.parent?.id === currentFolder.id : !f.parent)
+                  .map(folder => (
+                    <div 
+                      key={`folder-${folder.id}`}
+                      className="group relative bg-slate-50/50 border border-slate-200 rounded-3xl p-7 flex flex-col transition-all duration-300 hover:bg-slate-50 hover:border-slate-300 hover:shadow-md cursor-pointer"
+                      onClick={() => setCurrentFolder(folder)}
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center border border-slate-100">
+                            <svg className="w-6 h-6 text-slate-700" fill="currentColor" viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"></path></svg>
+                          </div>
+                          <div>
+                            <h3 className="text-xl font-bold text-slate-900">{folder.name}</h3>
+                            {folder.description && <p className="text-xs text-slate-500 font-semibold mt-1">{folder.description}</p>}
+                          </div>
+                        </div>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id); }} 
+                          className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-red-500 transition-colors"
+                        >
+                          Xóa
+                        </button>
+                      </div>
+                      
+                      <div className="mt-auto pt-5 flex justify-between items-center">
+                        <span className="bg-white px-3 py-1.5 rounded-lg border border-slate-100 text-[9px] font-bold text-slate-500 uppercase tracking-widest shadow-sm">
+                          {personalVocabs.filter(v => v.folder?.id === folder.id).length} từ vựng
+                        </span>
+                        {folders.filter(f => f.parent?.id === folder.id).length > 0 && (
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                            + {folders.filter(f => f.parent?.id === folder.id).length} mục con
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                {/* Vocab List for Current Level */}
+                {activeList
+                  .filter(item => currentFolder ? item.folder?.id === currentFolder.id : !item.folder)
+                  .map((item) => (
+                    <div 
+                      key={item.id} 
+                      className="group relative bg-white border border-slate-150 rounded-3xl p-7 flex flex-col transition-all duration-300 hover:border-slate-300 hover:shadow-md"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-2xl font-bold text-slate-900 mb-1">{item.word}</h3>
+                          <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest italic">{item.reading}</p>
+                        </div>
+                        <div className="flex gap-3">
+                          <button onClick={() => openEditModal(item)} className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-black transition-colors">Sửa</button>
+                          <button onClick={() => handleDeletePersonal(item.id)} className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-red-500 transition-colors">Xóa</button>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-4 border-t border-slate-50 space-y-3">
+                        <p className="text-slate-700 font-bold text-base leading-relaxed">{item.meaning}</p>
+                        
+                        {item.example && (
+                          <div className="pt-2">
+                            <p className="text-xs text-slate-500 font-semibold leading-relaxed mb-1">{item.example}</p>
+                            <p className="text-[10px] text-slate-400 italic font-medium">{item.exampleMeaning}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </>
+            )}
 
           </div>
         )}
@@ -427,6 +567,68 @@ export default function PersonalVocab() {
                   className="w-full py-5 bg-black text-white rounded-2xl font-black hover:bg-slate-800 transition-all text-[11px] uppercase tracking-[0.3em] shadow-xl shadow-black/10"
                 >
                   {editingId ? 'Cập nhật' : 'Lưu dữ liệu'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Folder Add Modal */}
+      {isFolderModalOpen && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-black/10 backdrop-blur-md">
+          <div className="bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-slate-100">
+            <div className="p-8 border-b border-slate-50 flex justify-between items-center">
+              <h2 className="text-[11px] font-black text-black uppercase tracking-[0.3em]">
+                {currentFolder ? 'Thêm Thư Mục Con' : 'Thêm Mục Lưu Trữ'}
+              </h2>
+              <button onClick={() => setIsFolderModalOpen(false)} className="text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:text-black transition-colors">Đóng</button>
+            </div>
+            
+            <form onSubmit={handleFolderSubmit} className="p-8 space-y-6">
+              <div className="space-y-3">
+                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Tên Thư Mục (VD: NHK)</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={folderFormData.name}
+                  onChange={handleFolderInputChange}
+                  required
+                  placeholder="..."
+                  className="w-full pb-2 bg-transparent border-b border-slate-200 focus:border-black outline-none transition-all font-bold placeholder:font-normal"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Mô tả / Ngày tháng (VD: Ngày 8/5)</label>
+                <input
+                  type="text"
+                  name="description"
+                  value={folderFormData.description}
+                  onChange={handleFolderInputChange}
+                  placeholder="..."
+                  className="w-full pb-2 bg-transparent border-b border-slate-200 focus:border-black outline-none transition-all font-medium placeholder:font-normal"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Link đính kèm (Nguồn bài báo/Web)</label>
+                <input
+                  type="url"
+                  name="sourceUrl"
+                  value={folderFormData.sourceUrl}
+                  onChange={handleFolderInputChange}
+                  placeholder="https://..."
+                  className="w-full pb-2 bg-transparent border-b border-slate-200 focus:border-black outline-none transition-all text-sm placeholder:text-slate-200"
+                />
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  className="w-full py-4 bg-black text-white rounded-xl font-black hover:bg-slate-800 transition-all text-[11px] uppercase tracking-[0.3em]"
+                >
+                  Tạo Thư Mục
                 </button>
               </div>
             </form>

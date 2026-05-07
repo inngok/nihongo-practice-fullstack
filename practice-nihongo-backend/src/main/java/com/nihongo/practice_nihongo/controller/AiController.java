@@ -4,6 +4,7 @@ import com.nihongo.practice_nihongo.service.AiService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
+import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -16,6 +17,7 @@ public class AiController {
         this.aiService = aiService;
     }
 
+    @Operation(summary = "Xử lý dữ liệu thô bằng AI để nhập vào hệ thống")
     @PostMapping("/format-import")
     public ResponseEntity<String> formatImport(@RequestBody Map<String, String> request) {
         String rawData = request.get("rawData");

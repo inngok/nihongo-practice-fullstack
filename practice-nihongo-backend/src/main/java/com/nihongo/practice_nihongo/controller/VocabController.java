@@ -9,13 +9,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/vocabs")
 @CrossOrigin(origins = "*")
-@Tag(name = "Vocab Management")
 public class VocabController {
 
     private final VocabService vocabService;
@@ -34,6 +33,7 @@ public class VocabController {
         return null;
     }
 
+    @Operation(summary = "Lấy danh sách từ vựng cá nhân (Từ tự thêm)")
     @GetMapping("/my")
     public ResponseEntity<List<Vocab>> getMyVocabs() {
         User currentUser = getCurrentUser();
@@ -41,6 +41,7 @@ public class VocabController {
         return ResponseEntity.ok(vocabService.getPersonalVocabs(currentUser.getId()));
     }
 
+    @Operation(summary = "Lấy danh sách tất cả từ vựng")
     @GetMapping
     public List<Vocab> getAllVocabs(
             @RequestParam(required = false) Long bookId,
@@ -63,12 +64,14 @@ public class VocabController {
         return vocabService.getAllVocabs();
     }
 
+    @Operation(summary = "Lấy thông tin từ vựng theo ID")
     @GetMapping("/{id:[0-9]+}")
     public ResponseEntity<Vocab> getVocabById(@PathVariable Long id) {
         Vocab vocab = vocabService.getVocabById(id);
         return vocab != null ? ResponseEntity.ok(vocab) : ResponseEntity.notFound().build();
     }
 
+    @Operation(summary = "Thêm từ vựng mới")
     @PostMapping
     public Vocab createVocab(@RequestBody Vocab vocab) {
         User currentUser = getCurrentUser();
@@ -78,17 +81,20 @@ public class VocabController {
         return vocabService.createVocab(vocab);
     }
 
+    @Operation(summary = "Thêm nhiều từ vựng cùng lúc (Bulk Insert)")
     @PostMapping("/bulk")
     public ResponseEntity<List<Vocab>> createVocabsBulk(@RequestBody List<Vocab> vocabs) {
         return ResponseEntity.ok(vocabService.createVocabsBulk(vocabs));
     }
 
+    @Operation(summary = "Cập nhật từ vựng")
     @PutMapping("/{id:[0-9]+}")
     public ResponseEntity<Vocab> updateVocab(@PathVariable Long id, @RequestBody Vocab vocab) {
         Vocab updated = vocabService.updateVocab(id, vocab);
         return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
     }
 
+    @Operation(summary = "Xóa từ vựng")
     @DeleteMapping("/{id:[0-9]+}")
     public ResponseEntity<Void> deleteVocab(@PathVariable Long id) {
         vocabService.deleteVocab(id);

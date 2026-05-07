@@ -19,13 +19,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
-@Tag(name = "Authentication")
 public class AuthController {
 
     @Autowired
@@ -46,6 +45,7 @@ public class AuthController {
     @Autowired
     private RefreshTokenService refreshTokenService;
 
+    @Operation(summary = "Đăng nhập")
     @PostMapping("/login")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequest authRequest) throws Exception {
         try {
@@ -69,6 +69,7 @@ public class AuthController {
         return ResponseEntity.badRequest().body("User not found");
     }
 
+    @Operation(summary = "Đăng ký tài khoản mới")
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
@@ -91,6 +92,7 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail(), user.getRole()));
     }
 
+    @Operation(summary = "Làm mới token (Refresh Token)")
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshtoken(@RequestBody TokenRefreshRequest request) {
         String requestRefreshToken = request.getRefreshToken();

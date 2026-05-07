@@ -4,7 +4,7 @@ import com.nihongo.practice_nihongo.model.Flashcard;
 import com.nihongo.practice_nihongo.model.User;
 import com.nihongo.practice_nihongo.repository.UserRepository;
 import com.nihongo.practice_nihongo.service.FlashcardService;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,7 +16,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/flashcards")
 @CrossOrigin(origins = "*")
-@Tag(name = "Flashcard Management")
 public class FlashcardController {
 
     private final FlashcardService flashcardService;
@@ -35,6 +34,7 @@ public class FlashcardController {
         return null;
     }
 
+    @Operation(summary = "Lấy danh sách tất cả Flashcard cá nhân")
     @GetMapping
     public ResponseEntity<List<Flashcard>> getAllFlashcards() {
         User user = getCurrentUser();
@@ -44,6 +44,7 @@ public class FlashcardController {
         return ResponseEntity.ok(flashcardService.getAllFlashcards(user.getId()));
     }
 
+    @Operation(summary = "Lấy danh sách Flashcard đến hạn ôn tập")
     @GetMapping("/due")
     public ResponseEntity<List<Flashcard>> getDueFlashcards() {
         User user = getCurrentUser();
@@ -53,6 +54,7 @@ public class FlashcardController {
         return ResponseEntity.ok(flashcardService.getDueFlashcards(user.getId()));
     }
 
+    @Operation(summary = "Đếm số lượng Flashcard đến hạn ôn tập")
     @GetMapping("/due/count")
     public ResponseEntity<Map<String, Long>> getDueCount() {
         User user = getCurrentUser();
@@ -63,6 +65,7 @@ public class FlashcardController {
         return ResponseEntity.ok(Map.of("count", count));
     }
 
+    @Operation(summary = "Thêm từ vựng/Kanji vào sổ tay (Tạo Flashcard)")
     @PostMapping
     public ResponseEntity<Flashcard> addToFlashcards(
             @RequestParam(required = false) Long vocabId,
@@ -79,6 +82,7 @@ public class FlashcardController {
         }
     }
 
+    @Operation(summary = "Ôn tập Flashcard (Gửi đánh giá mức độ nhớ)")
     @PostMapping("/{id}/review")
     public ResponseEntity<Flashcard> reviewCard(
             @PathVariable Long id,
@@ -99,6 +103,7 @@ public class FlashcardController {
         }
     }
 
+    @Operation(summary = "Xóa Flashcard khỏi sổ tay")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteFlashcard(@PathVariable Long id) {
         User user = getCurrentUser();

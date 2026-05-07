@@ -82,7 +82,15 @@ export default function Home() {
           className="group px-8 py-4 bg-slate-50 border border-slate-100 rounded-[2rem] hover:bg-black hover:border-black hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
         >
           <span className="text-[10px] md:text-[11px] font-black tracking-[0.3em] uppercase text-slate-500 group-hover:text-white transition-colors">
-            Phân biệt
+            Phân biệt Ngữ pháp
+          </span>
+        </Link>
+        <Link
+          to="/listening"
+          className="group px-8 py-4 bg-indigo-50/50 border border-indigo-100/50 rounded-[2rem] hover:bg-black hover:border-black hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 flex items-center gap-2"
+        >
+          <span className="text-[10px] md:text-[11px] font-black tracking-[0.3em] uppercase text-indigo-600 group-hover:text-white transition-colors">
+            Luyện Nghe Đoạn Văn 🎧
           </span>
         </Link>
       </div>

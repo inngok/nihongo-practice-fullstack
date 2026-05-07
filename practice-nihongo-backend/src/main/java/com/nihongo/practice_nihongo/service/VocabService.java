@@ -13,10 +13,12 @@ public class VocabService {
 
     private final VocabRepository vocabRepository;
     private final BookRepository bookRepository;
+    private final com.nihongo.practice_nihongo.repository.VocabFolderRepository vocabFolderRepository;
 
-    public VocabService(VocabRepository vocabRepository, BookRepository bookRepository) {
+    public VocabService(VocabRepository vocabRepository, BookRepository bookRepository, com.nihongo.practice_nihongo.repository.VocabFolderRepository vocabFolderRepository) {
         this.vocabRepository = vocabRepository;
         this.bookRepository = bookRepository;
+        this.vocabFolderRepository = vocabFolderRepository;
     }
 
     public List<Vocab> getAllVocabs() {
@@ -48,6 +50,10 @@ public class VocabService {
             Book book = bookRepository.findById(vocab.getBook().getId()).orElse(null);
             vocab.setBook(book);
         }
+        if (vocab.getFolder() != null && vocab.getFolder().getId() != null) {
+            com.nihongo.practice_nihongo.model.VocabFolder folder = vocabFolderRepository.findById(vocab.getFolder().getId()).orElse(null);
+            vocab.setFolder(folder);
+        }
         return vocabRepository.save(vocab);
     }
 
@@ -56,6 +62,10 @@ public class VocabService {
             if (vocab.getBook() != null && vocab.getBook().getId() != null) {
                 Book book = bookRepository.findById(vocab.getBook().getId()).orElse(null);
                 vocab.setBook(book);
+            }
+            if (vocab.getFolder() != null && vocab.getFolder().getId() != null) {
+                com.nihongo.practice_nihongo.model.VocabFolder folder = vocabFolderRepository.findById(vocab.getFolder().getId()).orElse(null);
+                vocab.setFolder(folder);
             }
         }
         return vocabRepository.saveAll(vocabs);
@@ -67,6 +77,10 @@ public class VocabService {
             if (vocab.getBook() != null && vocab.getBook().getId() != null) {
                 Book book = bookRepository.findById(vocab.getBook().getId()).orElse(null);
                 vocab.setBook(book);
+            }
+            if (vocab.getFolder() != null && vocab.getFolder().getId() != null) {
+                com.nihongo.practice_nihongo.model.VocabFolder folder = vocabFolderRepository.findById(vocab.getFolder().getId()).orElse(null);
+                vocab.setFolder(folder);
             }
             return vocabRepository.save(vocab);
         }
