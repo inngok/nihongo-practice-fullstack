@@ -24,6 +24,24 @@ public class AiService {
         return callGemini(prompt);
     }
 
+    public String generateVocabDetails(String word) throws Exception {
+        if (apiKey == null || apiKey.isEmpty()) {
+            return simulateVocabGeneration(word);
+        }
+        String prompt = "You are a professional Japanese teacher. For the Japanese word or phrase provided, " +
+                "generate its reading, Vietnamese meaning, a natural Japanese example sentence, and the Vietnamese translation of that example sentence. " +
+                "Return the response strictly as a JSON object with the following keys:\n" +
+                "{\n" +
+                "  \"reading\": \"(only hiragana/katakana representation, no kanji, no spaces)\",\n" +
+                "  \"meaning\": \"(Vietnamese translation)\",\n" +
+                "  \"example\": \"(natural Japanese example sentence containing the word)\",\n" +
+                "  \"exampleMeaning\": \"(Vietnamese translation of the example sentence)\"\n" +
+                "}\n" +
+                "Do not include any formatting, markdown, or other text except the clean JSON object.\n" +
+                "Word: " + word;
+        return callGemini(prompt);
+    }
+
     private String buildPrompt(String rawData, String type) {
         String schema = type.equals("kanjis") 
             ? "[{\"character\": \"...\", \"kunyomi\": \"...\", \"onyomi\": \"...\", \"hanviet\": \"...\", \"meaning\": \"...\", \"examples\": \"...\", \"week\": null, \"day\": null, \"page\": null}]"
@@ -89,5 +107,9 @@ public class AiService {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    private String simulateVocabGeneration(String word) {
+        return String.format("{\"reading\": \"[Học viên tự thêm]\", \"meaning\": \"Nghĩa của từ %s\", \"example\": \"%sを勉強します。\", \"exampleMeaning\": \"Tôi học từ %s.\"}", word, word, word);
     }
 }

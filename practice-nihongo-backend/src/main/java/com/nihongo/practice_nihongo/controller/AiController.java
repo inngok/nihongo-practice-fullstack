@@ -34,4 +34,18 @@ public class AiController {
             return ResponseEntity.internalServerError().body("Error processing AI request: " + e.getMessage());
         }
     }
+
+    @Operation(summary = "Tự động phân tích và sinh thông tin từ vựng bằng AI")
+    @GetMapping("/generate-vocab")
+    public ResponseEntity<String> generateVocab(@RequestParam String word) {
+        if (word == null || word.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Word is required");
+        }
+        try {
+            String jsonResult = aiService.generateVocabDetails(word);
+            return ResponseEntity.ok(jsonResult);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error processing AI request: " + e.getMessage());
+        }
+    }
 }

@@ -72,17 +72,32 @@ public class VocabService {
     }
 
     public Vocab updateVocab(Long id, Vocab vocab) {
-        if (vocabRepository.existsById(id)) {
-            vocab.setId(id);
+        Vocab existing = vocabRepository.findById(id).orElse(null);
+        if (existing != null) {
+            existing.setWord(vocab.getWord());
+            existing.setReading(vocab.getReading());
+            existing.setMeaning(vocab.getMeaning());
+            existing.setExample(vocab.getExample());
+            existing.setExampleMeaning(vocab.getExampleMeaning());
+            existing.setWeek(vocab.getWeek());
+            existing.setDay(vocab.getDay());
+
             if (vocab.getBook() != null && vocab.getBook().getId() != null) {
                 Book book = bookRepository.findById(vocab.getBook().getId()).orElse(null);
-                vocab.setBook(book);
+                existing.setBook(book);
+            } else {
+                existing.setBook(null);
             }
+
             if (vocab.getFolder() != null && vocab.getFolder().getId() != null) {
                 com.nihongo.practice_nihongo.model.VocabFolder folder = vocabFolderRepository.findById(vocab.getFolder().getId()).orElse(null);
-                vocab.setFolder(folder);
+                existing.setFolder(folder);
+            } else {
+                existing.setFolder(null);
             }
-            return vocabRepository.save(vocab);
+
+            // Keep the original user associated with the personal vocabulary
+            return vocabRepository.save(existing);
         }
         return null;
     }

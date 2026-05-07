@@ -75,7 +75,7 @@ public class VocabController {
     @PostMapping
     public Vocab createVocab(@RequestBody Vocab vocab) {
         User currentUser = getCurrentUser();
-        if (currentUser != null && !"ADMIN".equals(currentUser.getRole())) {
+        if (currentUser != null) {
             vocab.setUser(currentUser);
         }
         return vocabService.createVocab(vocab);

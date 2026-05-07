@@ -4,6 +4,8 @@ import flashcardService from '../../api/flashcardService';
 import vocabFolderService from '../../api/vocabFolderService';
 import { Modal, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 export default function PersonalVocab() {
   const navigate = useNavigate();
@@ -17,8 +19,12 @@ export default function PersonalVocab() {
   const [currentFolder, setCurrentFolder] = useState(null);
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
   const [folderFormData, setFolderFormData] = useState({ name: '', description: '', sourceUrl: '' });
+  const [editingFolderId, setEditingFolderId] = useState(null);
+  const [editingFolderParent, setEditingFolderParent] = useState(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const { fetchWithAuth } = useAuth();
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     word: '',
@@ -105,22 +111,53 @@ export default function PersonalVocab() {
 
   const openFolderModal = () => {
     setFolderFormData({ name: '', description: '', sourceUrl: '' });
+    setEditingFolderId(null);
+    setEditingFolderParent(null);
+    setIsFolderModalOpen(true);
+  };
+
+  const openEditFolderModal = (folder) => {
+    setFolderFormData({
+      name: folder.name,
+      description: folder.description || '',
+      sourceUrl: folder.sourceUrl || ''
+    });
+    setEditingFolderId(folder.id);
+    setEditingFolderParent(folder.parent ? { id: folder.parent.id } : null);
     setIsFolderModalOpen(true);
   };
 
   const handleFolderSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = {
-        ...folderFormData,
-        parent: currentFolder ? { id: currentFolder.id } : null
-      };
-      await vocabFolderService.createFolder(payload);
-      message.success('Đã tạo mục lưu trữ');
+      if (editingFolderId) {
+        const payload = {
+          ...folderFormData,
+          parent: editingFolderParent
+        };
+        await vocabFolderService.updateFolder(editingFolderId, payload);
+        message.success('Đã cập nhật mục lưu trữ');
+        // Update the currentFolder state if we are currently looking at it
+        if (currentFolder && currentFolder.id === editingFolderId) {
+          setCurrentFolder(prev => ({
+            ...prev,
+            name: folderFormData.name,
+            description: folderFormData.description,
+            sourceUrl: folderFormData.sourceUrl
+          }));
+        }
+      } else {
+        const payload = {
+          ...folderFormData,
+          parent: currentFolder ? { id: currentFolder.id } : null
+        };
+        await vocabFolderService.createFolder(payload);
+        message.success('Đã tạo mục lưu trữ');
+      }
       setIsFolderModalOpen(false);
       fetchData();
     } catch (err) {
-      message.error('Lỗi tạo mục');
+      message.error(editingFolderId ? 'Lỗi cập nhật mục' : 'Lỗi tạo mục');
     }
   };
 
@@ -144,6 +181,33 @@ export default function PersonalVocab() {
         }
       },
     });
+  };
+
+  const handleAiAutoFill = async () => {
+    if (!formData.word.trim()) {
+      return message.warning('Vui lòng nhập Từ vựng trước khi nhấn AI Điền Nhanh');
+    }
+    setIsAiLoading(true);
+    message.loading({ content: 'AI đang phân tích và soạn câu ví dụ...', key: 'ai_fill' });
+    try {
+      const res = await fetchWithAuth(`${API_BASE_URL}/ai/generate-vocab?word=${encodeURIComponent(formData.word)}`);
+      if (!res.ok) {
+        throw new Error('Không thể tải từ AI');
+      }
+      const data = await res.json();
+      setFormData(prev => ({
+        ...prev,
+        reading: data.reading || prev.reading,
+        meaning: data.meaning || prev.meaning,
+        example: data.example || prev.example,
+        exampleMeaning: data.exampleMeaning || prev.exampleMeaning
+      }));
+      message.success({ content: 'Đã điền thông tin tự động từ AI!', key: 'ai_fill' });
+    } catch (err) {
+      message.error({ content: 'Lỗi khi gọi AI: ' + err.message, key: 'ai_fill' });
+    } finally {
+      setIsAiLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -398,12 +462,20 @@ export default function PersonalVocab() {
                         {currentFolder.description && <span className="text-sm font-semibold text-slate-500 mb-1">{currentFolder.description}</span>}
                       </div>
                     </div>
-                    {currentFolder.sourceUrl && (
-                      <a href={currentFolder.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-800 hover:border-blue-200 transition-all shadow-sm">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                        Nguồn / Link
-                      </a>
-                    )}
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => openEditFolderModal(currentFolder)} 
+                        className="inline-flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest text-slate-600 hover:text-black hover:border-slate-300 transition-all shadow-sm"
+                      >
+                        Sửa mục
+                      </button>
+                      {currentFolder.sourceUrl && (
+                        <a href={currentFolder.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-800 hover:border-blue-200 transition-all shadow-sm">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                          Nguồn / Link
+                        </a>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -426,12 +498,20 @@ export default function PersonalVocab() {
                             {folder.description && <p className="text-xs text-slate-500 font-semibold mt-1">{folder.description}</p>}
                           </div>
                         </div>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id); }} 
-                          className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-red-500 transition-colors"
-                        >
-                          Xóa
-                        </button>
+                        <div className="flex gap-3">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); openEditFolderModal(folder); }} 
+                            className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-black transition-colors"
+                          >
+                            Sửa
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id); }} 
+                            className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-red-500 transition-colors"
+                          >
+                            Xóa
+                          </button>
+                        </div>
                       </div>
                       
                       <div className="mt-auto pt-5 flex justify-between items-center">
@@ -499,7 +579,17 @@ export default function PersonalVocab() {
             <form onSubmit={handleSubmit} className="p-10 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-3">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Từ vựng</label>
+                  <div className="flex justify-between items-center">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-400">Từ vựng</label>
+                    <button
+                      type="button"
+                      onClick={handleAiAutoFill}
+                      disabled={isAiLoading}
+                      className="text-[9px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-800 disabled:opacity-40 transition-colors flex items-center gap-1"
+                    >
+                      <span>✨ AI Điền Nhanh</span>
+                    </button>
+                  </div>
                   <input
                     type="text"
                     name="word"
@@ -580,7 +670,7 @@ export default function PersonalVocab() {
           <div className="bg-white w-full max-w-md rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 border border-slate-100">
             <div className="p-8 border-b border-slate-50 flex justify-between items-center">
               <h2 className="text-[11px] font-black text-black uppercase tracking-[0.3em]">
-                {currentFolder ? 'Thêm Thư Mục Con' : 'Thêm Mục Lưu Trữ'}
+                {editingFolderId ? 'Sửa Thư Mục' : (currentFolder ? 'Thêm Thư Mục Con' : 'Thêm Mục Lưu Trữ')}
               </h2>
               <button onClick={() => setIsFolderModalOpen(false)} className="text-[10px] font-bold uppercase tracking-widest text-slate-300 hover:text-black transition-colors">Đóng</button>
             </div>
@@ -628,7 +718,7 @@ export default function PersonalVocab() {
                   type="submit"
                   className="w-full py-4 bg-black text-white rounded-xl font-black hover:bg-slate-800 transition-all text-[11px] uppercase tracking-[0.3em]"
                 >
-                  Tạo Thư Mục
+                  {editingFolderId ? 'Cập nhật Thư Mục' : 'Tạo Thư Mục'}
                 </button>
               </div>
             </form>
