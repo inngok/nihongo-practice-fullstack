@@ -147,6 +147,37 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const deleteAccount = async () => {
+    try {
+      const token = localStorage.getItem('nihongo_token');
+      const response = await fetch(`${API_BASE_URL}/users/${currentUser.id}`, {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Xóa tài khoản thất bại');
+      }
+
+      // Clear local authentication state
+      setCurrentUser(null);
+      localStorage.removeItem('nihongo_token');
+      localStorage.removeItem('nihongo_user');
+      
+      messageApi.success({
+        content: 'Tài khoản của bạn đã được xóa hoàn toàn.',
+        duration: 3,
+        style: { marginTop: '10vh' }
+      });
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
+
   const refreshAccessToken = async () => {
     try {
       const refreshToken = localStorage.getItem('nihongo_refresh_token');

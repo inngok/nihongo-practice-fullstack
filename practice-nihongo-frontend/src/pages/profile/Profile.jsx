@@ -5,7 +5,7 @@ import { UserOutlined, MailOutlined, KeyOutlined, TrophyOutlined, EyeOutlined, E
 import { message, Modal } from 'antd';
 
 export default function Profile() {
-  const { currentUser, updateProfile } = useAuth();
+  const { currentUser, updateProfile, deleteAccount } = useAuth();
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
@@ -52,6 +52,29 @@ export default function Profile() {
         } catch (err) {
           console.error(err);
           message.error(err.message || 'Cập nhật hồ sơ thất bại.');
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
+  };
+
+  const handleDeleteAccount = () => {
+    Modal.confirm({
+      title: 'Xóa tài khoản vĩnh viễn',
+      content: 'Bạn có chắc chắn muốn xóa tài khoản này không? Hành động này cực kỳ nguy hiểm, toàn bộ lịch sử rèn luyện và tiến độ học tập của bạn sẽ bị xóa sạch và KHÔNG THỂ KHÔI PHỤC.',
+      okText: 'Tôi đồng ý xóa',
+      cancelText: 'Hủy bỏ',
+      okButtonProps: { className: 'bg-red-500 text-white hover:bg-red-600 border-red-500 font-bold rounded-lg' },
+      cancelButtonProps: { className: 'font-bold rounded-lg' },
+      onOk: async () => {
+        setLoading(true);
+        try {
+          await deleteAccount();
+          navigate('/login');
+        } catch (err) {
+          console.error(err);
+          message.error(err.message || 'Xóa tài khoản thất bại.');
         } finally {
           setLoading(false);
         }
@@ -241,6 +264,29 @@ export default function Profile() {
           </div>
 
         </form>
+
+        {/* Section 4: Danger Zone */}
+        <div className="pt-8 border-t border-slate-100 space-y-4 pb-12">
+          <h3 className="text-[10px] font-black tracking-widest text-red-500 uppercase pb-2 border-b border-red-50">
+            Khu vực nguy hiểm
+          </h3>
+          <div className="bg-red-50/30 border border-red-100 rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider">Xóa tài khoản của bạn</h4>
+              <p className="text-[10px] text-slate-400 font-semibold leading-relaxed mt-1">
+                Một khi đã xóa tài khoản, mọi tiến trình học tập, lịch sử ôn tập và thông tin cá nhân của bạn sẽ bị hủy bỏ vĩnh viễn và không thể khôi phục lại.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleDeleteAccount}
+              className="px-5 py-3.5 bg-white border border-red-200 hover:bg-red-500 hover:text-white hover:border-red-500 text-red-500 rounded-xl font-bold text-[10px] transition-all uppercase tracking-widest whitespace-nowrap active:scale-95"
+            >
+              Xóa tài khoản
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   );
