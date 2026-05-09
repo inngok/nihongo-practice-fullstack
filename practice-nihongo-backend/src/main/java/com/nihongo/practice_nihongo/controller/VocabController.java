@@ -5,6 +5,7 @@ import com.nihongo.practice_nihongo.service.VocabService;
 import com.nihongo.practice_nihongo.repository.UserRepository;
 import com.nihongo.practice_nihongo.model.User;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -73,18 +74,21 @@ public class VocabController {
 
     @Operation(summary = "Thêm từ vựng mới")
     @PostMapping
-    public Vocab createVocab(@RequestBody Vocab vocab) {
+    public ResponseEntity<Vocab> createVocab(@RequestBody Vocab vocab) {
         User currentUser = getCurrentUser();
-        if (currentUser != null) {
-            // Nếu từ vựng KHÔNG thuộc giáo trình nào (bookId null), nó là sổ tay cá nhân
-            if (vocab.getBook() == null || vocab.getBook().getId() == null) {
-                vocab.setUser(currentUser);
-            } else {
-                // Nếu thuộc giáo trình, nó là từ vựng hệ thống dùng chung cho tất cả user
-                vocab.setUser(null);
-            }
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return vocabService.createVocab(vocab);
+        
+        // Nếu từ vựng KHÔNG thuộc giáo trình nào (bookId null), nó là sổ tay cá nhân
+        if (vocab.getBook() == null || vocab.getBook().getId() == null) {
+            vocab.setUser(currentUser);
+        } else {
+            // Nếu thuộc giáo trình, nó là từ vựng hệ thống dùng chung cho tất cả user
+            vocab.setUser(null);
+        }
+        
+        return ResponseEntity.ok(vocabService.createVocab(vocab));
     }
 
     @Operation(summary = "Thêm nhiều từ vựng cùng lúc (Bulk Insert)")
@@ -96,6 +100,27 @@ public class VocabController {
     @Operation(summary = "Cập nhật từ vựng")
     @PutMapping("/{id:[0-9]+}")
     public ResponseEntity<Vocab> updateVocab(@PathVariable Long id, @RequestBody Vocab vocab) {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Vocab existing = vocabService.getVocabById(id);
+        if (existing == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
+        if (existing.getUser() != null) {
+            if (!existing.getUser().getId().equals(currentUser.getId()) && !isAdmin) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } else {
+            if (!isAdmin) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
+
         Vocab updated = vocabService.updateVocab(id, vocab);
         return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
     }
@@ -103,6 +128,27 @@ public class VocabController {
     @Operation(summary = "Xóa từ vựng")
     @DeleteMapping("/{id:[0-9]+}")
     public ResponseEntity<Void> deleteVocab(@PathVariable Long id) {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Vocab existing = vocabService.getVocabById(id);
+        if (existing == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
+        if (existing.getUser() != null) {
+            if (!existing.getUser().getId().equals(currentUser.getId()) && !isAdmin) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        } else {
+            if (!isAdmin) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
+
         vocabService.deleteVocab(id);
         return ResponseEntity.ok().build();
     }

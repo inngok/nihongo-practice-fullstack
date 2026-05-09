@@ -122,7 +122,7 @@ public class AiService {
     }
 
     private String callGemini(String prompt) throws Exception {
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
 
         Map<String, Object> requestBody = Map.of(
             "contents", List.of(
