@@ -23,6 +23,10 @@ const PersonalVocab = lazy(() => import("../pages/vocabulary/PersonalVocab"));
 
 // Kanji
 const Kanji = lazy(() => import("../pages/kanji/Kanji"));
+const KanjiSet4 = lazy(() => import("../pages/kanji/KanjiSet4"));
+
+// Flashcards
+const Flashcards = lazy(() => import("../pages/flashcard/Flashcards"));
 
 
 // Exams & Specialized
@@ -37,6 +41,7 @@ const Translator = lazy(() => import("../pages/translator/Translator"));
 const Tips = lazy(() => import("../pages/tips/Tips"));
 
 // Admin Management
+const Dashboard = lazy(() => import("../pages/manage/Dashboard"));
 const GrammarManager = lazy(() => import("../pages/manage/GrammarManager"));
 const BookManager = lazy(() => import("../pages/manage/BookManager"));
 const VocabManager = lazy(() => import("../pages/manage/VocabManager"));
@@ -128,6 +133,7 @@ export default function RouteMap() {
         {/* Kanji Section */}
         <Route path="kanji">
           <Route index element={<Kanji />} />
+          <Route path="set-4" element={<KanjiSet4 />} />
         </Route>
 
         {/* Exams & Study Tools */}
@@ -149,12 +155,14 @@ export default function RouteMap() {
 
         <Route path="translator" element={<Translator />} />
         <Route path="tips" element={<Tips />} />
+        <Route path="flashcards" element={<Flashcards />} />
         <Route path="*" element={<Fallback />} />
       </Route>
 
       {/* Admin Management Routes */}
       <Route path="manage" element={<AdminRoute />}>
         <Route element={<AdminLayout />}>
+          <Route index element={<Dashboard />} />
           <Route path="users" element={<UserManager />} />
           <Route path="import" element={<DataImporter />} />
           {/* Legacy/Deep paths for management */}

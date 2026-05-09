@@ -10,7 +10,8 @@ export default function Grammar() {
   useEffect(() => {
     bookService.getAll()
       .then(res => {
-        setBooks(res.data);
+        const grammarBooks = res.data.filter(book => book.type && book.type.includes('GRAMMAR'));
+        setBooks(grammarBooks);
       })
       .catch(console.error)
       .finally(() => setLoading(false));

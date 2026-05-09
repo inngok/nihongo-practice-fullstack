@@ -9,7 +9,10 @@ export default function Kanji() {
 
   useEffect(() => {
     bookService.getAll()
-      .then(res => setBooks(res.data))
+      .then(res => {
+        const kanjiBooks = res.data.filter(book => book.type && book.type.includes('KANJI'));
+        setBooks(kanjiBooks);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);

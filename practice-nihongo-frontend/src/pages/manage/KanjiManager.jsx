@@ -29,7 +29,8 @@ export default function KanjiManager() {
     examples: '',
     bookId: '',
     week: '',
-    day: ''
+    day: '',
+    page: ''
   });
 
   useEffect(() => {
@@ -37,6 +38,25 @@ export default function KanjiManager() {
     if (bookIdParam) {
       setSelectedBookId(bookIdParam);
     }
+
+    // Listen for real-time cross-tab synchronization messages
+    let channel;
+    try {
+      channel = new BroadcastChannel('nihongo-sync-channel');
+      channel.onmessage = (event) => {
+        if (event.data && event.data.type === 'BOOKS_UPDATED') {
+          fetchData();
+        }
+      };
+    } catch (err) {
+      console.warn('BroadcastChannel failed to initialize:', err);
+    }
+
+    return () => {
+      if (channel) {
+        channel.close();
+      }
+    };
   }, [bookIdParam]);
 
   // Filtered List
@@ -53,7 +73,7 @@ export default function KanjiManager() {
         bookService.getAll()
       ]);
       setKanjis(kanjiRes.data);
-      setBooks(bookRes.data);
+      setBooks(bookRes.data.filter(b => b.type && b.type.includes('KANJI')));
       setError(null);
     } catch (err) {
       setError('Không thể tải dữ liệu.');
@@ -78,7 +98,8 @@ export default function KanjiManager() {
       examples: '',
       bookId: '',
       week: '',
-      day: ''
+      day: '',
+      page: ''
     });
     setEditingId(null);
   };
@@ -102,7 +123,8 @@ export default function KanjiManager() {
       examples: kanji.examples,
       bookId: kanji.book?.id || '',
       week: kanji.week || '',
-      day: kanji.day || ''
+      day: kanji.day || '',
+      page: kanji.page || ''
     });
     setEditingId(kanji.id);
     setIsModalOpen(true);
@@ -156,15 +178,18 @@ export default function KanjiManager() {
     <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500">
       <div className="max-w-7xl mx-auto">
         
-        {/* Simple Header */}
-        <div className="flex justify-between items-center mb-12">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Hán tự</h1>
-            <p className="text-slate-400 text-[13px] font-medium">Hệ thống dữ liệu Kanji & Hán Việt</p>
+        {/* Minimalist Monochrome Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-slate-100">
+          <div className="space-y-1.5">
+            <div className="flex items-baseline gap-2">
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Hán tự</h1>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">/ Kanji</span>
+            </div>
+            <p className="text-slate-400 text-xs font-medium">Hệ thống dữ liệu Kanji & Hán Việt chi tiết</p>
           </div>
           <button 
             onClick={openAddModal} 
-            className="bg-black text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all shadow-sm flex items-center gap-2"
+            className="bg-black text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all shadow-sm flex items-center gap-2 self-start md:self-auto"
           >
             <PlusOutlined className="text-[10px]" />
             Thêm mới
@@ -210,6 +235,7 @@ export default function KanjiManager() {
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Hán Việt</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Âm On/Kun</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Ý nghĩa</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Giáo trình</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-right">Hành động</th>
                 </tr>
               </thead>
@@ -229,6 +255,11 @@ export default function KanjiManager() {
                       </div>
                     </td>
                     <td className="px-6 py-5 text-slate-500 text-[13px] italic">{item.meaning}</td>
+                    <td className="px-6 py-5">
+                      <span className="text-[10px] font-bold text-slate-500 bg-slate-100/70 text-slate-600 px-2.5 py-1.5 rounded-lg uppercase tracking-wider">
+                        {item.book?.title || 'Chưa phân loại'}{item.page ? ` • Trang ${item.page}` : ''}
+                      </span>
+                    </td>
                     <td className="px-6 py-5 text-right">
                       <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
@@ -314,18 +345,24 @@ export default function KanjiManager() {
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ví dụ (Một ví dụ mỗi dòng)</label>
                 <textarea name="examples" value={formData.examples} onChange={handleInputChange} rows="3" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none" placeholder="Ví dụ: &#10;一人: một người&#10;二人: hai người"></textarea>
               </div>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tuần (1-10)</label>
                   <select name="week" value={formData.week} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                    <option value="">-- Chọn --</option>
                     {[...Array(10)].map((_, i) => <option key={i+1} value={i+1}>Tuần {i+1}</option>)}
                   </select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ngày (1-7)</label>
                   <select name="day" value={formData.day} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
+                    <option value="">-- Chọn --</option>
                     {[...Array(7)].map((_, i) => <option key={i+1} value={i+1}>Ngày {i+1}</option>)}
                   </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Số Trang</label>
+                  <input type="number" name="page" value={formData.page} onChange={handleInputChange} placeholder="Ví dụ: 15" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
                 </div>
               </div>
               <div className="pt-4 flex gap-4">

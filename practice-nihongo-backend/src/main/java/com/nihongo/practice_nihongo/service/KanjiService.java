@@ -7,6 +7,8 @@ import com.nihongo.practice_nihongo.repository.BookRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+
 
 @Service
 public class KanjiService {
@@ -45,9 +47,31 @@ public class KanjiService {
 
     public List<Kanji> createKanjisBulk(List<Kanji> kanjis) {
         for (Kanji kanji : kanjis) {
-            if (kanji.getBook() != null && kanji.getBook().getId() != null) {
-                Book book = bookRepository.findById(kanji.getBook().getId()).orElse(null);
-                kanji.setBook(book);
+            Optional<Kanji> existingOpt = kanjiRepository.findByCharacter(kanji.getCharacter());
+            if (existingOpt.isPresent()) {
+                Kanji existing = existingOpt.get();
+                existing.setHanviet(kanji.getHanviet());
+                existing.setMeaning(kanji.getMeaning());
+                if (kanji.getKunyomi() != null) existing.setKunyomi(kanji.getKunyomi());
+                if (kanji.getOnyomi() != null) existing.setOnyomi(kanji.getOnyomi());
+                if (kanji.getExamples() != null) existing.setExamples(kanji.getExamples());
+                if (kanji.getWeek() != null) existing.setWeek(kanji.getWeek());
+                if (kanji.getDay() != null) existing.setDay(kanji.getDay());
+                if (kanji.getPage() != null) existing.setPage(kanji.getPage());
+                
+                if (kanji.getBook() != null && kanji.getBook().getId() != null) {
+                    Book book = bookRepository.findById(kanji.getBook().getId()).orElse(null);
+                    existing.setBook(book);
+                }
+                
+                // Map fields over to ensure JPA updates the existing record
+                kanji.setId(existing.getId());
+                kanji.setBook(existing.getBook());
+            } else {
+                if (kanji.getBook() != null && kanji.getBook().getId() != null) {
+                    Book book = bookRepository.findById(kanji.getBook().getId()).orElse(null);
+                    kanji.setBook(book);
+                }
             }
         }
         return kanjiRepository.saveAll(kanjis);

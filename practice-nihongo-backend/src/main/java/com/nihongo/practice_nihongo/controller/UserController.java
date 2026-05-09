@@ -10,13 +10,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
 @CrossOrigin(origins = "*")
-@Tag(name = "User Management")
 public class UserController {
 
     @Autowired
@@ -25,11 +24,13 @@ public class UserController {
     @Autowired
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
+    @Operation(summary = "Lấy danh sách tất cả người dùng")
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userRepository.findAll());
     }
 
+    @Operation(summary = "Thêm người dùng mới")
     @PostMapping
     public ResponseEntity<?> createUser(@org.springframework.web.bind.annotation.RequestBody User user) {
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -44,6 +45,7 @@ public class UserController {
         return ResponseEntity.ok(userRepository.save(user));
     }
 
+    @Operation(summary = "Cập nhật thông tin người dùng")
     @org.springframework.web.bind.annotation.PutMapping("/{id}")
     public ResponseEntity<?> updateUser(@org.springframework.web.bind.annotation.PathVariable Long id, @org.springframework.web.bind.annotation.RequestBody User userDetails) {
         return userRepository.findById(id).map(user -> {
@@ -60,6 +62,7 @@ public class UserController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Xóa người dùng")
     @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@org.springframework.web.bind.annotation.PathVariable Long id) {
         return userRepository.findById(id).map(user -> {

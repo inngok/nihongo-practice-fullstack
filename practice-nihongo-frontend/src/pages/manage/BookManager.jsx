@@ -4,6 +4,19 @@ import bookService from '../../api/bookService';
 import { Modal, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 
+// Static lookup maps for premium typographical tags, eliminating conditional if-else branches in JSX
+const CATEGORY_STYLES = {
+  KANJI: 'bg-amber-50 text-amber-600 border-amber-100',
+  GRAMMAR: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+  VOCABULARY: 'bg-emerald-50 text-emerald-600 border-emerald-100'
+};
+
+const CATEGORY_LABELS = {
+  KANJI: 'Hán Tự',
+  GRAMMAR: 'Ngữ Pháp',
+  VOCABULARY: 'Từ Vựng'
+};
+
 export default function BookManager() {
   const navigate = useNavigate();
   const [books, setBooks] = useState([]);
@@ -17,7 +30,8 @@ export default function BookManager() {
     title: '',
     japaneseTitle: '',
     levelLabel: '',
-    num: ''
+    num: '',
+    types: ['VOCABULARY']
   });
 
   useEffect(() => {
@@ -48,7 +62,8 @@ export default function BookManager() {
       title: '',
       japaneseTitle: '',
       levelLabel: '',
-      num: ''
+      num: '',
+      types: ['VOCABULARY']
     });
     setEditingId(null);
   };
@@ -59,11 +74,13 @@ export default function BookManager() {
   };
 
   const openEditModal = (book) => {
+    const bookTypes = book.type ? book.type.split(',') : ['VOCABULARY'];
     setFormData({
       title: book.title,
       japaneseTitle: book.japaneseTitle,
       levelLabel: book.levelLabel,
-      num: book.num
+      num: book.num,
+      types: bookTypes
     });
     setEditingId(book.id);
     setIsModalOpen(true);
@@ -72,15 +89,32 @@ export default function BookManager() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const payload = {
+        title: formData.title,
+        japaneseTitle: formData.japaneseTitle,
+        levelLabel: formData.levelLabel,
+        num: formData.num,
+        type: formData.types.join(',')
+      };
+
       if (editingId) {
-        await bookService.update(editingId, formData);
+        await bookService.update(editingId, payload);
       } else {
-        await bookService.create(formData);
+        await bookService.create(payload);
       }
       setIsModalOpen(false);
       resetForm();
       fetchBooks();
       message.success(editingId ? 'Cập nhật giáo trình thành công!' : 'Thêm giáo trình mới thành công!');
+
+      // Broadcast update to other open tabs
+      try {
+        const channel = new BroadcastChannel('nihongo-sync-channel');
+        channel.postMessage({ type: 'BOOKS_UPDATED' });
+        channel.close();
+      } catch (broadcastErr) {
+        console.warn('Failed to broadcast sync event:', broadcastErr);
+      }
     } catch (err) {
       message.error('Đã có lỗi xảy ra!');
       console.error(err);
@@ -99,6 +133,15 @@ export default function BookManager() {
           await bookService.delete(id);
           fetchBooks();
           message.success('Đã xóa giáo trình');
+
+          // Broadcast update to other open tabs
+          try {
+            const channel = new BroadcastChannel('nihongo-sync-channel');
+            channel.postMessage({ type: 'BOOKS_UPDATED' });
+            channel.close();
+          } catch (broadcastErr) {
+            console.warn('Failed to broadcast sync event:', broadcastErr);
+          }
         } catch (err) {
           message.error('Không thể xóa giáo trình này.');
           console.error(err);
@@ -111,15 +154,18 @@ export default function BookManager() {
     <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500">
       <div className="max-w-7xl mx-auto">
         
-        {/* Simple Header */}
-        <div className="flex justify-between items-center mb-12">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Giáo trình</h1>
-            <p className="text-slate-400 text-[13px] font-medium">Danh mục sách và tài liệu học tập</p>
+        {/* Minimalist Monochrome Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-slate-100">
+          <div className="space-y-1.5">
+            <div className="flex items-baseline gap-2">
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Giáo trình</h1>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">/ Textbooks</span>
+            </div>
+            <p className="text-slate-400 text-xs font-medium">Danh mục sách và tài liệu học tập hệ thống</p>
           </div>
           <button
             onClick={openAddModal}
-            className="bg-black text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all shadow-sm flex items-center gap-2"
+            className="bg-black text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all shadow-sm flex items-center gap-2 self-start md:self-auto"
           >
             <PlusOutlined className="text-[10px]" />
             Thêm mới
@@ -138,6 +184,7 @@ export default function BookManager() {
                 <tr className="bg-slate-50 border-b border-slate-100">
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">STT</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Tên giáo trình</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Phân loại</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Nhãn level</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-right">Hành động</th>
                 </tr>
@@ -150,6 +197,19 @@ export default function BookManager() {
                       <td className="px-6 py-5">
                         <div className="font-bold text-slate-900 leading-tight">{item.title}</div>
                         <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{item.japaneseTitle}</div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex flex-wrap gap-1.5">
+                          {item.type && item.type.split(',').map(t => {
+                            const styleClass = CATEGORY_STYLES[t] || CATEGORY_STYLES.VOCABULARY;
+                            const labelText = CATEGORY_LABELS[t] || CATEGORY_LABELS.VOCABULARY;
+                            return (
+                              <span key={t} className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${styleClass}`}>
+                                {labelText}
+                              </span>
+                            );
+                          })}
+                        </div>
                       </td>
                       <td className="px-6 py-5">
                         <span className="text-[10px] font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded">
@@ -253,6 +313,43 @@ export default function BookManager() {
                 />
               </div>
 
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Phân loại giáo trình (Chọn nhiều loại nếu sách tích hợp)</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { key: 'VOCABULARY', label: 'Từ Vựng' },
+                    { key: 'KANJI', label: 'Hán Tự' },
+                    { key: 'GRAMMAR', label: 'Ngữ Pháp' }
+                  ].map(item => {
+                    const isActive = formData.types.includes(item.key);
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => {
+                          const newTypes = isActive
+                            ? formData.types.filter(t => t !== item.key)
+                            : [...formData.types, item.key];
+                          // Ensure at least one category is checked
+                          if (newTypes.length > 0) {
+                            setFormData(prev => ({ ...prev, types: newTypes }));
+                          } else {
+                            message.warning('Giáo trình phải thuộc ít nhất một phân loại!');
+                          }
+                        }}
+                        className={`py-3 rounded-xl font-bold text-xs uppercase tracking-wider border transition-all ${
+                          isActive
+                            ? 'bg-black text-white border-black'
+                            : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Nhãn Level (Hiển thị ở trang chủ)</label>
                 <select
@@ -260,7 +357,7 @@ export default function BookManager() {
                   value={formData.levelLabel}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none font-bold text-xs"
                 >
                   <option value="">-- Chọn level --</option>
                   {['N1', 'N2', 'N3', 'N4', 'N5'].map(lvl => (

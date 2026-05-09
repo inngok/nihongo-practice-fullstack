@@ -14,14 +14,37 @@ public class BookService {
     private BookRepository bookRepository;
 
     public List<Book> getAllBooks() {
-        return bookRepository.findAll();
+        List<Book> books = bookRepository.findAll();
+        boolean needsUpdate = false;
+        for (Book book : books) {
+            if (book.getType() == null) {
+                String titleLower = book.getTitle().toLowerCase();
+                if (titleLower.contains("hán tự") || titleLower.contains("kanji") || titleLower.contains("chữ hán")) {
+                    book.setType("KANJI");
+                } else if (titleLower.contains("ngữ pháp") || titleLower.contains("grammar") || titleLower.contains("cấu trúc")) {
+                    book.setType("GRAMMAR");
+                } else {
+                    book.setType("VOCABULARY");
+                }
+                bookRepository.save(book);
+            }
+        }
+        return books;
     }
 
     public Book getBookById(Long id) {
-        return bookRepository.findById(id).orElseThrow(() -> new RuntimeException("Book not found with id: " + id));
+        Book book = bookRepository.findById(id).orElseThrow(() -> new RuntimeException("Book not found with id: " + id));
+        if (book.getType() == null) {
+            book.setType("VOCABULARY");
+            bookRepository.save(book);
+        }
+        return book;
     }
 
     public Book createBook(Book book) {
+        if (book.getType() == null) {
+            book.setType("VOCABULARY");
+        }
         return bookRepository.save(book);
     }
 
@@ -31,6 +54,7 @@ public class BookService {
         book.setJapaneseTitle(bookDetails.getJapaneseTitle());
         book.setLevelLabel(bookDetails.getLevelLabel());
         book.setNum(bookDetails.getNum());
+        book.setType(bookDetails.getType() != null ? bookDetails.getType() : "VOCABULARY");
         return bookRepository.save(book);
     }
 
