@@ -17,27 +17,75 @@ export default function Header() {
           Nihongo
         </Link>
 
-        {isAdmin && (
-          <Dropdown
-            menu={{
-              items: [
-                { key: '1', label: <Link to="/grammar/manage" className="font-bold text-slate-600">Ngữ pháp</Link>, icon: <SettingOutlined /> },
-                { key: 'vocab', label: <Link to="/vocabulary/manage" className="font-bold text-slate-600">Từ vựng</Link>, icon: <DatabaseOutlined /> },
-                { key: '2', label: <Link to="/manage/users" className="font-bold text-slate-600">Người dùng</Link>, icon: <UserOutlined /> },
-                { key: 'divider', type: 'divider' },
-                { key: '3', label: <Link to="/manage/import" className="font-bold text-slate-600">Import dữ liệu</Link>, icon: <ImportOutlined /> },
-                { key: '4', label: <Link to="/grammar/books" className="font-bold text-slate-600">Bộ sách</Link>, icon: <DatabaseOutlined /> },
-              ],
-              className: "p-2 rounded-2xl shadow-2xl border border-slate-50"
-            }}
-            trigger={['hover']}
-          >
-            <a onClick={(e) => e.preventDefault()} className="transition-all whitespace-nowrap py-1.5 px-4 bg-black text-white hover:bg-slate-800 rounded-xl font-bold uppercase text-[9px] tracking-widest cursor-pointer flex items-center gap-2 shadow-lg shadow-black/10">
-              Quản lý
-              <DownOutlined className="text-[7px]" />
-            </a>
-          </Dropdown>
-        )}
+        {/* Right side controls on mobile */}
+        <div className="flex items-center gap-3 md:gap-6">
+          {isAdmin && (
+            <Dropdown
+              menu={{
+                items: [
+                  { key: '1', label: <Link to="/grammar/manage" className="font-bold text-slate-600">Ngữ pháp</Link>, icon: <SettingOutlined /> },
+                  { key: 'vocab', label: <Link to="/vocabulary/manage" className="font-bold text-slate-600">Từ vựng</Link>, icon: <DatabaseOutlined /> },
+                  { key: '2', label: <Link to="/manage/users" className="font-bold text-slate-600">Người dùng</Link>, icon: <UserOutlined /> },
+                  { key: 'divider', type: 'divider' },
+                  { key: '3', label: <Link to="/manage/import" className="font-bold text-slate-600">Import dữ liệu</Link>, icon: <ImportOutlined /> },
+                  { key: '4', label: <Link to="/grammar/books" className="font-bold text-slate-600">Bộ sách</Link>, icon: <DatabaseOutlined /> },
+                ],
+                className: "p-2 rounded-2xl shadow-2xl border border-slate-50"
+              }}
+              trigger={['hover', 'click']}
+            >
+              <a onClick={(e) => e.preventDefault()} className="transition-all whitespace-nowrap py-1.5 px-3 md:px-4 bg-black text-white hover:bg-slate-800 rounded-xl font-bold uppercase text-[9px] tracking-widest cursor-pointer flex items-center gap-1.5 shadow-lg shadow-black/10">
+                Quản lý
+                <DownOutlined className="text-[7px]" />
+              </a>
+            </Dropdown>
+          )}
+
+          {/* Auth controls for mobile */}
+          <div className="flex md:hidden items-center gap-2">
+            {currentUser ? (
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: 'profile',
+                      label: (
+                        <div className="px-2 py-1 flex flex-col gap-0.5 border-b border-slate-50">
+                          <span className="font-bold text-slate-800 text-xs">{currentUser.name}</span>
+                          <span className="text-[9px] text-slate-400 uppercase tracking-widest">{currentUser.role || 'USER'}</span>
+                        </div>
+                      )
+                    },
+                    {
+                      key: 'logout',
+                      label: (
+                        <button onClick={logout} className="w-full text-left font-bold text-red-500 hover:text-red-700 text-xs">
+                          Đăng xuất
+                        </button>
+                      ),
+                      icon: <ImportOutlined className="text-red-500" />
+                    }
+                  ],
+                  className: "p-2 rounded-2xl shadow-2xl border border-slate-50"
+                }}
+                trigger={['click']}
+              >
+                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-black border border-slate-200 cursor-pointer text-xs font-bold uppercase">
+                  {currentUser.name?.charAt(0).toUpperCase()}
+                </div>
+              </Dropdown>
+            ) : (
+              <>
+                <Link to="/login" className="text-slate-400 hover:text-black transition-colors text-[10px] font-black uppercase tracking-widest py-1 px-2">
+                  Đăng nhập
+                </Link>
+                <Link to="/register" className="bg-black text-white px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors text-[10px] font-black uppercase tracking-widest">
+                  Đăng ký
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
       <nav className="flex items-center gap-4 md:gap-8 text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-400 overflow-x-auto no-scrollbar w-full md:w-auto justify-center">

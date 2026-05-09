@@ -106,6 +106,15 @@ export default function BookManager() {
       resetForm();
       fetchBooks();
       message.success(editingId ? 'Cập nhật giáo trình thành công!' : 'Thêm giáo trình mới thành công!');
+
+      // Broadcast update to other open tabs
+      try {
+        const channel = new BroadcastChannel('nihongo-sync-channel');
+        channel.postMessage({ type: 'BOOKS_UPDATED' });
+        channel.close();
+      } catch (broadcastErr) {
+        console.warn('Failed to broadcast sync event:', broadcastErr);
+      }
     } catch (err) {
       message.error('Đã có lỗi xảy ra!');
       console.error(err);
@@ -124,6 +133,15 @@ export default function BookManager() {
           await bookService.delete(id);
           fetchBooks();
           message.success('Đã xóa giáo trình');
+
+          // Broadcast update to other open tabs
+          try {
+            const channel = new BroadcastChannel('nihongo-sync-channel');
+            channel.postMessage({ type: 'BOOKS_UPDATED' });
+            channel.close();
+          } catch (broadcastErr) {
+            console.warn('Failed to broadcast sync event:', broadcastErr);
+          }
         } catch (err) {
           message.error('Không thể xóa giáo trình này.');
           console.error(err);
@@ -136,15 +154,18 @@ export default function BookManager() {
     <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500">
       <div className="max-w-7xl mx-auto">
         
-        {/* Simple Header */}
-        <div className="flex justify-between items-center mb-12">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Giáo trình</h1>
-            <p className="text-slate-400 text-[13px] font-medium">Danh mục sách và tài liệu học tập</p>
+        {/* Minimalist Monochrome Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-slate-100">
+          <div className="space-y-1.5">
+            <div className="flex items-baseline gap-2">
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Giáo trình</h1>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">/ Textbooks</span>
+            </div>
+            <p className="text-slate-400 text-xs font-medium">Danh mục sách và tài liệu học tập hệ thống</p>
           </div>
           <button
             onClick={openAddModal}
-            className="bg-black text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all shadow-sm flex items-center gap-2"
+            className="bg-black text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all shadow-sm flex items-center gap-2 self-start md:self-auto"
           >
             <PlusOutlined className="text-[10px]" />
             Thêm mới

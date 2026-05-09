@@ -19,6 +19,32 @@ export default function DataImporter() {
 
   useEffect(() => {
     fetchBooks();
+
+    // Listen for window focus to auto-refresh the book list (e.g., if a book was added in another tab)
+    const handleWindowFocus = () => {
+      fetchBooks();
+    };
+
+    // Listen for real-time cross-tab synchronization messages
+    let channel;
+    try {
+      channel = new BroadcastChannel('nihongo-sync-channel');
+      channel.onmessage = (event) => {
+        if (event.data && event.data.type === 'BOOKS_UPDATED') {
+          fetchBooks();
+        }
+      };
+    } catch (err) {
+      console.warn('BroadcastChannel failed to initialize:', err);
+    }
+
+    window.addEventListener('focus', handleWindowFocus);
+    return () => {
+      window.removeEventListener('focus', handleWindowFocus);
+      if (channel) {
+        channel.close();
+      }
+    };
   }, []);
 
   // Reset selected textbook when toggling import data categories (Kanji vs Vocab)
@@ -275,14 +301,26 @@ export default function DataImporter() {
       <div className="w-full max-w-5xl">
         {contextHolder}
         
-        {/* Header Section */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
-            Quản lý dữ liệu
-          </h1>
-          <p className="text-sm text-slate-500 max-w-xl leading-relaxed">
-            Sử dụng AI để chuẩn hóa và nạp dữ liệu nhanh chóng vào hệ thống.
-          </p>
+        {/* Minimalist Monochrome Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-slate-100">
+          <div className="space-y-1.5">
+            <div className="flex items-baseline gap-2">
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Dữ liệu</h1>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">/ Data Import</span>
+            </div>
+            <p className="text-slate-400 text-xs font-medium">Tự động chuẩn hóa cấu trúc dữ liệu thô bằng AI</p>
+          </div>
+          
+          {/* Connection Status Box */}
+          <div className="flex gap-4 items-center bg-slate-50/50 border border-slate-100 rounded-xl px-5 py-2.5 self-start md:self-auto shadow-sm">
+            <div className="space-y-0.5">
+              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Trạng thái AI</span>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Engine Ready</span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -402,6 +440,7 @@ export default function DataImporter() {
                 placeholder="Chọn giáo trình..."
                 className="w-full h-12"
                 onChange={setSelectedBook}
+                onFocus={fetchBooks}
                 value={selectedBook}
                 options={books
                   .filter(book => {

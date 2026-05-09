@@ -37,6 +37,25 @@ export default function VocabManager() {
     if (bookIdParam) {
       setSelectedBookId(bookIdParam);
     }
+
+    // Listen for real-time cross-tab synchronization messages
+    let channel;
+    try {
+      channel = new BroadcastChannel('nihongo-sync-channel');
+      channel.onmessage = (event) => {
+        if (event.data && event.data.type === 'BOOKS_UPDATED') {
+          fetchData();
+        }
+      };
+    } catch (err) {
+      console.warn('BroadcastChannel failed to initialize:', err);
+    }
+
+    return () => {
+      if (channel) {
+        channel.close();
+      }
+    };
   }, [bookIdParam]);
 
   // Filtered List
@@ -154,13 +173,16 @@ export default function VocabManager() {
     <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500">
       <div className="max-w-7xl mx-auto">
         
-        {/* Simple Header */}
-        <div className="flex justify-between items-center mb-12">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Từ vựng</h1>
-            <p className="text-slate-400 text-[13px] font-medium">Cập nhật kho từ vựng giáo trình</p>
+        {/* Minimalist Monochrome Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-slate-100">
+          <div className="space-y-1.5">
+            <div className="flex items-baseline gap-2">
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Từ vựng</h1>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">/ Vocabulary</span>
+            </div>
+            <p className="text-slate-400 text-xs font-medium">Cập nhật kho từ vựng giáo trình hệ thống</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 self-start md:self-auto">
             <button
               onClick={() => navigate('/grammar/books')}
               className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-50 transition-all shadow-sm"

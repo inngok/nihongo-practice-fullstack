@@ -38,6 +38,25 @@ export default function KanjiManager() {
     if (bookIdParam) {
       setSelectedBookId(bookIdParam);
     }
+
+    // Listen for real-time cross-tab synchronization messages
+    let channel;
+    try {
+      channel = new BroadcastChannel('nihongo-sync-channel');
+      channel.onmessage = (event) => {
+        if (event.data && event.data.type === 'BOOKS_UPDATED') {
+          fetchData();
+        }
+      };
+    } catch (err) {
+      console.warn('BroadcastChannel failed to initialize:', err);
+    }
+
+    return () => {
+      if (channel) {
+        channel.close();
+      }
+    };
   }, [bookIdParam]);
 
   // Filtered List
@@ -159,15 +178,18 @@ export default function KanjiManager() {
     <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500">
       <div className="max-w-7xl mx-auto">
         
-        {/* Simple Header */}
-        <div className="flex justify-between items-center mb-12">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Hán tự</h1>
-            <p className="text-slate-400 text-[13px] font-medium">Hệ thống dữ liệu Kanji & Hán Việt</p>
+        {/* Minimalist Monochrome Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-slate-100">
+          <div className="space-y-1.5">
+            <div className="flex items-baseline gap-2">
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Hán tự</h1>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">/ Kanji</span>
+            </div>
+            <p className="text-slate-400 text-xs font-medium">Hệ thống dữ liệu Kanji & Hán Việt chi tiết</p>
           </div>
           <button 
             onClick={openAddModal} 
-            className="bg-black text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all shadow-sm flex items-center gap-2"
+            className="bg-black text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all shadow-sm flex items-center gap-2 self-start md:self-auto"
           >
             <PlusOutlined className="text-[10px]" />
             Thêm mới
