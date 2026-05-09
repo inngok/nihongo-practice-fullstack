@@ -48,4 +48,22 @@ public class AiController {
             return ResponseEntity.internalServerError().body("Error processing AI request: " + e.getMessage());
         }
     }
+
+    @Operation(summary = "Đàm thoại tiếng Nhật thực tế nhập vai với AI")
+    @PostMapping("/chat")
+    public ResponseEntity<String> chatWithAi(@RequestBody Map<String, Object> request) {
+        String scenario = (String) request.get("scenario");
+        String userMessage = (String) request.get("userMessage");
+        java.util.List<java.util.Map<String, String>> history = (java.util.List<java.util.Map<String, String>>) request.get("history");
+
+        if (userMessage == null || userMessage.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("User message is required");
+        }
+        try {
+            String jsonResult = aiService.generateChatResponse(scenario, history, userMessage);
+            return ResponseEntity.ok(jsonResult);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error processing AI chat: " + e.getMessage());
+        }
+    }
 }

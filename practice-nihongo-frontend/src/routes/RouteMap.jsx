@@ -39,6 +39,8 @@ const ExamVocab = lazy(() => import("../pages/exam/components/ExamVocab"));
 const KanjiPC8Selector = lazy(() => import("../pages/exam/dong-du/KanjiPC8Selector"));
 const Translator = lazy(() => import("../pages/translator/Translator"));
 const Tips = lazy(() => import("../pages/tips/Tips"));
+const AiChat = lazy(() => import("../pages/ai-chat/AiChat"));
+const Profile = lazy(() => import("../pages/profile/Profile"));
 
 // Admin Management
 const Dashboard = lazy(() => import("../pages/manage/Dashboard"));
@@ -156,6 +158,8 @@ export default function RouteMap() {
         <Route path="translator" element={<Translator />} />
         <Route path="tips" element={<Tips />} />
         <Route path="flashcards" element={<Flashcards />} />
+        <Route path="ai-chat" element={<AiChat />} />
+        <Route path="profile" element={<Profile />} />
         <Route path="*" element={<Fallback />} />
       </Route>
 

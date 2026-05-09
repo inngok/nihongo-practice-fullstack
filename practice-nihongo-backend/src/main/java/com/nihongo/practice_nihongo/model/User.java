@@ -32,6 +32,10 @@ public class User {
     @Builder.Default
     private String role = "STUDENT";
 
+    @Column(name = "jlpt_level", columnDefinition = "varchar(10) default 'N3'")
+    @Builder.Default
+    private String jlptLevel = "N3";
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

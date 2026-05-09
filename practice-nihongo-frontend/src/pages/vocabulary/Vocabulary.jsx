@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import bookService from '../../api/bookService';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Vocabulary() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,6 +19,14 @@ export default function Vocabulary() {
       .finally(() => setLoading(false));
   }, []);
 
+  const filteredBooks = books.filter(book => {
+    if (!currentUser) return true; // Show all books if not logged in
+    const bookLevel = book.levelLabel?.toUpperCase() || '';
+    const bookTitle = book.title?.toUpperCase() || '';
+    const bookJpTitle = book.japaneseTitle?.toUpperCase() || '';
+    const targetLvl = currentUser.jlptLevel?.toUpperCase() || 'N3';
+    return bookLevel.includes(targetLvl) || bookTitle.includes(targetLvl) || bookJpTitle.includes(targetLvl);
+  });
 
   return (
     <div className="min-h-screen w-full bg-white flex flex-col items-center pt-24 md:pt-28 pb-16 px-6 font-sans relative overflow-hidden selection:bg-slate-200">
@@ -38,7 +48,7 @@ export default function Vocabulary() {
             Từ vựng
           </h1>
           <p className="text-sm md:text-base text-slate-500 max-w-xl leading-relaxed">
-            Học từ vựng theo giáo trình N3 hiệu quả nhất.
+            Chọn giáo trình từ vựng phù hợp để rèn luyện vốn từ vựng tiếng Nhật của riêng bạn.
           </p>
         </div>
 
@@ -49,7 +59,7 @@ export default function Vocabulary() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {books.map((book) => (
+            {filteredBooks.map((book) => (
               <div
                 key={book.id}
                 onClick={() => navigate(`/vocabulary/study?bookId=${book.id}`)}
@@ -86,9 +96,9 @@ export default function Vocabulary() {
               </div>
             ))}
 
-            {books.length === 0 && (
+            {filteredBooks.length === 0 && (
               <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-100 rounded-3xl">
-                <p className="text-slate-400 font-medium italic">Chưa có giáo trình từ vựng nào.</p>
+                <p className="text-slate-400 font-medium italic">Không tìm thấy giáo trình nào cho trình độ này.</p>
               </div>
             )}
           </div>

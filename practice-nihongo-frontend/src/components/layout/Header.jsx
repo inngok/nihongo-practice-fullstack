@@ -50,27 +50,39 @@ export default function Header() {
                     {
                       key: 'profile',
                       label: (
-                        <div className="px-2 py-1 flex flex-col gap-0.5 border-b border-slate-50">
-                          <span className="font-bold text-slate-800 text-xs">{currentUser.name}</span>
-                          <span className="text-[9px] text-slate-400 uppercase tracking-widest">{currentUser.role || 'USER'}</span>
+                        <div className="px-3 py-2 flex flex-col gap-0.5 border-b border-slate-50 min-w-[140px]">
+                          <span className="font-extrabold text-slate-800 text-xs">{currentUser.name}</span>
+                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                            {isAdmin ? 'Quản trị viên' : 'Học viên'}
+                          </span>
                         </div>
                       )
                     },
                     {
+                      key: 'profile-link',
+                      label: (
+                        <Link to="/profile" className="w-full text-left font-bold text-slate-600 hover:text-black text-xs py-1 transition-colors block">
+                          Hồ sơ của tôi
+                        </Link>
+                      ),
+                      icon: <UserOutlined className="text-slate-400 text-xs" />
+                    },
+                    {
                       key: 'logout',
                       label: (
-                        <button onClick={logout} className="w-full text-left font-bold text-red-500 hover:text-red-700 text-xs">
+                        <button onClick={logout} className="w-full text-left font-bold text-slate-600 hover:text-black text-xs py-1 transition-colors">
                           Đăng xuất
                         </button>
                       ),
-                      icon: <ImportOutlined className="text-red-500" />
+                      icon: <ImportOutlined className="text-slate-400 text-xs" />
                     }
                   ],
-                  className: "p-2 rounded-2xl shadow-2xl border border-slate-50"
+                  className: "p-1.5 rounded-2xl shadow-xl border border-slate-100/50 bg-white"
                 }}
                 trigger={['click']}
+                placement="bottomRight"
               >
-                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-black border border-slate-200 cursor-pointer text-xs font-bold uppercase">
+                <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center cursor-pointer text-xs font-black uppercase tracking-wider shadow-sm transition-all duration-300 select-none">
                   {currentUser.name?.charAt(0).toUpperCase()}
                 </div>
               </Dropdown>
@@ -94,7 +106,10 @@ export default function Header() {
           { path: '/grammar', label: 'Ngữ pháp' },
           { path: '/vocabulary', label: 'Từ vựng' },
           { path: '/kanji', label: 'Hán tự' },
-          ...(currentUser ? [{ path: '/my-vocab', label: 'Sổ tay' }] : []),
+          ...(currentUser ? [
+            { path: '/my-vocab', label: 'Sổ tay' },
+            { path: '/ai-chat', label: 'Đàm thoại AI' }
+          ] : []),
         ].map(nav => (
           <Link
             key={nav.path}
@@ -111,28 +126,48 @@ export default function Header() {
 
       <div className="hidden md:flex flex-1 items-center justify-end gap-4 text-xs font-bold uppercase tracking-widest">
         {currentUser ? (
-          <div className="flex items-center gap-4">
-            <span className="text-slate-600 flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-black border border-slate-200">
-                {currentUser.name?.charAt(0).toUpperCase()}
-              </div>
-              <span className="hidden lg:flex items-center gap-2">
-                {currentUser.name}
-                {isAdmin && (
-                  <span className="px-1.5 py-0.5 border border-slate-200 text-slate-400 rounded text-[7px] font-black tracking-[0.2em] uppercase flex items-center gap-1.5">
-                    <span className="w-1 h-1 bg-slate-400 rounded-full animate-pulse" />
-                    Admin
-                  </span>
-                )}
-              </span>
-            </span>
-            <button
-              onClick={logout}
-              className="text-slate-400 hover:text-black transition-colors"
-            >
-              Đăng xuất
-            </button>
-          </div>
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'profile',
+                  label: (
+                    <div className="px-3 py-2 flex flex-col gap-0.5 border-b border-slate-50 min-w-[150px]">
+                      <span className="font-extrabold text-slate-800 text-xs">{currentUser.name}</span>
+                      <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                        {isAdmin ? 'Quản trị viên' : 'Học viên'}
+                      </span>
+                    </div>
+                  )
+                },
+                {
+                  key: 'profile-link',
+                  label: (
+                    <Link to="/profile" className="w-full text-left font-bold text-slate-600 hover:text-black text-xs py-1 transition-colors block">
+                      Hồ sơ của tôi
+                    </Link>
+                  ),
+                  icon: <UserOutlined className="text-slate-400 text-xs" />
+                },
+                {
+                  key: 'logout',
+                  label: (
+                    <button onClick={logout} className="w-full text-left font-bold text-slate-600 hover:text-black text-xs py-1 transition-colors">
+                      Đăng xuất
+                    </button>
+                  ),
+                  icon: <ImportOutlined className="text-slate-400 text-xs" />
+                }
+              ],
+              className: "p-1.5 rounded-2xl shadow-xl border border-slate-100/50 bg-white"
+            }}
+            trigger={['click', 'hover']}
+            placement="bottomRight"
+          >
+            <div className="w-8 h-8 rounded-full bg-black hover:bg-slate-800 text-white flex items-center justify-center cursor-pointer text-xs font-black uppercase tracking-wider shadow-sm transition-all duration-300 select-none">
+              {currentUser.name?.charAt(0).toUpperCase()}
+            </div>
+          </Dropdown>
         ) : (
           <>
             <Link to="/login" className="text-slate-400 hover:text-black transition-colors">
