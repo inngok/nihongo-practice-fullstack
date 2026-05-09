@@ -1,9 +1,12 @@
 package com.nihongo.practice_nihongo.service;
 
+import com.nihongo.practice_nihongo.model.AiUsage;
+import com.nihongo.practice_nihongo.repository.AiUsageRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -13,33 +16,94 @@ public class AiService {
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final AiUsageRepository aiUsageRepository;
+
+    public AiService(AiUsageRepository aiUsageRepository) {
+        this.aiUsageRepository = aiUsageRepository;
+    }
+
+    private synchronized void recordAiUsage(boolean isSuccess) {
+        try {
+            LocalDate today = LocalDate.now();
+            AiUsage usage = aiUsageRepository.findByUsageDate(today)
+                    .orElseGet(() -> new AiUsage(today));
+            
+            usage.setTotalCalls(usage.getTotalCalls() + 1);
+            if (isSuccess) {
+                usage.setSuccessCalls(usage.getSuccessCalls() + 1);
+            } else {
+                usage.setFailCalls(usage.getFailCalls() + 1);
+            }
+            aiUsageRepository.save(usage);
+        } catch (Exception e) {
+            System.err.println("Error saving AI usage stats to database: " + e.getMessage());
+        }
+    }
+
+    public Map<String, Object> getAiUsageStats() {
+        LocalDate today = LocalDate.now();
+        AiUsage usage = aiUsageRepository.findByUsageDate(today)
+                .orElseGet(() -> new AiUsage(today));
+
+        int limit = 1500; // Gemini RPD limit
+        int used = usage.getTotalCalls();
+        int remaining = Math.max(0, limit - used);
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("used", used);
+        stats.put("success", usage.getSuccessCalls());
+        stats.put("fail", usage.getFailCalls());
+        stats.put("limit", limit);
+        stats.put("remaining", remaining);
+        stats.put("rpmLimit", 15);
+        stats.put("isKeyConfigured", apiKey != null && !apiKey.trim().isEmpty());
+        return stats;
+    }
 
     public String formatDataForImport(String rawData, String type) throws Exception {
-        if (apiKey == null || apiKey.isEmpty()) {
-            // Fallback for demo if no API key is provided
-            return simulateAiProcessing(rawData, type);
-        }
+        try {
+            if (apiKey == null || apiKey.isEmpty()) {
+                // Fallback for demo if no API key is provided
+                String res = simulateAiProcessing(rawData, type);
+                recordAiUsage(true);
+                return res;
+            }
 
-        String prompt = buildPrompt(rawData, type);
-        return callGemini(prompt);
+            String prompt = buildPrompt(rawData, type);
+            String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res;
+        } catch (Exception e) {
+            recordAiUsage(false);
+            throw e;
+        }
     }
 
     public String generateVocabDetails(String word) throws Exception {
-        if (apiKey == null || apiKey.isEmpty()) {
-            return simulateVocabGeneration(word);
+        try {
+            if (apiKey == null || apiKey.isEmpty()) {
+                String res = simulateVocabGeneration(word);
+                recordAiUsage(true);
+                return res;
+            }
+            String prompt = "You are a professional Japanese teacher. For the Japanese word or phrase provided, " +
+                    "generate its reading, Vietnamese meaning, a natural Japanese example sentence, and the Vietnamese translation of that example sentence. " +
+                    "Return the response strictly as a JSON object with the following keys:\n" +
+                    "{\n" +
+                    "  \"reading\": \"(only hiragana/katakana representation, no kanji, no spaces)\",\n" +
+                    "  \"meaning\": \"(Vietnamese translation)\",\n" +
+                    "  \"example\": \"(natural Japanese example sentence containing the word)\",\n" +
+                    "  \"exampleMeaning\": \"(Vietnamese translation of the example sentence)\"\n" +
+                    "}\n" +
+                    "Do not include any formatting, markdown, or other text except the clean JSON object.\n" +
+                    "Word: " + word;
+            String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res;
+        } catch (Exception e) {
+            recordAiUsage(false);
+            throw e;
         }
-        String prompt = "You are a professional Japanese teacher. For the Japanese word or phrase provided, " +
-                "generate its reading, Vietnamese meaning, a natural Japanese example sentence, and the Vietnamese translation of that example sentence. " +
-                "Return the response strictly as a JSON object with the following keys:\n" +
-                "{\n" +
-                "  \"reading\": \"(only hiragana/katakana representation, no kanji, no spaces)\",\n" +
-                "  \"meaning\": \"(Vietnamese translation)\",\n" +
-                "  \"example\": \"(natural Japanese example sentence containing the word)\",\n" +
-                "  \"exampleMeaning\": \"(Vietnamese translation of the example sentence)\"\n" +
-                "}\n" +
-                "Do not include any formatting, markdown, or other text except the clean JSON object.\n" +
-                "Word: " + word;
-        return callGemini(prompt);
     }
 
     private String buildPrompt(String rawData, String type) {
@@ -58,7 +122,7 @@ public class AiService {
     }
 
     private String callGemini(String prompt) throws Exception {
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
         Map<String, Object> requestBody = Map.of(
             "contents", List.of(

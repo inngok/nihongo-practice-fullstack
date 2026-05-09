@@ -16,6 +16,7 @@ export default function DataImporter() {
   const [messageApi, contextHolder] = message.useMessage();
   const fileInputRef = React.useRef(null);
   const aiFileInputRef = React.useRef(null);
+  const abortControllerRef = React.useRef(null);
 
   useEffect(() => {
     fetchBooks();
@@ -207,12 +208,21 @@ export default function DataImporter() {
     }
   };
 
+  const handleCancelAI = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  };
+
   const handleAIFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setIsProcessingAI(true);
     messageApi.loading({ content: 'AI đang đọc và giải mã cấu trúc file...', key: 'ai_file_load' });
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     const reader = new FileReader();
     reader.onload = async (evt) => {
@@ -226,6 +236,7 @@ export default function DataImporter() {
         if (rawDataArray.length === 0) {
           messageApi.destroy('ai_file_load');
           setIsProcessingAI(false);
+          abortControllerRef.current = null;
           return messageApi.warning('File tải lên không có dữ liệu');
         }
 
@@ -240,6 +251,7 @@ export default function DataImporter() {
             rawData: rawDataString,
             type: dataType
           }),
+          signal: controller.signal
         });
 
         if (!response.ok) {
@@ -251,10 +263,15 @@ export default function DataImporter() {
         setJsonData(formattedJson);
         messageApi.success({ content: `AI đã chuẩn hóa thành công ${rawDataArray.length} dòng dữ liệu!`, key: 'ai_file_load', duration: 4 });
       } catch (err) {
-        console.error(err);
-        messageApi.error({ content: 'Lỗi khi AI chuẩn hóa file: ' + err.message, key: 'ai_file_load', duration: 4 });
+        if (err.name === 'AbortError') {
+          messageApi.info({ content: 'Đã hủy tiến trình AI theo yêu cầu.', key: 'ai_file_load', duration: 3 });
+        } else {
+          console.error(err);
+          messageApi.error({ content: 'Lỗi khi AI chuẩn hóa file: ' + err.message, key: 'ai_file_load', duration: 4 });
+        }
       } finally {
         setIsProcessingAI(false);
+        abortControllerRef.current = null;
       }
     };
     reader.readAsBinaryString(file);
@@ -268,6 +285,9 @@ export default function DataImporter() {
 
     setIsProcessingAI(true);
     
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    
     try {
       const response = await fetchWithAuth(`${API_BASE_URL}/ai/format-import`, {
         method: 'POST',
@@ -278,6 +298,7 @@ export default function DataImporter() {
           rawData: rawInput,
           type: dataType
         }),
+        signal: controller.signal
       });
 
       if (!response.ok) {
@@ -289,10 +310,15 @@ export default function DataImporter() {
       setJsonData(formattedJson);
       messageApi.success('AI đã xử lý xong! Bạn vui lòng kiểm tra lại JSON bên dưới rồi nhấn Import nhé.');
     } catch (err) {
-      console.error(err);
-      messageApi.error('Lỗi khi xử lý AI: ' + err.message);
+      if (err.name === 'AbortError') {
+        messageApi.info('Đã hủy tiến trình AI theo yêu cầu.');
+      } else {
+        console.error(err);
+        messageApi.error('Lỗi khi xử lý AI: ' + err.message);
+      }
     } finally {
       setIsProcessingAI(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -361,13 +387,22 @@ export default function DataImporter() {
                   className="w-full h-48 p-5 bg-slate-50 border border-slate-100 rounded-xl focus:border-slate-400 outline-none transition-all resize-none text-sm font-medium"
                 ></textarea>
                 
-                <button
-                  onClick={handleAISmartFormat}
-                  disabled={isProcessingAI || !rawInput.trim()}
-                  className="w-full py-4 bg-white border-2 border-slate-900 text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all disabled:opacity-30 flex items-center justify-center"
-                >
-                  {isProcessingAI ? 'Đang xử lý...' : 'Xử lý bằng AI'}
-                </button>
+                {isProcessingAI ? (
+                  <button
+                    onClick={handleCancelAI}
+                    className="w-full py-4 bg-red-50 border border-red-200 text-red-600 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-500 hover:text-white hover:border-red-500 transition-all flex items-center justify-center gap-2 animate-pulse"
+                  >
+                    <span>Dừng xử lý (Cancel)</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleAISmartFormat}
+                    disabled={!rawInput.trim()}
+                    className="w-full py-4 bg-white border-2 border-slate-900 text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all disabled:opacity-30 flex items-center justify-center"
+                  >
+                    Xử lý bằng AI
+                  </button>
+                )}
               </div>
             </div>
 

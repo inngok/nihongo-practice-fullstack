@@ -18,6 +18,7 @@ export default function AdminSidebar() {
   const menuItems = [
     { path: '/', label: 'Về trang chủ' },
     { type: 'divider' },
+    { path: '/manage', label: 'Tổng quan' },
     { path: '/grammar/manage', label: 'Ngữ pháp' },
     { path: '/vocabulary/manage', label: 'Từ vựng' },
     { path: '/kanji/manage', label: 'Hán tự' },

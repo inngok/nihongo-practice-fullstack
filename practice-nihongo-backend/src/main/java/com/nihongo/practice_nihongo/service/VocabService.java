@@ -25,6 +25,10 @@ public class VocabService {
         return vocabRepository.findAll();
     }
 
+    public List<Vocab> getSystemVocabs() {
+        return vocabRepository.findByUserIsNull();
+    }
+
     public List<Vocab> getPersonalVocabs(Long userId) {
         return vocabRepository.findByUserId(userId);
     }

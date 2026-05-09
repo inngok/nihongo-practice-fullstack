@@ -41,6 +41,7 @@ const Translator = lazy(() => import("../pages/translator/Translator"));
 const Tips = lazy(() => import("../pages/tips/Tips"));
 
 // Admin Management
+const Dashboard = lazy(() => import("../pages/manage/Dashboard"));
 const GrammarManager = lazy(() => import("../pages/manage/GrammarManager"));
 const BookManager = lazy(() => import("../pages/manage/BookManager"));
 const VocabManager = lazy(() => import("../pages/manage/VocabManager"));
@@ -161,6 +162,7 @@ export default function RouteMap() {
       {/* Admin Management Routes */}
       <Route path="manage" element={<AdminRoute />}>
         <Route element={<AdminLayout />}>
+          <Route index element={<Dashboard />} />
           <Route path="users" element={<UserManager />} />
           <Route path="import" element={<DataImporter />} />
           {/* Legacy/Deep paths for management */}

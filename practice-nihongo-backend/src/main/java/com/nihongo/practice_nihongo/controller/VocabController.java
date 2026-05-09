@@ -61,7 +61,7 @@ public class VocabController {
             return vocabService.getSystemAndPersonalVocabs(currentUser.getId());
         }
         
-        return vocabService.getAllVocabs();
+        return vocabService.getSystemVocabs();
     }
 
     @Operation(summary = "Lấy thông tin từ vựng theo ID")
@@ -76,7 +76,13 @@ public class VocabController {
     public Vocab createVocab(@RequestBody Vocab vocab) {
         User currentUser = getCurrentUser();
         if (currentUser != null) {
-            vocab.setUser(currentUser);
+            // Nếu từ vựng KHÔNG thuộc giáo trình nào (bookId null), nó là sổ tay cá nhân
+            if (vocab.getBook() == null || vocab.getBook().getId() == null) {
+                vocab.setUser(currentUser);
+            } else {
+                // Nếu thuộc giáo trình, nó là từ vựng hệ thống dùng chung cho tất cả user
+                vocab.setUser(null);
+            }
         }
         return vocabService.createVocab(vocab);
     }
