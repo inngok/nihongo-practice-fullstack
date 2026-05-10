@@ -17,6 +17,10 @@ export default function DataImporter() {
   const fileInputRef = React.useRef(null);
   const aiFileInputRef = React.useRef(null);
   const abortControllerRef = React.useRef(null);
+  const [duplicateModalVisible, setDuplicateModalVisible] = useState(false);
+  const [duplicateItems, setDuplicateItems] = useState([]);
+  const [nonDuplicateItems, setNonDuplicateItems] = useState([]);
+
 
   useEffect(() => {
     fetchBooks();
@@ -63,6 +67,61 @@ export default function DataImporter() {
     } catch (error) {
       console.error('Failed to fetch books:', error);
     }
+  };
+
+  const proceedImport = async (dataToImport, successMessage) => {
+    setIsLoading(true);
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/${dataType}/bulk`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dataToImport),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server trả về lỗi: ${response.status}`);
+      }
+
+      messageApi.success(successMessage);
+      setJsonData(''); // Clear after success
+    } catch (error) {
+      messageApi.error(`Lỗi khi import: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeepOld = async () => {
+    setDuplicateModalVisible(false);
+    if (nonDuplicateItems.length === 0) {
+      messageApi.info('Tất cả bản ghi đều trùng khớp và đã được giữ nguyên (không import thêm).');
+      return;
+    }
+    await proceedImport(
+      nonDuplicateItems,
+      `Đã giữ lại ${duplicateItems.length} bản ghi cũ. Import thành công ${nonDuplicateItems.length} bản ghi mới!`
+    );
+  };
+
+  const handleOverwriteNew = async () => {
+    setDuplicateModalVisible(false);
+    
+    // For both vocabs and kanjis, map existingId into the item's id property so JPA performs updates
+    const updatedDuplicates = duplicateItems.map(item => {
+      const { existingId, ...rest } = item;
+      return {
+        ...rest,
+        id: existingId
+      };
+    });
+
+    const combinedData = [...nonDuplicateItems, ...updatedDuplicates];
+    await proceedImport(
+      combinedData,
+      `Đã cập nhật đè ${duplicateItems.length} bản ghi trùng và import thêm ${nonDuplicateItems.length} bản ghi mới thành công!`
+    );
   };
 
   const handleImport = async () => {
@@ -131,25 +190,52 @@ export default function DataImporter() {
     }));
 
     setIsLoading(true);
+
+    // Fast check for duplicates within the current book
+    let existingItems = [];
     try {
-      const response = await fetchWithAuth(`${API_BASE_URL}/${dataType}/bulk`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(finalData),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Server trả về lỗi: ${response.status}`);
+      const response = await fetchWithAuth(`${API_BASE_URL}/${dataType}?bookId=${selectedBook}`);
+      if (response.ok) {
+        existingItems = await response.json();
       }
-
-      messageApi.success(`Import thành công ${finalData.length} bản ghi vào ${dataType}!`);
-      setJsonData(''); // Clear after success
     } catch (error) {
-      messageApi.error(`Lỗi khi import: ${error.message}`);
-    } finally {
+      console.error('Failed to fetch existing items for duplicate check:', error);
+      // Fallback: Proceed with bulk import directly
+      await proceedImport(finalData, `Import thành công ${finalData.length} bản ghi vào ${dataType}!`);
+      return;
+    }
+
+    const existingMap = new Map();
+    existingItems.forEach(item => {
+      const key = dataType === 'kanjis' ? item.character : item.word;
+      if (key) {
+        existingMap.set(String(key).trim(), item);
+      }
+    });
+
+    const duplicates = [];
+    const nonDuplicates = [];
+
+    finalData.forEach(item => {
+      const key = dataType === 'kanjis' ? item.character : item.word;
+      const existing = existingMap.get(String(key).trim());
+      if (existing) {
+        duplicates.push({
+          ...item,
+          existingId: existing.id
+        });
+      } else {
+        nonDuplicates.push(item);
+      }
+    });
+
+    if (duplicates.length > 0) {
+      setDuplicateItems(duplicates);
+      setNonDuplicateItems(nonDuplicates);
+      setDuplicateModalVisible(true);
       setIsLoading(false);
+    } else {
+      await proceedImport(finalData, `Import thành công ${finalData.length} bản ghi vào ${dataType}!`);
     }
   };
 
@@ -503,6 +589,78 @@ export default function DataImporter() {
 
         </div>
       </div>
+
+      {/* Duplicate Alert Modal */}
+      {duplicateModalVisible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-8 shadow-2xl space-y-6 transform scale-100 transition-all animate-scale-in">
+            {/* Icon & Title */}
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                </svg>
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="text-base font-bold text-slate-900 tracking-tight">Phát hiện dữ liệu trùng</h3>
+                <p className="text-xs text-slate-500 font-medium">Có <span className="font-bold text-slate-700">{duplicateItems.length}</span> bản ghi đã tồn tại trong giáo trình này.</p>
+              </div>
+            </div>
+
+            {/* Content Detail */}
+            <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 space-y-3">
+              <div className="flex justify-between text-xs font-semibold">
+                <span className="text-slate-500">Bản ghi mới (chưa có):</span>
+                <span className="text-slate-900">{nonDuplicateItems.length}</span>
+              </div>
+              <div className="flex justify-between text-xs font-semibold">
+                <span className="text-slate-500">Bản ghi trùng (đã có):</span>
+                <span className="text-slate-900 text-amber-600 font-bold">{duplicateItems.length}</span>
+              </div>
+              
+              {/* Short preview of some duplicates */}
+              <div className="pt-2 border-t border-slate-100">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Bản ghi trùng tiêu biểu:</span>
+                <div className="max-h-24 overflow-y-auto space-y-1.5 pr-1 select-none">
+                  {duplicateItems.slice(0, 5).map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-[11px] text-slate-600 bg-white border border-slate-100 rounded-lg px-2.5 py-1">
+                      <span className="font-bold">{dataType === 'kanjis' ? item.character : item.word}</span>
+                      <span className="text-[10px] text-slate-400 truncate max-w-[200px]">{item.meaning}</span>
+                    </div>
+                  ))}
+                  {duplicateItems.length > 5 && (
+                    <div className="text-[10px] text-center text-slate-400 font-medium py-1">
+                      và {duplicateItems.length - 5} bản ghi khác...
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col gap-2.5 pt-2">
+              <button
+                onClick={handleKeepOld}
+                className="w-full py-3.5 bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 rounded-xl font-bold text-xs uppercase tracking-wider transition-all"
+              >
+                1. Giữ cái cũ (Bỏ qua {duplicateItems.length} bản trùng)
+              </button>
+              <button
+                onClick={handleOverwriteNew}
+                className="w-full py-3.5 bg-slate-900 text-white hover:bg-black rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-slate-900/10"
+              >
+                2. Theo cái mới (Ghi đè {duplicateItems.length} bản trùng)
+              </button>
+              <button
+                onClick={() => setDuplicateModalVisible(false)}
+                className="w-full py-2.5 bg-white text-slate-400 hover:text-slate-600 rounded-xl font-bold text-xs uppercase tracking-wider transition-all"
+              >
+                Hủy bỏ (Cancel)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
