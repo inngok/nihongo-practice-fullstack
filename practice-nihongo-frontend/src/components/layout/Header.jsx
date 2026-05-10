@@ -2,10 +2,10 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Dropdown, Space } from 'antd';
-import { DownOutlined, SettingOutlined, UserOutlined, ImportOutlined, DatabaseOutlined } from '@ant-design/icons';
+import { DownOutlined, SettingOutlined, UserOutlined, ImportOutlined, DatabaseOutlined, PieChartOutlined } from '@ant-design/icons';
 
 export default function Header() {
-  const { pathname } = useLocation();
+  const pathname = useLocation().pathname;
   const { currentUser, logout } = useAuth();
 
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
@@ -23,6 +23,7 @@ export default function Header() {
             <Dropdown
               menu={{
                 items: [
+                  { key: 'dashboard', label: <Link to="/manage" className="font-bold text-slate-600">Tổng quan</Link>, icon: <PieChartOutlined /> },
                   { key: '1', label: <Link to="/grammar/manage" className="font-bold text-slate-600">Ngữ pháp</Link>, icon: <SettingOutlined /> },
                   { key: 'vocab', label: <Link to="/vocabulary/manage" className="font-bold text-slate-600">Từ vựng</Link>, icon: <DatabaseOutlined /> },
                   { key: '2', label: <Link to="/manage/users" className="font-bold text-slate-600">Người dùng</Link>, icon: <UserOutlined /> },

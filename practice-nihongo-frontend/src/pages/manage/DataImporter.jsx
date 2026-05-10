@@ -20,14 +20,30 @@ export default function DataImporter() {
   const [duplicateModalVisible, setDuplicateModalVisible] = useState(false);
   const [duplicateItems, setDuplicateItems] = useState([]);
   const [nonDuplicateItems, setNonDuplicateItems] = useState([]);
+  const [aiUsage, setAiUsage] = useState(null);
 
+  const fetchAiUsage = async () => {
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/dashboard/stats`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.aiUsage) {
+          setAiUsage(data.aiUsage);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch AI usage stats:', error);
+    }
+  };
 
   useEffect(() => {
     fetchBooks();
+    fetchAiUsage();
 
     // Listen for window focus to auto-refresh the book list (e.g., if a book was added in another tab)
     const handleWindowFocus = () => {
       fetchBooks();
+      fetchAiUsage();
     };
 
     // Listen for real-time cross-tab synchronization messages
@@ -348,6 +364,7 @@ export default function DataImporter() {
         const formattedJson = await response.text();
         setJsonData(formattedJson);
         messageApi.success({ content: `AI đã chuẩn hóa thành công ${rawDataArray.length} dòng dữ liệu!`, key: 'ai_file_load', duration: 4 });
+        fetchAiUsage();
       } catch (err) {
         if (err.name === 'AbortError') {
           messageApi.info({ content: 'Đã hủy tiến trình AI theo yêu cầu.', key: 'ai_file_load', duration: 3 });
@@ -395,6 +412,7 @@ export default function DataImporter() {
       const formattedJson = await response.text();
       setJsonData(formattedJson);
       messageApi.success('AI đã xử lý xong! Bạn vui lòng kiểm tra lại JSON bên dưới rồi nhấn Import nhé.');
+      fetchAiUsage();
     } catch (err) {
       if (err.name === 'AbortError') {
         messageApi.info('Đã hủy tiến trình AI theo yêu cầu.');
@@ -428,8 +446,10 @@ export default function DataImporter() {
             <div className="space-y-0.5">
               <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Trạng thái AI</span>
               <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Engine Ready</span>
+                <span className={`w-1.5 h-1.5 rounded-full ${aiUsage?.isKeyConfigured ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
+                <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                  {aiUsage ? `Còn lại: ${aiUsage.remaining} / ${aiUsage.limit} lượt` : 'Engine Ready'}
+                </span>
               </div>
             </div>
           </div>
