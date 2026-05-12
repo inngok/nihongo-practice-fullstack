@@ -1,35 +1,14 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import { Dropdown, Space } from 'antd';
 import { DownOutlined, SettingOutlined, UserOutlined, ImportOutlined, DatabaseOutlined, PieChartOutlined } from '@ant-design/icons';
 
 export default function Header() {
   const pathname = useLocation().pathname;
   const { currentUser, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
 
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
-
-  const themeToggleBtn = (
-    <button
-      onClick={toggleTheme}
-      className="flex items-center justify-center w-8 h-8 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-850 hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300 shadow-sm shrink-0"
-      aria-label="Toggle Theme"
-      title={theme === 'dark' ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
-    >
-      {theme === 'dark' ? (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707m1.414 1.414a5 5 0 117.071 7.071 5 5 0 01-7.071-7.071z" />
-        </svg>
-      ) : (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-        </svg>
-      )}
-    </button>
-  );
 
   return (
     <header className="fixed top-0 z-[1000] w-full bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm border-b border-slate-50 dark:border-slate-900 px-4 md:px-12 py-3 md:py-4 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4 transition-all duration-500">
@@ -40,7 +19,6 @@ export default function Header() {
 
         {/* Right side controls on mobile */}
         <div className="flex items-center gap-3 md:gap-6">
-          {themeToggleBtn}
           {isAdmin && (
             <Dropdown
               menu={{
@@ -138,7 +116,7 @@ export default function Header() {
             to={nav.path}
             className={`transition-all whitespace-nowrap py-1 border-b-2 ${(nav.path === '/' && pathname === '/') || (nav.path !== '/' && (pathname === nav.path || pathname.startsWith(nav.path + '/')))
                 ? 'text-black border-black dark:text-white dark:border-white'
-                : 'border-transparent hover:text-black dark:hover:text-white hover:border-slate-200 dark:hover:border-slate-800'
+                : 'border-transparent hover:text-black dark:hover:text-white hover:border-slate-200 dark:hover:hover:border-slate-800'
               }`}
           >
             {nav.label}
@@ -147,7 +125,6 @@ export default function Header() {
       </nav>
 
       <div className="hidden md:flex flex-1 items-center justify-end gap-4 text-xs font-bold uppercase tracking-widest">
-        {themeToggleBtn}
         {currentUser ? (
           <Dropdown
             menu={{
