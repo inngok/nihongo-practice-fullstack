@@ -55,7 +55,7 @@ jobs:
             sudo docker compose down || true
             
             # Deep clean Docker to free up space and clear corrupted cache
-            sudo docker system prune -af --volumes || true
+            sudo docker system prune -af || true
             sudo docker builder prune -af || true
             
             # Start the application and database with a fresh build

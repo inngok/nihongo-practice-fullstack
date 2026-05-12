@@ -26,7 +26,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=12345
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-      - SPRING_SQL_INIT_MODE=always
+      - SPRING_SQL_INIT_MODE=never
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - postgres
