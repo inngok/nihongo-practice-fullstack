@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       const data = await response.json();
-      const user = { id: data.id, name: data.name, email: data.email, role: data.role };
+      const user = { id: data.id, name: data.name, email: data.email, role: data.role, jlptLevel: data.jlptLevel || 'N3' };
       
       setCurrentUser(user);
       localStorage.setItem('nihongo_user', JSON.stringify(user));
@@ -57,12 +57,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password) => {
+  const register = async (name, email, password, jlptLevel = 'N3') => {
     try {
       const response = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, jlptLevel }),
       });
 
       if (!response.ok) {
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       const data = await response.json();
-      const user = { id: data.id, name: data.name, email: data.email, role: data.role };
+      const user = { id: data.id, name: data.name, email: data.email, role: data.role, jlptLevel: data.jlptLevel || 'N3' };
       
       setCurrentUser(user);
       localStorage.setItem('nihongo_user', JSON.stringify(user));
@@ -99,6 +99,83 @@ export const AuthProvider = ({ children }) => {
       duration: 2,
       style: { marginTop: '10vh' }
     });
+  };
+
+  const updateProfile = async (name, password, jlptLevel) => {
+    try {
+      const token = localStorage.getItem('nihongo_token');
+      const response = await fetch(`${API_BASE_URL}/users/${currentUser.id}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          name, 
+          password, 
+          email: currentUser.email, 
+          role: currentUser.role, 
+          jlptLevel 
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Cập nhật thông tin thất bại');
+      }
+
+      const data = await response.json();
+      const updatedUser = { 
+        id: data.id, 
+        name: data.name, 
+        email: data.email, 
+        role: data.role, 
+        jlptLevel: data.jlptLevel || 'N3' 
+      };
+      
+      setCurrentUser(updatedUser);
+      localStorage.setItem('nihongo_user', JSON.stringify(updatedUser));
+      
+      messageApi.success({
+        content: 'Cập nhật thông tin hồ sơ thành công!',
+        duration: 3,
+        style: { marginTop: '10vh' }
+      });
+      return updatedUser;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const deleteAccount = async () => {
+    try {
+      const token = localStorage.getItem('nihongo_token');
+      const response = await fetch(`${API_BASE_URL}/users/${currentUser.id}`, {
+        method: 'DELETE',
+        headers: { 
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Xóa tài khoản thất bại');
+      }
+
+      // Clear local authentication state
+      setCurrentUser(null);
+      localStorage.removeItem('nihongo_token');
+      localStorage.removeItem('nihongo_user');
+      
+      messageApi.success({
+        content: 'Tài khoản của bạn đã được xóa hoàn toàn.',
+        duration: 3,
+        style: { marginTop: '10vh' }
+      });
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
   };
 
   const refreshAccessToken = async () => {
@@ -159,6 +236,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateProfile,
     fetchWithAuth
   };
 

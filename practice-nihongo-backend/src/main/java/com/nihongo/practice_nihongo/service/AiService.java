@@ -17,9 +17,26 @@ public class AiService {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final AiUsageRepository aiUsageRepository;
+    private final java.util.concurrent.atomic.AtomicInteger keyIndex = new java.util.concurrent.atomic.AtomicInteger(0);
 
     public AiService(AiUsageRepository aiUsageRepository) {
         this.aiUsageRepository = aiUsageRepository;
+    }
+
+    private List<String> getApiKeys() {
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(apiKey.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+    }
+
+    private String getNextApiKey(List<String> keys) {
+        if (keys.isEmpty()) return null;
+        int index = Math.abs(keyIndex.getAndIncrement() % keys.size());
+        return keys.get(index);
     }
 
     private synchronized void recordAiUsage(boolean isSuccess) {
@@ -45,7 +62,9 @@ public class AiService {
         AiUsage usage = aiUsageRepository.findByUsageDate(today)
                 .orElseGet(() -> new AiUsage(today));
 
-        int limit = 1500; // Gemini RPD limit
+        List<String> keys = getApiKeys();
+        int numKeys = Math.max(1, keys.size());
+        int limit = numKeys * 1500; // 1500 RPD limit per key
         int used = usage.getTotalCalls();
         int remaining = Math.max(0, limit - used);
 
@@ -55,14 +74,16 @@ public class AiService {
         stats.put("fail", usage.getFailCalls());
         stats.put("limit", limit);
         stats.put("remaining", remaining);
-        stats.put("rpmLimit", 15);
-        stats.put("isKeyConfigured", apiKey != null && !apiKey.trim().isEmpty());
+        stats.put("rpmLimit", numKeys * 15);
+        stats.put("isKeyConfigured", !keys.isEmpty());
+        stats.put("configuredKeysCount", keys.size());
         return stats;
     }
 
     public String formatDataForImport(String rawData, String type) throws Exception {
         try {
-            if (apiKey == null || apiKey.isEmpty()) {
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
                 // Fallback for demo if no API key is provided
                 String res = simulateAiProcessing(rawData, type);
                 recordAiUsage(true);
@@ -81,7 +102,8 @@ public class AiService {
 
     public String generateVocabDetails(String word) throws Exception {
         try {
-            if (apiKey == null || apiKey.isEmpty()) {
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
                 String res = simulateVocabGeneration(word);
                 recordAiUsage(true);
                 return res;
@@ -122,6 +144,28 @@ public class AiService {
     }
 
     private String callGemini(String prompt) throws Exception {
+        List<String> keys = getApiKeys();
+        if (keys.isEmpty()) {
+            throw new Exception("No Gemini API keys configured");
+        }
+
+        int maxRetries = keys.size();
+        Exception lastException = null;
+
+        for (int i = 0; i < maxRetries; i++) {
+            String activeKey = getNextApiKey(keys);
+            try {
+                return executeGeminiCall(prompt, activeKey);
+            } catch (Exception e) {
+                System.err.println("Gemini call failed with key [index " + (keyIndex.get() % keys.size()) + "]: " + e.getMessage());
+                lastException = e;
+            }
+        }
+
+        throw new Exception("All Gemini API keys in pool exhausted. Last error: " + (lastException != null ? lastException.getMessage() : "Unknown"));
+    }
+
+    private String executeGeminiCall(String prompt, String activeKey) throws Exception {
         String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
 
         Map<String, Object> requestBody = Map.of(
@@ -132,8 +176,8 @@ public class AiService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        if (apiKey != null && !apiKey.trim().isEmpty()) {
-            headers.set("x-goog-api-key", apiKey.trim());
+        if (activeKey != null && !activeKey.isEmpty()) {
+            headers.set("x-goog-api-key", activeKey);
         }
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
@@ -153,7 +197,7 @@ public class AiService {
                 return text.replaceAll("```json", "").replaceAll("```", "").trim();
             }
         }
-        throw new Exception("Failed to call Gemini API: " + response.getStatusCode());
+        throw new Exception("HTTP Error: " + response.getStatusCode());
     }
 
     private String simulateAiProcessing(String rawData, String type) {
@@ -175,5 +219,59 @@ public class AiService {
 
     private String simulateVocabGeneration(String word) {
         return String.format("{\"reading\": \"[Học viên tự thêm]\", \"meaning\": \"Nghĩa của từ %s\", \"example\": \"%sを勉強します。\", \"exampleMeaning\": \"Tôi học từ %s.\"}", word, word, word);
+    }
+
+    public String generateChatResponse(String scenario, List<Map<String, String>> history, String userMessage) throws Exception {
+        StringBuilder historyPrompt = new StringBuilder();
+        if (history != null && !history.isEmpty()) {
+            // Keep only last 6 messages to keep tokens low!
+            int start = Math.max(0, history.size() - 6);
+            for (int i = start; i < history.size(); i++) {
+                Map<String, String> msg = history.get(i);
+                String sender = "ai".equals(msg.get("sender")) ? "Japanese Speaker" : "Student";
+                historyPrompt.append(sender).append(": ").append(msg.get("text")).append("\n");
+            }
+        }
+
+        String scenarioInstructions = "";
+        if ("casual_friend".equalsIgnoreCase(scenario)) {
+            scenarioInstructions = "You are 'Kenji', a close Japanese friend chatting casually and warmly. Use casual conversational Japanese (Kougotai, short-forms, friendly sentence-ending particles like ね, よ, dative contractions like ちゃう, てる). Avoid overly textbook polite form (desu/masu) unless context demands it.";
+        } else if ("ramen_shop".equalsIgnoreCase(scenario)) {
+            scenarioInstructions = "You are the staff member ('Tenin') at a busy Ramen shop in Tokyo. Use polite service speech (Keigo, or polite desu/masu). Prompt the customer natural service questions (e.g., noodle hardness, toppings, payment).";
+        } else if ("hotel_reception".equalsIgnoreCase(scenario)) {
+            scenarioInstructions = "You are the professional receptionist at a hotel in Kyoto. Use highly polite hospitality speech (Keigo, Kenjougo/Sonkeigo). Help the guest with checking in, checking out, or requesting services.";
+        } else if ("asking_directions".equalsIgnoreCase(scenario)) {
+            scenarioInstructions = "You are a helpful passerby in Shibuya. Use polite but friendly everyday speech (desu/masu). Give simple, friendly directions to nearby stations or cafes.";
+        } else if ("parttime_interview".equalsIgnoreCase(scenario)) {
+            scenarioInstructions = "You are the interviewer/manager at a convenience store hiring for a part-time job. Use formal interview speech (polite desu/masu). Ask the applicant natural questions about their shifts, Japanese level, and experience.";
+        } else {
+            scenarioInstructions = "You are a friendly Japanese conversational partner. Use natural, everyday conversational Japanese.";
+        }
+
+        String prompt = "You are an expert Japanese speech tutor and conversationalist.\n" +
+                "Roleplay Setting:\n" + scenarioInstructions + "\n\n" +
+                "Conversation History:\n" + historyPrompt.toString() +
+                "Student just said: " + userMessage + "\n\n" +
+                "Your task:\n" +
+                "1. Analyze the Student's latest message. Check for spelling, grammar (e.g., incorrect particles), and naturalness in everyday conversational Japanese.\n" +
+                "2. Generate a natural reply in Japanese matching your Roleplay Setting.\n" +
+                "3. Provide 3 short, natural Japanese conversational suggestions the Student could use next to continue the chat.\n\n" +
+                "You MUST return your response strictly as a JSON object following this exact schema:\n" +
+                "{\n" +
+                "  \"reply\": \"(your next natural Japanese reply, including kanji/kana)\",\n" +
+                "  \"romaji\": \"(romaji pronunciation of your reply)\",\n" +
+                "  \"translation\": \"(Vietnamese translation of your reply)\",\n" +
+                "  \"feedback\": \"(gentle Vietnamese feedback checking the student's spelling, grammar, and naturalness. If they made mistakes, show the correct way. If perfect, compliment them warmly.)\",\n" +
+                "  \"suggestions\": [\n" +
+                "    {\"text\": \"(natural option 1 the student could say next in Japanese)\", \"translation\": \"(Vietnamese translation of option 1)\"},\n" +
+                "    {\"text\": \"(natural option 2 the student could say next in Japanese)\", \"translation\": \"(Vietnamese translation of option 2)\"},\n" +
+                "    {\"text\": \"(natural option 3 the student could say next in Japanese)\", \"translation\": \"(Vietnamese translation of option 3)\"}\n" +
+                "  ]\n" +
+                "}\n" +
+                "Return ONLY the raw, clean JSON object. No markdown code blocks, no intro, and no extra characters.";
+
+        String res = callGemini(prompt);
+        recordAiUsage(true);
+        return res;
     }
 }

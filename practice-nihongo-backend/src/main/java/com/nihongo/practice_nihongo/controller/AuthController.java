@@ -63,7 +63,7 @@ public class AuthController {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
-            return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail(), user.getRole()));
+            return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getJlptLevel()));
         }
         
         return ResponseEntity.badRequest().body("User not found");
@@ -80,6 +80,7 @@ public class AuthController {
                 .name(registerRequest.getName())
                 .email(registerRequest.getEmail())
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
+                .jlptLevel(registerRequest.getJlptLevel() != null && !registerRequest.getJlptLevel().isEmpty() ? registerRequest.getJlptLevel() : "N3")
                 .build();
 
         userRepository.save(user);
@@ -89,7 +90,7 @@ public class AuthController {
         final String jwt = jwtUtil.generateToken(userDetails);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-        return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail(), user.getRole()));
+        return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getJlptLevel()));
     }
 
     @Operation(summary = "Làm mới token (Refresh Token)")

@@ -55,6 +55,9 @@ public class UserController {
             }
             user.setEmail(userDetails.getEmail());
             user.setRole(userDetails.getRole());
+            if (userDetails.getJlptLevel() != null && !userDetails.getJlptLevel().isEmpty()) {
+                user.setJlptLevel(userDetails.getJlptLevel());
+            }
             if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
                 user.setPassword(passwordEncoder.encode(userDetails.getPassword()));
             }

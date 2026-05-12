@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -9,6 +10,9 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [jlptLevel, setJlptLevel] = useState('N3');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { register } = useAuth();
 
@@ -23,7 +27,7 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      await register(name, email, password);
+      await register(name, email, password, jlptLevel);
       navigate('/');
     } catch (err) {
       setError(err.message || 'Đã có lỗi xảy ra khi đăng ký.');
@@ -73,6 +77,24 @@ export default function Register() {
             </div>
             <div>
               <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                Trình độ JLPT Mục tiêu
+              </label>
+              <select
+                id="jlptLevel"
+                name="jlptLevel"
+                value={jlptLevel}
+                onChange={(e) => setJlptLevel(e.target.value)}
+                className="mt-1 block w-full rounded-xl px-4 py-3.5 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm bg-white cursor-pointer transition-all font-bold"
+              >
+                <option value="N1">N1 (Thượng cấp)</option>
+                <option value="N2">N2 (Trung - Thượng cấp)</option>
+                <option value="N3">N3 (Trung cấp)</option>
+                <option value="N4">N4 (Sơ - Trung cấp)</option>
+                <option value="N5">N5 (Sơ cấp)</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
                 Email
               </label>
               <input
@@ -90,31 +112,49 @@ export default function Register() {
               <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
                 Mật khẩu
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 appearance-none rounded-xl relative block w-full px-4 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
-                placeholder="Tạo mật khẩu"
-              />
+              <div className="relative mt-1 flex items-center">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="appearance-none rounded-xl relative block w-full px-4 pr-10 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
+                  placeholder="Tạo mật khẩu"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 text-slate-400 hover:text-slate-700 text-xs focus:outline-none flex items-center justify-center cursor-pointer transition-colors"
+                >
+                  {showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                </button>
+              </div>
             </div>
             <div>
               <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
                 Xác nhận mật khẩu
               </label>
-              <input
-                id="confirm-password"
-                name="confirm-password"
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-1 appearance-none rounded-xl relative block w-full px-4 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
-                placeholder="Nhập lại mật khẩu"
-              />
+              <div className="relative mt-1 flex items-center">
+                <input
+                  id="confirm-password"
+                  name="confirm-password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="appearance-none rounded-xl relative block w-full px-4 pr-10 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
+                  placeholder="Nhập lại mật khẩu"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 text-slate-400 hover:text-slate-700 text-xs focus:outline-none flex items-center justify-center cursor-pointer transition-colors"
+                >
+                  {showConfirmPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                </button>
+              </div>
             </div>
           </div>
 
