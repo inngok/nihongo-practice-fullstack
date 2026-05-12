@@ -261,9 +261,9 @@ export default function KanjiSet4() {
         <div className="flex justify-between items-center mb-6">
           <button
             onClick={() => navigate('/kanji')}
-            className="border border-black hover:bg-black hover:text-white px-5 py-2 text-xs font-bold uppercase tracking-wider transition-all"
+            className="group flex items-center gap-1.5 text-slate-500 hover:text-slate-950 text-xs font-black uppercase tracking-widest transition-colors bg-transparent border-none p-0 outline-none focus:outline-none"
           >
-            Quay lại
+            <span className="transition-transform group-hover:-translate-x-1">←</span> QUAY LẠI
           </button>
           
           <span className="text-[10px] font-black tracking-[0.25em] text-slate-300 uppercase">

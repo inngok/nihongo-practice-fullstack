@@ -33,6 +33,9 @@ public class Grammar {
 
     private String level; // Cấp độ (N5, N4, N3, N2, N1)
 
+    private Integer week;
+    private Integer day;
+
     @ManyToOne
     @JoinColumn(name = "book_id")
     private Book book;

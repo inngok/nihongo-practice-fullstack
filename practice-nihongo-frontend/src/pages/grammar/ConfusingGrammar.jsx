@@ -72,10 +72,10 @@ export default function ConfusingGrammar() {
         {/* Back Button */}
         <button
           onClick={() => navigate('/')}
-          className="group flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors mb-8"
+          className="group flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors mb-8"
         >
           <span className="transition-transform group-hover:-translate-x-1">←</span>
-          Quay lại
+          QUAY LẠI
         </button>
 
         {/* Header Section */}

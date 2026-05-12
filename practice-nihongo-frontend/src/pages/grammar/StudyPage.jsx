@@ -66,7 +66,7 @@ export default function StudyPage() {
               pattern: item.word,
               meaning: item.meaning,
               explanation: item.reading ? `Đọc: ${item.reading}` : '',
-              unit: item.week || 1,
+              unit: (item.week !== undefined && item.week !== null) ? parseInt(item.week) : 1,
               examples: [{ jp: item.example, vn: item.exampleMeaning }],
               quiz: {
                 sentence: item.example,
@@ -77,7 +77,7 @@ export default function StudyPage() {
           : data.map(item => ({
               ...item,
               pattern: item.structure,
-              unit: item.week || 1,
+              unit: (item.week !== undefined && item.week !== null) ? parseInt(item.week) : 1,
               examples: [{ jp: item.exampleSentence, vn: item.exampleMeaning }],
               quiz: { 
                 sentence: item.exampleSentence, 
@@ -820,9 +820,9 @@ export default function StudyPage() {
               switchMode('menu');
             }
           }}
-          className="px-8 py-3 border-2 border-black dark:border-slate-600 text-xs font-black uppercase hover:bg-black hover:text-white dark:text-slate-300 dark:hover:bg-white dark:hover:text-black transition-all"
+          className="group flex items-center gap-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-xs font-black uppercase tracking-widest transition-all bg-transparent border-none p-0 outline-none focus:outline-none"
         >
-          {activeMode === 'menu' ? 'Thoát' : 'Quay lại'}
+          <span className="transition-transform group-hover:-translate-x-1">←</span> {activeMode === 'menu' ? 'THOÁT' : 'QUAY LẠI'}
         </button>
       </div>
 

@@ -35,6 +35,8 @@ public class GrammarService {
         grammar.setExampleMeaning(grammarDetails.getExampleMeaning());
         grammar.setLevel(grammarDetails.getLevel());
         grammar.setBook(grammarDetails.getBook());
+        grammar.setWeek(grammarDetails.getWeek());
+        grammar.setDay(grammarDetails.getDay());
         return grammarRepository.save(grammar);
     }
 

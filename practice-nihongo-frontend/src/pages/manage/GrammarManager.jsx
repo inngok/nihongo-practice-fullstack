@@ -400,15 +400,15 @@ export default function GrammarManager() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Tuần (1-10)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Bài / Tuần (1-50)</label>
                   <select
                     name="week"
                     value={formData.week}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
                   >
-                    {[...Array(10)].map((_, i) => (
-                      <option key={i + 1} value={i + 1} className="dark:bg-slate-950">Tuần {i + 1}</option>
+                    {[...Array(50)].map((_, i) => (
+                      <option key={i + 1} value={i + 1} className="dark:bg-slate-950">Bài / Tuần {i + 1}</option>
                     ))}
                   </select>
                 </div>

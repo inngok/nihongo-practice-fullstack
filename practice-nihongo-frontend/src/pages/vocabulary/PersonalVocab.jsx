@@ -289,9 +289,9 @@ export default function PersonalVocab() {
         {/* Back Button */}
         <button
           onClick={() => navigate('/')}
-          className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-950 dark:hover:text-white transition-colors mb-6 md:mb-8 border border-slate-200 dark:border-slate-800/80 px-4 py-2 rounded-xl"
+          className="group flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-950 dark:hover:text-white transition-colors mb-6 md:mb-8"
         >
-          Quay lại trang chủ
+          <span className="transition-transform group-hover:-translate-x-1">←</span> QUAY LẠI
         </button>
 
         {/* Title Section */}
