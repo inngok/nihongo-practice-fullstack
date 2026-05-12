@@ -60,14 +60,14 @@ const PageLoader = () => (
 );
 
 const UserLayout = () => (
-  <div className="flex flex-col min-h-screen bg-white relative">
+  <div className="flex flex-col min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300 relative">
     <ScrollToTopButton />
     <Header />
 
     {/* Slogan Badge */}
     <div className="fixed right-6 top-24 z-[1001] hidden lg:block pointer-events-none select-none">
-      <div className="bg-white/80 backdrop-blur-md border border-slate-100 px-4 py-2 rounded-xl shadow-sm flex items-center gap-3">
-        <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400 italic whitespace-nowrap">
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-100 dark:border-slate-850 px-4 py-2 rounded-xl shadow-sm flex items-center gap-3">
+        <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 italic whitespace-nowrap">
           "If you can dream it, you can do it"
         </p>
       </div>
@@ -109,11 +109,29 @@ const Fallback = () => (
   </div>
 );
 
+import { ConfigProvider, theme as antdTheme } from "antd";
+import { useTheme } from "../context/ThemeContext";
+
 // --- Main Router ---
 
 export default function RouteMap() {
+  const { isDark } = useTheme();
+
   return (
-    <Routes>
+    <ConfigProvider
+      theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        token: {
+          fontFamily: "Inter, sans-serif",
+          ...(isDark ? {
+            colorBgBase: '#020617', // Slate 950
+            colorBgContainer: '#0f172a', // Slate 900
+            colorBorder: '#1e293b', // Slate 800
+          } : {})
+        }
+      }}
+    >
+      <Routes>
       {/* Public & User Routes */}
       <Route element={<UserLayout />}>
         <Route index element={<Home />} />
@@ -187,6 +205,7 @@ export default function RouteMap() {
         <Route path="kanji/manage" element={<KanjiManager />} />
       </Route>
     </Routes>
+  </ConfigProvider>
   );
 }
 

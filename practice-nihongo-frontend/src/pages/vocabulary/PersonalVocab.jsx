@@ -14,7 +14,7 @@ export default function PersonalVocab() {
   const [savedKanjis, setSavedKanjis] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  const [activeTab, setActiveTab] = useState('saved-vocab'); // 'saved-vocab' | 'saved-kanji' | 'personal'
+  const [activeTab, setActiveTab] = useState('personal'); // 'saved-vocab' | 'saved-kanji' | 'personal'
   const [folders, setFolders] = useState([]);
   const [currentFolder, setCurrentFolder] = useState(null);
   const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
@@ -283,13 +283,13 @@ export default function PersonalVocab() {
   const activeList = getActiveData();
 
   return (
-    <div className="min-h-screen w-full bg-white flex flex-col items-center pt-24 md:pt-28 pb-16 px-6 font-sans relative overflow-hidden selection:bg-slate-200">
+    <div className="min-h-screen w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center pt-24 md:pt-28 pb-16 px-6 font-sans relative overflow-hidden selection:bg-slate-200 transition-colors duration-300">
       <div className="w-full max-w-5xl relative z-10">
         
         {/* Back Button */}
         <button
           onClick={() => navigate('/')}
-          className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-950 transition-colors mb-6 md:mb-8 border border-slate-200 px-4 py-2 rounded-xl"
+          className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-950 dark:hover:text-white transition-colors mb-6 md:mb-8 border border-slate-200 dark:border-slate-800/80 px-4 py-2 rounded-xl"
         >
           Quay lại trang chủ
         </button>
@@ -297,10 +297,10 @@ export default function PersonalVocab() {
         {/* Title Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
           <div>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
               Sổ tay cá nhân
             </h1>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest leading-relaxed">
               Tổng cộng {savedVocabs.length + savedKanjis.length + personalVocabs.length} mục đã được lưu trữ
             </p>
           </div>
@@ -308,7 +308,7 @@ export default function PersonalVocab() {
           <div className="flex flex-wrap gap-4">
             <button
               onClick={() => navigate('/flashcards')}
-              className="bg-black hover:bg-slate-800 text-white px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-black/10 active:scale-95"
+              className="bg-black dark:bg-white text-white dark:text-black hover:bg-slate-800 dark:hover:bg-slate-100 px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest shadow-lg shadow-black/10 active:scale-95"
             >
               Luyện Flashcard
             </button>
@@ -317,7 +317,7 @@ export default function PersonalVocab() {
                 if (activeTab !== 'personal') setActiveTab('personal');
                 openFolderModal();
               }}
-              className="border border-slate-200 hover:border-black hover:bg-slate-50 text-slate-800 px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest active:scale-95"
+              className="border border-slate-200 dark:border-slate-800 hover:border-black dark:hover:border-white hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-800 dark:text-slate-200 px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest active:scale-95"
             >
               Thêm Thư Mục
             </button>
@@ -326,7 +326,7 @@ export default function PersonalVocab() {
                 if (activeTab !== 'personal') setActiveTab('personal');
                 openAddModal();
               }}
-              className="border border-slate-200 hover:border-black hover:bg-slate-50 text-slate-800 px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest active:scale-95"
+              className="border border-slate-200 dark:border-slate-800 hover:border-black dark:hover:border-white hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-800 dark:text-slate-200 px-6 md:px-8 py-3.5 rounded-2xl font-bold transition-all text-[11px] uppercase tracking-widest active:scale-95"
             >
               Thêm từ mới
             </button>
@@ -335,6 +335,16 @@ export default function PersonalVocab() {
 
         {/* Minimalist Switcher Tabs */}
         <div className="flex flex-wrap gap-2.5 mb-10 border-b border-slate-100 pb-4">
+          <button
+            onClick={() => setActiveTab('personal')}
+            className={`text-[9px] font-black tracking-wider uppercase px-4 py-2.5 rounded-lg transition-all ${
+              activeTab === 'personal'
+                ? 'bg-slate-950 text-white shadow-sm'
+                : 'bg-slate-50 text-slate-400 hover:bg-slate-100 border border-slate-100'
+            }`}
+          >
+            Từ tự thêm ({personalVocabs.length})
+          </button>
           <button
             onClick={() => setActiveTab('saved-vocab')}
             className={`text-[9px] font-black tracking-wider uppercase px-4 py-2.5 rounded-lg transition-all ${
@@ -354,16 +364,6 @@ export default function PersonalVocab() {
             }`}
           >
             Hán tự đã lưu ({savedKanjis.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('personal')}
-            className={`text-[9px] font-black tracking-wider uppercase px-4 py-2.5 rounded-lg transition-all ${
-              activeTab === 'personal'
-                ? 'bg-slate-950 text-white shadow-sm'
-                : 'bg-slate-50 text-slate-400 hover:bg-slate-100 border border-slate-100'
-            }`}
-          >
-            Từ tự thêm ({personalVocabs.length})
           </button>
         </div>
 

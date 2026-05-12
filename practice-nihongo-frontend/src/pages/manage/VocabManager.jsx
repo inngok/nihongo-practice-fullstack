@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import vocabService from '../../api/vocabService';
 import bookService from '../../api/bookService';
+import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 import { Modal, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined } from '@ant-design/icons';
 
@@ -9,11 +11,13 @@ export default function VocabManager() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const bookIdParam = searchParams.get('bookId');
+  const { fetchWithAuth } = useAuth();
   
   const [vocabs, setVocabs] = useState([]);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
   
   // Filter State
   const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
@@ -125,11 +129,41 @@ export default function VocabManager() {
     setIsModalOpen(true);
   };
 
+  const handleAiAutoFill = async () => {
+    if (!formData.word.trim()) {
+      return message.warning('Vui lòng nhập Từ vựng trước khi nhấn AI Điền Nhanh');
+    }
+    setIsAiLoading(true);
+    message.loading({ content: 'AI đang phân tích và soạn câu ví dụ...', key: 'ai_fill' });
+    try {
+      const res = await fetchWithAuth(`${API_BASE_URL}/ai/generate-vocab?word=${encodeURIComponent(formData.word)}`);
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => 'Không thể tải từ AI');
+        throw new Error(errorText);
+      }
+      const data = await res.json();
+      setFormData(prev => ({
+        ...prev,
+        reading: data.reading || prev.reading,
+        meaning: data.meaning || prev.meaning,
+        example: data.example || prev.example,
+        exampleMeaning: data.exampleMeaning || prev.exampleMeaning
+      }));
+      message.success({ content: 'Đã điền thông tin tự động từ AI!', key: 'ai_fill' });
+    } catch (err) {
+      message.error({ content: 'Lỗi khi gọi AI: ' + err.message, key: 'ai_fill' });
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const payload = {
       ...formData,
-      book: formData.bookId ? { id: parseInt(formData.bookId) } : null
+      book: formData.bookId ? { id: parseInt(formData.bookId) } : null,
+      week: formData.week ? parseInt(formData.week) : null,
+      day: formData.day ? parseInt(formData.day) : null
     };
     delete payload.bookId;
 
@@ -322,7 +356,17 @@ export default function VocabManager() {
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Từ vựng</label>
+                  <div className="flex justify-between items-center px-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Từ vựng</label>
+                    <button
+                      type="button"
+                      onClick={handleAiAutoFill}
+                      disabled={isAiLoading}
+                      className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-800 disabled:opacity-40 transition-colors flex items-center gap-1"
+                    >
+                      <span>✨ AI Điền Nhanh</span>
+                    </button>
+                  </div>
                   <input
                     type="text"
                     name="word"
@@ -384,6 +428,7 @@ export default function VocabManager() {
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none"
                   >
+                    <option value="">-- Không chọn --</option>
                     {[...Array(10)].map((_, i) => (
                       <option key={i + 1} value={i + 1}>Tuần {i + 1}</option>
                     ))}
@@ -397,6 +442,7 @@ export default function VocabManager() {
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none"
                   >
+                    <option value="">-- Không chọn --</option>
                     {[...Array(7)].map((_, i) => (
                       <option key={i + 1} value={i + 1}>Ngày {i + 1}</option>
                     ))}
