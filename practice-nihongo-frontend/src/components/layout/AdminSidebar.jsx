@@ -28,10 +28,10 @@ export default function AdminSidebar() {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-slate-100 flex flex-col z-[1100]">
+    <aside className="fixed left-0 top-0 h-screen w-64 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 flex flex-col z-[1100]">
       {/* Brand */}
       <div className="h-20 flex items-center px-8">
-        <Link to="/" className="text-lg font-black tracking-tighter flex items-center gap-2.5 text-slate-900 uppercase">
+        <Link to="/" className="text-lg font-black tracking-tighter flex items-center gap-2.5 text-slate-900 dark:text-white uppercase">
           NIHONGO
         </Link>
       </div>
@@ -40,7 +40,7 @@ export default function AdminSidebar() {
       <nav className="flex-grow py-4 px-3 space-y-0.5 overflow-y-auto no-scrollbar">
         {menuItems.map((item, index) => {
           if (item.type === 'divider') {
-            return <div key={index} className="h-px bg-slate-50 my-4 mx-4" />;
+            return <div key={index} className="h-px bg-slate-50 dark:bg-slate-850 my-4 mx-4" />;
           }
 
           const isActive = pathname === item.path;
@@ -50,8 +50,8 @@ export default function AdminSidebar() {
               to={item.path}
               className={`flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 group ${
                 isActive 
-                  ? 'bg-slate-900 text-white font-bold shadow-md shadow-slate-200' 
-                  : 'text-slate-500 hover:text-black hover:bg-slate-50'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-black font-bold shadow-md shadow-slate-200 dark:shadow-none' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/40'
               }`}
             >
               <span className="text-[13px] tracking-tight">{item.label}</span>
@@ -61,10 +61,10 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-slate-50">
+      <div className="p-4 border-t border-slate-50 dark:border-slate-800">
         <button
           onClick={logout}
-          className="w-full flex items-center px-4 py-2.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all font-medium text-xs tracking-tight"
+          className="w-full flex items-center px-4 py-2.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all font-medium text-xs tracking-tight"
         >
           Đăng xuất
         </button>

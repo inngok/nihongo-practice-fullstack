@@ -52,3 +52,53 @@ input::-ms-clear {
   display: none;
 }
 
+/* ==========================================
+   DARK MODE
+   ========================================== */
+
+/* Base: dark background on html/body so pages inherit it */
+html.dark {
+  background-color: #0f172a;
+  color-scheme: dark;
+}
+html.dark body {
+  background-color: #0f172a;
+  color: #cbd5e1;
+}
+
+/* Full-page containers (min-h-screen with bg-white) should be transparent in dark */
+html.dark .min-h-screen.bg-white {
+  background-color: transparent !important;
+}
+
+/* Smooth transition for theme switch */
+html.dark *,
+html.dark *::before,
+html.dark *::after {
+  transition-property: background-color, border-color, color;
+  transition-duration: 0.15s;
+  transition-timing-function: ease;
+}
+
+/* Ant Design dropdown overrides (3rd party, needs !important) */
+html.dark .ant-dropdown-menu {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important;
+}
+html.dark .ant-dropdown-menu-item {
+  color: #cbd5e1 !important;
+}
+html.dark .ant-dropdown-menu-item:hover {
+  background-color: #334155 !important;
+}
+html.dark .ant-dropdown-menu-item a,
+html.dark .ant-dropdown-menu-item button,
+html.dark .ant-dropdown-menu-item span {
+  color: #cbd5e1 !important;
+}
+html.dark .ant-dropdown-menu-item-divider {
+  background-color: #334155 !important;
+}
+
+

@@ -152,4 +152,25 @@ public class VocabController {
         vocabService.deleteVocab(id);
         return ResponseEntity.ok().build();
     }
+
+    @Operation(summary = "Xóa tất cả từ vựng hoặc theo sách")
+    @DeleteMapping("/all")
+    public ResponseEntity<Void> deleteAllVocabs(@RequestParam(required = false) Long bookId) {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(currentUser.getRole());
+        if (!isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        if (bookId != null) {
+            vocabService.deleteVocabsByBook(bookId);
+        } else {
+            vocabService.deleteAllVocabs();
+        }
+        return ResponseEntity.ok().build();
+    }
 }

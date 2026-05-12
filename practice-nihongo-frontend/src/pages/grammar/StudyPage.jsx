@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
   Brain, CheckCircle, Layers, List, Search,
   ChevronRight, ChevronLeft, Check, RotateCcw,
@@ -7,15 +7,20 @@ import {
 } from 'lucide-react';
 
 import grammarService from '../../api/grammarService';
+import vocabService from '../../api/vocabService';
 
 
-export default function Mimikara() {
+export default function StudyPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const bookId = searchParams.get('bookId');
 
+  // Detect context: vocabulary or grammar based on URL
+  const isVocabMode = location.pathname.startsWith('/vocabulary');
+
+  // ... rest of state (unchanged)
   const [activeMode, setActiveMode] = useState('menu');
-  // ... rest of state
   const [prevMode, setPrevMode] = useState(null);
   const [selectedUnit, setSelectedUnit] = useState('all');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -38,36 +43,71 @@ export default function Mimikara() {
   });
   const containerRef = useRef(null);
   const [grammarData, setGrammarData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch dữ liệu từ API thay cho file tĩnh
+  // Fetch data from the correct API based on context
   useEffect(() => {
-    grammarService.getAll()
+    setLoading(true);
+    const fetchData = isVocabMode
+      ? vocabService.getAll({ bookId })
+      : grammarService.getAll();
+
+    fetchData
       .then(res => {
         let data = res.data;
-        // Lọc theo Book ID nếu có
+        // Filter by Book ID if provided
         if (bookId) {
           data = data.filter(item => item.book && String(item.book.id) === String(bookId));
         }
 
-        const mapped = data.map(item => ({
-          ...item,
-          pattern: item.structure,
-          unit: 1, // Mặc định Unit 1 nếu DB chưa có trường Unit
-          examples: [{ jp: item.exampleSentence, vn: item.exampleMeaning }],
-          quiz: { 
-            sentence: item.exampleSentence, 
-            translation: item.exampleMeaning, 
-            answer: item.structure 
-          }
-        }));
+        const mapped = isVocabMode
+          ? data.map(item => ({
+              ...item,
+              pattern: item.word,
+              meaning: item.meaning,
+              explanation: item.reading ? `Đọc: ${item.reading}` : '',
+              unit: item.week || 1,
+              examples: [{ jp: item.example, vn: item.exampleMeaning }],
+              quiz: {
+                sentence: item.example,
+                translation: item.exampleMeaning,
+                answer: item.word
+              }
+            }))
+          : data.map(item => ({
+              ...item,
+              pattern: item.structure,
+              unit: item.week || 1,
+              examples: [{ jp: item.exampleSentence, vn: item.exampleMeaning }],
+              quiz: { 
+                sentence: item.exampleSentence, 
+                translation: item.exampleMeaning, 
+                answer: item.structure 
+              }
+            }));
         setGrammarData(mapped);
       })
-      .catch(console.error);
-  }, [bookId]);
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [bookId, isVocabMode]);
 
   useEffect(() => {
     localStorage.setItem('mimikara_completed', JSON.stringify(completedIds));
   }, [completedIds]);
+
+  // Compute available units dynamically based on current data
+  const uniqueUnits = useMemo(() => {
+    const units = Array.from(new Set(grammarData.map(item => item.unit).filter(u => u !== undefined && u !== null)));
+    const sorted = units.sort((a, b) => a - b);
+    return sorted.length > 0 ? sorted : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  }, [grammarData]);
+
+  // Reset selection if the previously selected unit does not exist in the new book
+  useEffect(() => {
+    if (selectedUnit !== 'all' && !uniqueUnits.includes(selectedUnit)) {
+      setSelectedUnit('all');
+    }
+  }, [uniqueUnits, selectedUnit]);
 
   // Focus management
   useEffect(() => {
@@ -373,18 +413,26 @@ export default function Mimikara() {
   const MenuScreen = useMemo(() => (
     <div className="flex flex-col gap-12 animate-in fade-in duration-500">
       <div className="flex flex-wrap gap-2">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+        {uniqueUnits.map(num => (
           <button
             key={num}
             onClick={() => setSelectedUnit(num)}
-            className={`px-6 py-4 border ${selectedUnit === num ? 'bg-black text-white' : 'border-slate-100 text-slate-400'} text-xs font-black transition-all`}
+            className={`px-6 py-4 border transition-all text-xs font-black ${
+              selectedUnit === num 
+                ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' 
+                : 'border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 hover:border-slate-300 dark:hover:border-slate-600'
+            }`}
           >
             U{num < 10 ? `0${num}` : num}
           </button>
         ))}
         <button
           onClick={() => setSelectedUnit('all')}
-          className={`px-6 py-4 border ${selectedUnit === 'all' ? 'bg-black text-white' : 'border-slate-100 text-slate-400'} text-xs font-black`}
+          className={`px-6 py-4 border transition-all text-xs font-black ${
+            selectedUnit === 'all' 
+              ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' 
+              : 'border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-500 hover:border-slate-300 dark:hover:border-slate-600'
+          }`}
         >
           TẤT CẢ
         </button>
@@ -401,25 +449,25 @@ export default function Mimikara() {
           <button
             key={m.id}
             onClick={() => switchMode(m.id)}
-            className="flex-1 min-w-[120px] py-5 border border-black text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all flex flex-col items-center gap-2"
+            className="flex-1 min-w-[120px] py-5 border border-black dark:border-slate-700 text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white dark:text-slate-300 dark:hover:bg-white dark:hover:text-black transition-all flex flex-col items-center gap-2"
           >
             <m.icon className="w-5 h-5" /> {m.label}
           </button>
         ))}
       </div>
     </div>
-  ), [selectedUnit, switchMode]);
+  ), [selectedUnit, switchMode, uniqueUnits]);
 
   const ListScreen = useMemo(() => (
     <div className="flex flex-col gap-8 animate-in">
       <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 w-5 h-5" />
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 w-5 h-5" />
         <input
           type="text"
           placeholder="Tìm kiếm..."
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
-          className="w-full pl-12 pr-4 py-4 border-b-2 border-slate-100 focus:border-black outline-none font-medium"
+          className="w-full pl-12 pr-4 py-4 border-b-2 border-slate-100 dark:border-slate-800 bg-transparent focus:border-black dark:focus:border-white outline-none font-medium text-slate-900 dark:text-white"
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -445,15 +493,15 @@ export default function Mimikara() {
             <div
               key={item.id}
               onClick={() => { setPrevMode('list'); setStudyData([item]); setActiveMode('flashcard'); setCurrentIndex(0); }}
-              className="p-8 border border-slate-100 rounded-[2rem] hover:border-black transition-all cursor-pointer group"
+              className="p-8 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] hover:border-black dark:hover:border-white transition-all cursor-pointer group bg-white dark:bg-slate-900/50"
             >
               <div className="flex justify-between mb-4">
-                <span className="text-[10px] font-black text-slate-300">U{item.unit} • #{item.id}</span>
+                <span className="text-[10px] font-black text-slate-300 dark:text-slate-600">U{item.unit} • #{item.id}</span>
                 {completedIds.includes(item.id) && <Check className="w-4 h-4 text-emerald-500" />}
               </div>
-              <h3 className="text-2xl font-semibold italic mb-2 font-kanji">{item.pattern}</h3>
-              {item.romaji && <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-2">{item.romaji}</p>}
-              <p className="text-slate-500 font-bold text-sm italic">{item.meaning}</p>
+              <h3 className="text-2xl font-semibold italic mb-2 font-kanji text-slate-900 dark:text-white">{item.pattern}</h3>
+              {item.romaji && <p className="text-[10px] font-bold text-slate-300 dark:text-slate-500 uppercase tracking-widest mb-2">{item.romaji}</p>}
+              <p className="text-slate-500 dark:text-slate-400 font-bold text-sm italic">{item.meaning}</p>
             </div>
           ))}
       </div>
@@ -469,14 +517,14 @@ export default function Mimikara() {
     >
       <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
         <div className="flex items-center gap-3">
-          <span className="px-3 py-1 bg-black text-white text-[10px] font-black rounded-full">UNIT {currentItem.unit}</span>
-          <span className="text-[10px] font-black text-slate-400"># {currentItem.id}</span>
+          <span className="px-3 py-1 bg-black text-white dark:bg-white dark:text-black text-[10px] font-black rounded-full">UNIT {currentItem.unit}</span>
+          <span className="text-[10px] font-black text-slate-400 dark:text-slate-500"># {currentItem.id}</span>
         </div>
         <div className="flex-grow flex justify-center md:justify-end items-center gap-6 w-full md:w-auto">
-          <span className="text-[10px] font-black text-slate-300">TIẾN TRÌNH: {currentIndex + 1} / {studyData.length}</span>
-          <div className="h-1 bg-slate-100 w-32 md:w-64 rounded-full overflow-hidden">
+          <span className="text-[10px] font-black text-slate-300 dark:text-slate-600">TIẾN TRÌNH: {currentIndex + 1} / {studyData.length}</span>
+          <div className="h-1 bg-slate-100 dark:bg-slate-800 w-32 md:w-64 rounded-full overflow-hidden">
             <div
-              className="h-full bg-black transition-all duration-500"
+              className="h-full bg-black dark:bg-white transition-all duration-500"
               style={{ width: `${((currentIndex + 1) / studyData.length) * 100}%` }}
             />
           </div>
@@ -497,32 +545,32 @@ export default function Mimikara() {
               }}
             >
               <div className={`relative w-full h-full transition-all duration-700 preserve-3d shadow-2xl rounded-[3rem] ${isFlipped ? 'rotate-y-180' : 'group-hover:scale-105'}`}>
-                <div className="absolute inset-0 backface-hidden bg-white border-2 border-slate-100 rounded-[3rem] flex flex-col items-center justify-center p-12 text-center">
-                  <h2 className="text-2xl md:text-4xl font-semibold italic whitespace-normal md:whitespace-nowrap font-kanji">{currentItem.pattern}</h2>
-                  <p className="mt-4 text-[10px] font-bold text-slate-300 uppercase tracking-widest italic decoration-slate-100 underline underline-offset-8">NHẤN ĐỂ LẬT</p>
+                <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] flex flex-col items-center justify-center p-12 text-center">
+                  <h2 className="text-2xl md:text-4xl font-semibold italic whitespace-normal md:whitespace-nowrap font-kanji text-slate-900 dark:text-white">{currentItem.pattern}</h2>
+                  <p className="mt-4 text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest italic decoration-slate-100 underline underline-offset-8">NHẤN ĐỂ LẬT</p>
                 </div>
-                <div className="absolute inset-0 backface-hidden rotate-y-180 bg-white border-2 border-slate-900 text-slate-900 rounded-[3rem] flex flex-col items-center p-8 md:p-12 text-center overflow-hidden">
+                <div className="absolute inset-0 backface-hidden rotate-y-180 bg-white dark:bg-slate-900 border-2 border-slate-900 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-[3rem] flex flex-col items-center p-8 md:p-12 text-center overflow-hidden">
                    <div className="w-full flex-grow flex flex-col items-center justify-center overflow-y-auto no-scrollbar space-y-4">
                       <div className="space-y-2">
-                        <h3 className="text-xl md:text-2xl font-black italic leading-tight">{currentItem.meaning}</h3>
-                        <p className="text-xs md:text-sm text-slate-500 italic font-medium px-4">{currentItem.explanation}</p>
+                        <h3 className="text-xl md:text-2xl font-black italic leading-tight text-slate-900 dark:text-white">{currentItem.meaning}</h3>
+                        <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 italic font-medium px-4">{currentItem.explanation}</p>
                       </div>
                       
                       {currentItem.examples && currentItem.examples.length > 0 && (
-                        <div className="w-full space-y-3 pt-4 border-t border-slate-100">
+                        <div className="w-full space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                            {currentItem.examples.map((ex, idx) => (
                              <div key={idx} className="text-left">
-                               <p className="text-[11px] font-bold text-slate-900 leading-snug">{ex.jp}</p>
-                               <p className="text-[10px] text-slate-400 font-medium italic">{ex.vn}</p>
+                               <p className="text-[11px] font-bold text-slate-900 dark:text-white leading-snug">{ex.jp}</p>
+                               <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium italic">{ex.vn}</p>
                              </div>
                            ))}
                         </div>
                       )}
                    </div>
                    
-                   <div className="mt-6 pt-4 border-t border-slate-50 w-full flex flex-col items-center gap-2">
-                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-300">PATTERN: {currentItem.pattern}</p>
-                     <div className="px-4 py-1.5 bg-slate-900 text-white rounded-full text-[9px] font-black uppercase tracking-tighter shadow-lg">LẬT LẠI</div>
+                   <div className="mt-6 pt-4 border-t border-slate-55 dark:border-slate-800 w-full flex flex-col items-center gap-2">
+                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-300 dark:text-slate-600">PATTERN: {currentItem.pattern}</p>
+                     <div className="px-4 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-full text-[9px] font-black uppercase tracking-tighter shadow-lg">LẬT LẠI</div>
                    </div>
                 </div>
               </div>
@@ -532,31 +580,31 @@ export default function Mimikara() {
             <div className="max-w-4xl mx-auto w-full space-y-8">
               <div 
                 onClick={() => setIsFlipped(prev => !prev)}
-                className="bg-white border-2 border-slate-900 rounded-[2.5rem] p-12 text-center cursor-pointer hover:bg-slate-100 transition-all active:scale-[0.99] group relative overflow-hidden min-h-[300px] flex flex-col justify-center"
+                className="bg-white dark:bg-slate-900 border-2 border-slate-900 dark:border-slate-700 rounded-[2.5rem] p-12 text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all active:scale-[0.99] group relative overflow-hidden min-h-[300px] flex flex-col justify-center"
               >
                 {!isFlipped ? (
                   <div className="animate-in fade-in zoom-in-95 duration-300">
-                    <h2 className="text-3xl md:text-5xl font-semibold italic mb-6 whitespace-normal md:whitespace-nowrap font-kanji">{currentItem.pattern}</h2>
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] animate-pulse">Nhấn để xem nghĩa / Space to flip</p>
+                    <h2 className="text-3xl md:text-5xl font-semibold italic mb-6 whitespace-normal md:whitespace-nowrap font-kanji text-slate-900 dark:text-white">{currentItem.pattern}</h2>
+                    <p className="text-[10px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-[0.2em] animate-pulse">Nhấn để xem nghĩa / Space to flip</p>
                   </div>
                 ) : (
                   <div className="animate-in fade-in zoom-in-95 duration-300">
-                    <h2 className="text-xl font-semibold italic text-slate-300 mb-2 uppercase tracking-widest font-kanji">{currentItem.pattern}</h2>
-                    <div className="h-px w-20 bg-slate-100 mx-auto mb-6" />
-                    <h3 className="text-3xl font-black italic text-black mb-4">{currentItem.meaning}</h3>
-                    <p className="text-[10px] font-bold text-slate-400 italic mb-2 px-6">{currentItem.explanation}</p>
-                    <p className="text-[10px] font-black text-slate-200 uppercase tracking-widest mt-6">Nhấn để ẩn / Space to flip back</p>
+                    <h2 className="text-xl font-semibold italic text-slate-300 dark:text-slate-500 mb-2 uppercase tracking-widest font-kanji">{currentItem.pattern}</h2>
+                    <div className="h-px w-20 bg-slate-100 dark:bg-slate-800 mx-auto mb-6" />
+                    <h3 className="text-3xl font-black italic text-slate-900 dark:text-white mb-4">{currentItem.meaning}</h3>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 italic mb-2 px-6">{currentItem.explanation}</p>
+                    <p className="text-[10px] font-black text-slate-200 dark:text-slate-600 uppercase tracking-widest mt-6">Nhấn để ẩn / Space to flip back</p>
                   </div>
                 )}
               </div>
               {isFlipped && (
                 <div className="animate-in slide-in-from-top-4 duration-500">
-                  <div className="space-y-2 bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-2 px-2">Ví dụ Mimikara</p>
+                  <div className="space-y-2 bg-slate-50 dark:bg-slate-800/40 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800">
+                    <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest mb-2 px-2">Ví dụ</p>
                     {currentItem.examples?.map((ex, idx) => (
-                      <div key={idx} className={`relative p-4 rounded-[1.5rem] italic ${ex.isBook ? 'bg-white shadow-sm' : 'text-slate-900'}`}>
+                      <div key={idx} className={`relative p-4 rounded-[1.5rem] italic ${ex.isBook ? 'bg-white dark:bg-slate-900 shadow-sm' : 'text-slate-900 dark:text-slate-100'}`}>
                         <p className="font-bold text-sm mb-1">{ex.jp}</p>
-                        <p className="text-[11px] font-medium text-slate-400">{ex.vn}</p>
+                        <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">{ex.vn}</p>
                       </div>
                     ))}
                   </div>
@@ -567,12 +615,12 @@ export default function Mimikara() {
           quiz: (
             <div className="text-center space-y-12">
               <div className="space-y-4">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border border-slate-100 rounded-full px-4 py-1.5 inline-block mx-auto mb-2 shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-full px-4 py-1.5 inline-block mx-auto mb-2 shadow-sm">
                   Gợi ý: {currentItem.isMainQuiz ? currentItem.quiz?.hint : currentItem.meaning}
                 </p>
-                <p className="text-slate-400 italic">"{currentItem.translation}"</p>
+                <p className="text-slate-400 dark:text-slate-500 italic">"{currentItem.translation}"</p>
               </div>
-              <h3 className="text-3xl md:text-4xl font-bold italic leading-relaxed">
+              <h3 className="text-3xl md:text-4xl font-bold italic leading-relaxed text-slate-900 dark:text-white">
                 {renderSentenceWithBlank()}
               </h3>
               <div className="space-y-4">
@@ -585,9 +633,9 @@ export default function Mimikara() {
                     value={userInput}
                     onChange={e => !feedback && setUserInput(e.target.value)}
                     placeholder="Nhập đáp án..."
-                    className={`w-full py-6 px-10 rounded-full border-2 outline-none text-center text-xl font-bold transition-all shadow-xl ${
-                      feedback === 'correct' ? 'border-emerald-500' : 
-                      feedback === 'incorrect' ? 'border-red-500' : 'border-black/5 focus:border-black'
+                    className={`w-full py-6 px-10 rounded-full border-2 outline-none text-center text-xl font-bold transition-all shadow-xl bg-transparent ${
+                      feedback === 'correct' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 
+                      feedback === 'incorrect' ? 'border-red-500 text-red-600 dark:text-red-400' : 'border-black/5 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white'
                     }`}
                   />
                 </form>
@@ -600,26 +648,26 @@ export default function Mimikara() {
           listening: (
             <div className="text-center space-y-12">
               {!currentItem.sentence ? (
-                <div className="py-20 italic text-slate-400">Không có dữ liệu ví dụ cho Unit này.</div>
+                <div className="py-20 italic text-slate-400 dark:text-slate-600">Không có dữ liệu ví dụ cho Unit này.</div>
               ) : (
                 <>
                   <div className="flex flex-col items-center gap-6">
                     <button
                       onClick={() => playAudio(currentItem.sentence)}
-                      className="w-24 h-24 bg-black text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-2xl group"
+                      className="w-24 h-24 bg-black dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all shadow-2xl group"
                     >
                       <Volume2 className="w-10 h-10 group-hover:animate-pulse" />
                     </button>
-                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Phím Space để nghe lại</p>
+                    <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">Phím Space để nghe lại</p>
                   </div>
 
               <div className="space-y-4">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border border-slate-100 rounded-full px-4 py-1.5 inline-block mx-auto mb-2 shadow-sm">
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-full px-4 py-1.5 inline-block mx-auto mb-2 shadow-sm">
                   Gợi ý: {currentItem.isMainQuiz ? currentItem.quiz?.hint : currentItem.meaning}
                 </p>
-                <p className="text-slate-400 italic">"{currentItem.translation}"</p>
+                <p className="text-slate-400 dark:text-slate-500 italic">"{currentItem.translation}"</p>
               </div>
-              <h3 className="text-2xl md:text-3xl font-bold italic leading-relaxed">
+              <h3 className="text-2xl md:text-3xl font-bold italic leading-relaxed text-slate-900 dark:text-white">
                 {renderSentenceWithBlank()}
               </h3>
             
@@ -633,9 +681,9 @@ export default function Mimikara() {
                   value={userInput}
                   onChange={e => !feedback && setUserInput(e.target.value)}
                   placeholder="Nghe và điền ngữ pháp..."
-                  className={`w-full py-6 px-10 rounded-full border-2 outline-none text-center text-xl font-bold transition-all shadow-xl ${
-                    feedback === 'correct' ? 'border-emerald-500' : 
-                    feedback === 'incorrect' ? 'border-red-500' : 'border-black/5 focus:border-black'
+                  className={`w-full py-6 px-10 rounded-full border-2 outline-none text-center text-xl font-bold transition-all shadow-xl bg-transparent ${
+                    feedback === 'correct' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 
+                    feedback === 'incorrect' ? 'border-red-500 text-red-600 dark:text-red-400' : 'border-black/5 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white'
                   }`}
                 />
               </form>
@@ -652,27 +700,27 @@ export default function Mimikara() {
     multiple_choice: (
       <div className="text-center space-y-12 w-full max-w-2xl mx-auto">
         <div className="space-y-4">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border border-slate-100 rounded-full px-4 py-1.5 inline-block mx-auto mb-2 shadow-sm">
+          <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 rounded-full px-4 py-1.5 inline-block mx-auto mb-2 shadow-sm">
             Gợi ý: {currentItem.isMainQuiz ? currentItem.quiz?.hint : currentItem.meaning}
           </p>
-          <p className="text-slate-400 italic">"{currentItem.translation}"</p>
+          <p className="text-slate-400 dark:text-slate-500 italic">"{currentItem.translation}"</p>
         </div>
-        <h3 className="text-3xl md:text-4xl font-bold italic leading-relaxed">
+        <h3 className="text-3xl md:text-4xl font-bold italic leading-relaxed text-slate-900 dark:text-white">
           {renderSentenceWithBlank()}
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 w-full max-w-lg mx-auto">
           {multipleChoiceOptions.map((opt, i) => {
-            let btnState = "bg-white border-2 border-slate-100 hover:border-black text-slate-700 hover:shadow-md";
+            let btnState = "bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 hover:border-black dark:hover:border-white text-slate-700 dark:text-slate-300 hover:shadow-md";
             if (feedback) {
               if (opt === currentItem.answer) {
-                 btnState = "bg-emerald-50 border-emerald-500 text-emerald-700 shadow-inner";
+                 btnState = "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500 text-emerald-700 dark:text-emerald-400 shadow-inner";
               } else if (userInput === opt) {
-                 btnState = "bg-red-50 border-red-500 text-red-700 shadow-inner";
+                 btnState = "bg-red-50 dark:bg-red-950/30 border-red-500 text-red-700 dark:text-red-400 shadow-inner";
               } else {
-                 btnState = "bg-slate-50 border-slate-100 text-slate-300 opacity-50";
+                 btnState = "bg-slate-50 dark:bg-slate-800/20 border-slate-100 dark:border-slate-800 text-slate-300 dark:text-slate-700 opacity-50";
               }
             } else if (userInput === opt) {
-               btnState = "bg-black border-black text-white";
+               btnState = "bg-black dark:bg-white border-black dark:border-white text-white dark:text-black";
             }
 
             return (
@@ -714,14 +762,14 @@ export default function Mimikara() {
             }
           }}
           disabled={currentIndex === 0}
-          className="flex-1 py-4 border border-slate-200 rounded-2xl text-[10px] font-black uppercase text-slate-400 disabled:opacity-30 hover:border-black hover:text-black transition-all flex items-center justify-center gap-2"
+          className="flex-1 py-4 border border-slate-200 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase text-slate-400 disabled:opacity-30 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white transition-all flex items-center justify-center gap-2"
         >
           <ChevronLeft className="w-4 h-4" /> TRƯỚC
         </button>
         <button
           onClick={handleSubmit}
           disabled={activeMode === 'multiple_choice' && !feedback}
-          className="flex-1 py-4 bg-black text-white rounded-2xl text-[10px] font-black uppercase hover:shadow-2xl transition-all flex items-center justify-center gap-2 disabled:bg-slate-100 disabled:text-slate-400 disabled:shadow-none"
+          className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl text-[10px] font-black uppercase hover:shadow-2xl transition-all flex items-center justify-center gap-2 disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-600 disabled:shadow-none"
         >
           {['quiz', 'listening'].includes(activeMode) && !feedback ? (
             <>KIỂM TRA <Check className="w-4 h-4" /></>
@@ -749,22 +797,22 @@ export default function Mimikara() {
     <div 
       ref={containerRef}
       tabIndex="0"
-      className="min-h-screen w-full bg-white flex flex-col items-center pt-32 px-4 md:px-12 selection:bg-black selection:text-white outline-none focus:outline-none"
+      className="min-h-screen w-full bg-white dark:bg-transparent flex flex-col items-center pt-32 px-4 md:px-12 selection:bg-black selection:text-white outline-none focus:outline-none"
       onKeyDown={handleKeyDown}
     >
       <div className="w-full max-w-6xl mb-12 flex justify-between items-end">
         <div>
-          <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-2">
-            {grammarData[0]?.book?.levelLabel || 'TRÌNH ĐỘ N3'}
+          <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest mb-2">
+            {grammarData[0]?.book?.levelLabel || (isVocabMode ? 'TỪ VỰNG' : 'TRÌNH ĐỘ N3')}
           </p>
-          <h1 className="text-5xl font-black tracking-tighter italic">
-            {grammarData[0]?.book?.title || 'Mimikara'}
+          <h1 className="text-5xl font-black tracking-tighter italic dark:text-white">
+            {grammarData[0]?.book?.title || (isVocabMode ? 'Từ vựng' : 'Ngữ pháp')}
           </h1>
         </div>
         <button
           onClick={() => {
             if (activeMode === 'menu') {
-              navigate('/grammar');
+              navigate(isVocabMode ? '/vocabulary' : '/grammar');
             } else if (prevMode) {
               setActiveMode(prevMode);
               setPrevMode(null);
@@ -772,31 +820,40 @@ export default function Mimikara() {
               switchMode('menu');
             }
           }}
-          className="px-8 py-3 border-2 border-black text-xs font-black uppercase hover:bg-black hover:text-white transition-all"
+          className="px-8 py-3 border-2 border-black dark:border-slate-600 text-xs font-black uppercase hover:bg-black hover:text-white dark:text-slate-300 dark:hover:bg-white dark:hover:text-black transition-all"
         >
           {activeMode === 'menu' ? 'Thoát' : 'Quay lại'}
         </button>
       </div>
 
-      <div className="w-full max-w-6xl flex-grow flex flex-col">
-        {mainContent}
+      <div className="w-full max-w-6xl flex-grow flex flex-col justify-center">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4 animate-pulse">
+            <div className="w-12 h-12 border-4 border-slate-100 dark:border-slate-800 border-t-black dark:border-t-white rounded-full animate-spin"></div>
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Đang đồng bộ dữ liệu...</p>
+          </div>
+        ) : (
+          mainContent
+        )}
       </div>
 
       {showResults && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-sm bg-white rounded-[2.5rem] p-10 text-center shadow-2xl">
-            <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center mx-auto absolute -top-8 left-1/2 -translate-x-1/2 rotate-3 border-4 border-white">
-              <Brain className="w-8 h-8 text-white" />
+          <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-10 text-center shadow-2xl">
+            <div className="w-16 h-16 bg-black dark:bg-white rounded-2xl flex items-center justify-center mx-auto absolute -top-8 left-1/2 -translate-x-1/2 rotate-3 border-4 border-white dark:border-slate-900 shadow-xl">
+              <Brain className="w-8 h-8 text-white dark:text-black" />
             </div>
             <div className="mt-8 space-y-6">
-              <h2 className="text-3xl font-black italic uppercase">Hoàn thành!</h2>
-              <div className="py-6 border-y border-slate-50">
-                <div className="text-7xl font-black italic">{score} <span className="text-2xl text-slate-200">/ {studyData.length}</span></div>
+              <h2 className="text-3xl font-black italic uppercase text-slate-900 dark:text-white">Hoàn thành!</h2>
+              <div className="py-6 border-y border-slate-50 dark:border-slate-800">
+                <div className="text-7xl font-black italic text-slate-900 dark:text-white">
+                  {score} <span className="text-2xl text-slate-200 dark:text-slate-700">/ {studyData.length}</span>
+                </div>
               </div>
-              <p className="text-slate-500 italic text-sm">{getScoreMessage(score, studyData.length)}</p>
+              <p className="text-slate-500 dark:text-slate-400 italic text-sm">{getScoreMessage(score, studyData.length)}</p>
               <div className="grid grid-cols-1 gap-3">
-                <button onClick={() => switchMode('quiz')} className="py-4 bg-black text-white rounded-2xl font-black uppercase text-[10px]">Thử lại</button>
-                <button onClick={() => switchMode('menu')} className="py-4 bg-slate-50 text-slate-400 rounded-2xl font-black uppercase text-[10px]">Menu</button>
+                <button onClick={() => switchMode('quiz')} className="py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase text-[10px] hover:scale-[1.02] active:scale-[0.98] transition-all">Thử lại</button>
+                <button onClick={() => switchMode('menu')} className="py-4 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-400 rounded-2xl font-black uppercase text-[10px] hover:scale-[1.02] active:scale-[0.98] transition-all">Menu</button>
               </div>
             </div>
           </div>

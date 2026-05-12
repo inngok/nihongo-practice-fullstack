@@ -16,6 +16,7 @@ const Register = lazy(() => import("../pages/auth/Register"));
 // Grammar
 const Grammar = lazy(() => import("../pages/grammar/Grammar"));
 const ConfusingGrammar = lazy(() => import("../pages/grammar/ConfusingGrammar"));
+const StudyPage = lazy(() => import("../pages/grammar/StudyPage"));
 
 // Vocabulary
 const Vocabulary = lazy(() => import("../pages/vocabulary/Vocabulary"));
@@ -53,8 +54,15 @@ const UserManager = lazy(() => import("../pages/manage/UserManager"));
 
 // --- Layout & Route Wrappers ---
 
+const StudyPageWrapper = () => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const bookId = searchParams.get('bookId') || '';
+  return <StudyPage key={`${location.pathname}-${bookId}`} />;
+};
+
 const PageLoader = () => (
-  <div className="min-h-[calc(100vh-80px)] mt-20 flex items-center justify-center bg-white">
+  <div className="min-h-[calc(100vh-80px)] mt-20 flex items-center justify-center bg-white dark:bg-transparent">
     <div className="w-6 h-6 border-2 border-slate-100 border-t-black rounded-full animate-spin"></div>
   </div>
 );
@@ -93,7 +101,7 @@ const AdminRoute = ({ children }) => {
 };
 
 const Fallback = () => (
-  <div className="min-h-[calc(100vh-80px)] mt-20 flex-grow flex items-center justify-center bg-white text-slate-500 font-bold text-lg">
+  <div className="min-h-[calc(100vh-80px)] mt-20 flex-grow flex items-center justify-center bg-white dark:bg-transparent text-slate-500 dark:text-slate-400 font-bold text-lg">
     <div className="text-center space-y-4">
       <div>Trang đang phát triển</div>
     </div>
@@ -132,12 +140,14 @@ export default function RouteMap() {
         {/* Grammar Section */}
         <Route path="grammar">
           <Route index element={<Grammar />} />
+          <Route path="study" element={<StudyPageWrapper />} />
           <Route path="confusing" element={<ConfusingGrammar />} />
         </Route>
 
         {/* Vocabulary Section */}
         <Route path="vocabulary">
           <Route index element={<Vocabulary />} />
+          <Route path="study" element={<StudyPageWrapper />} />
         </Route>
         <Route path="my-vocab" element={<PersonalVocab />} />
 

@@ -138,9 +138,10 @@ public class AiService {
                "\n\nRules:\n" +
                "1. Return ONLY the JSON array. No other text.\n" +
                "2. Ensure all fields are present. Use null for numeric fields (week, day, page) and empty strings for text fields if information is missing.\n" +
-               "3. For Kanji, separate kunyomi and onyomi correctly if possible. If only one reading is provided, try to identify if it is Kun or On.\n" +
-               "4. For Examples, please format as: 'Word (Reading): Meaning'.\n" +
-               "5. Ensure the JSON is valid and encoded in UTF-8.";
+               "3. For Kanji, separate kunyomi and onyomi correctly if possible. If only one reading is provided, try to identify if it is Kun or On. If the Vietnamese meaning (\"meaning\") is missing, translate the Kanji's meaning into Vietnamese.\n" +
+               "4. For Vocabulary, if the Vietnamese meaning (\"meaning\") of the word/phrase is missing or empty, you MUST translate and populate the meaning in Vietnamese.\n" +
+               "5. For Vocabulary, if the Japanese example sentence (\"example\") or its Vietnamese translation (\"exampleMeaning\") is missing, you MUST generate a natural, beginner-friendly Japanese example sentence containing that word/phrase and translate it correctly into Vietnamese for \"exampleMeaning\".\n" +
+               "6. Ensure the JSON is valid, properly escaped, and encoded in UTF-8.";
     }
 
     private String callGemini(String prompt) throws Exception {

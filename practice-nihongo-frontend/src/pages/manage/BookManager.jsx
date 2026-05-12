@@ -6,9 +6,9 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-de
 
 // Static lookup maps for premium typographical tags, eliminating conditional if-else branches in JSX
 const CATEGORY_STYLES = {
-  KANJI: 'bg-amber-50 text-amber-600 border-amber-100',
-  GRAMMAR: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-  VOCABULARY: 'bg-emerald-50 text-emerald-600 border-emerald-100'
+  KANJI: 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/50',
+  GRAMMAR: 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/50',
+  VOCABULARY: 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50'
 };
 
 const CATEGORY_LABELS = {
@@ -151,21 +151,21 @@ export default function BookManager() {
   };
 
   return (
-    <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500">
+    <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 bg-transparent">
       <div className="max-w-7xl mx-auto">
         
         {/* Minimalist Monochrome Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-slate-100">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-slate-100 dark:border-slate-800">
           <div className="space-y-1.5">
             <div className="flex items-baseline gap-2">
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Giáo trình</h1>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">/ Textbooks</span>
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Quản lý Giáo trình</h1>
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">/ Textbooks</span>
             </div>
-            <p className="text-slate-400 text-xs font-medium">Danh mục sách và tài liệu học tập hệ thống</p>
+            <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">Danh mục sách và tài liệu học tập hệ thống</p>
           </div>
           <button
             onClick={openAddModal}
-            className="bg-black text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all shadow-sm flex items-center gap-2 self-start md:self-auto"
+            className="bg-black text-white dark:bg-white dark:text-black px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-sm flex items-center gap-2 self-start md:self-auto"
           >
             <PlusOutlined className="text-[10px]" />
             Thêm mới
@@ -175,28 +175,28 @@ export default function BookManager() {
         {/* Content */}
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="w-6 h-6 border-2 border-slate-100 border-t-black rounded-full animate-spin"></div>
+            <div className="w-6 h-6 border-2 border-slate-100 dark:border-slate-800 border-t-black dark:border-t-white rounded-full animate-spin"></div>
           </div>
         ) : (
-          <div className="border border-slate-100 rounded-xl overflow-hidden">
+          <div className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/50">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">STT</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Tên giáo trình</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Phân loại</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Nhãn level</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-right">Hành động</th>
+                <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">STT</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Tên giáo trình</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Phân loại</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Nhãn level</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 text-right">Hành động</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-850">
                 {books.length > 0 ? (
                   books.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-6 py-5 font-bold text-slate-300">#{item.num}</td>
+                    <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors group">
+                      <td className="px-6 py-5 font-bold text-slate-300 dark:text-slate-600">#{item.num}</td>
                       <td className="px-6 py-5">
-                        <div className="font-bold text-slate-900 leading-tight">{item.title}</div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">{item.japaneseTitle}</div>
+                        <div className="font-bold text-slate-900 dark:text-white leading-tight">{item.title}</div>
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tighter">{item.japaneseTitle}</div>
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex flex-wrap gap-1.5">
@@ -212,30 +212,30 @@ export default function BookManager() {
                         </div>
                       </td>
                       <td className="px-6 py-5">
-                        <span className="text-[10px] font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded">
+                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded">
                           {item.levelLabel}
                         </span>
                       </td>
                       <td className="px-6 py-5 text-right">
                         <div className="flex justify-end items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
                           <div className="flex gap-2 mr-4">
-                            <button onClick={() => navigate(`/vocabulary/manage?bookId=${item.id}`)} className="text-[10px] font-bold text-slate-400 hover:text-black uppercase tracking-tighter">Từ vựng</button>
-                            <span className="text-slate-100">|</span>
-                            <button onClick={() => navigate(`/kanji/manage?bookId=${item.id}`)} className="text-[10px] font-bold text-slate-400 hover:text-black uppercase tracking-tighter">Hán tự</button>
-                            <span className="text-slate-100">|</span>
-                            <button onClick={() => navigate(`/grammar/manage?bookId=${item.id}`)} className="text-[10px] font-bold text-slate-400 hover:text-black uppercase tracking-tighter">Ngữ pháp</button>
+                            <button onClick={() => navigate(`/vocabulary/manage?bookId=${item.id}`)} className="text-[10px] font-bold text-slate-400 hover:text-black dark:hover:text-white uppercase tracking-tighter">Từ vựng</button>
+                            <span className="text-slate-100 dark:text-slate-800">|</span>
+                            <button onClick={() => navigate(`/kanji/manage?bookId=${item.id}`)} className="text-[10px] font-bold text-slate-400 hover:text-black dark:hover:text-white uppercase tracking-tighter">Hán tự</button>
+                            <span className="text-slate-100 dark:text-slate-800">|</span>
+                            <button onClick={() => navigate(`/grammar/manage?bookId=${item.id}`)} className="text-[10px] font-bold text-slate-400 hover:text-black dark:hover:text-white uppercase tracking-tighter">Ngữ pháp</button>
                           </div>
-                          <div className="flex gap-1 border-l border-slate-100 pl-4">
+                          <div className="flex gap-1 border-l border-slate-100 dark:border-slate-800 pl-4">
                             <button 
                               onClick={() => openEditModal(item)} 
-                              className="p-2 text-slate-400 hover:text-black transition-colors"
+                              className="p-2 text-slate-400 hover:text-black dark:hover:text-white transition-colors"
                               title="Sửa"
                             >
                               <EditOutlined className="text-base" />
                             </button>
                             <button 
                               onClick={() => handleDelete(item.id)} 
-                              className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                              className="p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                               title="Xóa"
                             >
                               <DeleteOutlined className="text-base" />
@@ -247,7 +247,7 @@ export default function BookManager() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="px-6 py-12 text-center text-slate-300 italic text-sm">Chưa có giáo trình nào.</td>
+                    <td colSpan="5" className="px-6 py-12 text-center text-slate-300 dark:text-slate-600 italic text-sm">Chưa có giáo trình nào.</td>
                   </tr>
                 )}
               </tbody>
@@ -258,15 +258,15 @@ export default function BookManager() {
 
       {/* Modal Form */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-slate-900">
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
                 {editingId ? 'Chỉnh sửa giáo trình' : 'Thêm giáo trình mới'}
               </h2>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 text-slate-400 hover:text-black transition-colors"
+                className="p-2 text-slate-400 hover:text-black dark:hover:text-white transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -277,18 +277,18 @@ export default function BookManager() {
             <form onSubmit={handleSubmit} className="p-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="md:col-span-1 space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">STT</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">STT</label>
                   <input
                     type="text"
                     name="num"
                     value={formData.num}
                     onChange={handleInputChange}
                     placeholder="01"
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
                   />
                 </div>
                 <div className="md:col-span-3 space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Tên giáo trình</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Tên giáo trình</label>
                   <input
                     type="text"
                     name="title"
@@ -296,25 +296,25 @@ export default function BookManager() {
                     onChange={handleInputChange}
                     placeholder="Ví dụ: Mimikara N3"
                     required
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Tên tiếng Nhật</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Tên tiếng Nhật</label>
                 <input
                   type="text"
                   name="japaneseTitle"
                   value={formData.japaneseTitle}
                   onChange={handleInputChange}
                   placeholder="Ví dụ: 耳から覚える文法"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
                 />
               </div>
 
               <div className="space-y-3">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Phân loại giáo trình (Chọn nhiều loại nếu sách tích hợp)</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Phân loại giáo trình (Chọn nhiều loại nếu sách tích hợp)</label>
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { key: 'VOCABULARY', label: 'Từ Vựng' },
@@ -339,8 +339,8 @@ export default function BookManager() {
                         }}
                         className={`py-3 rounded-xl font-bold text-xs uppercase tracking-wider border transition-all ${
                           isActive
-                            ? 'bg-black text-white border-black'
-                            : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
+                            : 'bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-850'
                         }`}
                       >
                         {item.label}
@@ -351,17 +351,17 @@ export default function BookManager() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 px-1">Nhãn Level (Hiển thị ở trang chủ)</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Nhãn Level (Hiển thị ở trang chủ)</label>
                 <select
                   name="levelLabel"
                   value={formData.levelLabel}
                   onChange={handleInputChange}
                   required
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-black/5 focus:border-black outline-none transition-all appearance-none font-bold text-xs"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl font-bold text-xs"
                 >
-                  <option value="">-- Chọn level --</option>
+                  <option value="" className="dark:bg-slate-950">-- Chọn level --</option>
                   {['N1', 'N2', 'N3', 'N4', 'N5'].map(lvl => (
-                    <option key={lvl} value={lvl}>{lvl}</option>
+                    <option key={lvl} value={lvl} className="dark:bg-slate-950">{lvl}</option>
                   ))}
                 </select>
               </div>
@@ -370,13 +370,13 @@ export default function BookManager() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-6 py-4 border border-slate-200 rounded-2xl font-bold text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all"
+                  className="flex-1 px-6 py-4 border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-4 bg-black text-white rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-xl shadow-black/10"
+                  className="flex-1 px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-xl shadow-black/10 dark:shadow-none"
                 >
                   {editingId ? 'Cập nhật' : 'Lưu dữ liệu'}
                 </button>

@@ -13,4 +13,7 @@ public interface VocabRepository extends JpaRepository<Vocab, Long> {
     List<Vocab> findByUserId(Long userId);
     List<Vocab> findByUserIsNull();
     List<Vocab> findByUserIdOrUserIsNull(Long userId);
+
+    @org.springframework.transaction.annotation.Transactional
+    void deleteByBookId(Long bookId);
 }
