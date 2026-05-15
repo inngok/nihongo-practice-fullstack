@@ -21,17 +21,11 @@ public class PracticeNihongoApplication {
 			dotenv.entries().forEach(entry -> {
 				System.setProperty(entry.getKey(), entry.getValue());
 			});
-			System.out.println(">>> Dotenv loaded from: " + targetDir);
 		} catch (Exception e) {
 			System.out.println(">>> Exception loading .env: " + e.getMessage());
 		}
 
 		String apiKey = System.getProperty("GEMINI_API_KEY");
-		if (apiKey != null && apiKey.length() > 5) {
-			System.out.println(">>> GEMINI_API_KEY loaded successfully (starts with: " + apiKey.substring(0, 5) + "...)");
-		} else {
-			System.err.println(">>> ERROR: GEMINI_API_KEY not found in .env or environment variables!");
-		}
 
 		SpringApplication.run(PracticeNihongoApplication.class, args);
 	}

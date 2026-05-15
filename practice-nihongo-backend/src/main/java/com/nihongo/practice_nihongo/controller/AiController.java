@@ -17,14 +17,14 @@ public class AiController {
         this.aiService = aiService;
     }
 
-    @Operation(summary = "Xử lý dữ liệu thô bằng AI để nhập vào hệ thống")
-    @PostMapping("/format-import")
-    public ResponseEntity<String> formatImport(@RequestBody Map<String, String> request) {
-        String rawData = request.get("rawData");
-        String type = request.get("type"); // "kanjis" or "vocabs"
+    @Operation(summary = "Xử lý dữ liệu thô bằng AI để nhập hàng loạt")
+    @PostMapping("/generate-bulk")
+    public ResponseEntity<String> generateBulk(@RequestBody Map<String, String> request) {
+        String rawData = request.get("text");
+        String type = request.get("type"); // "KANJI", "VOCABULARY", or "GRAMMAR"
         
         if (rawData == null || rawData.isEmpty()) {
-            return ResponseEntity.badRequest().body("Raw data is required");
+            return ResponseEntity.badRequest().body("Text data is required");
         }
 
         try {

@@ -14,22 +14,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  backend:
-    build: 
-      context: ./practice-nihongo-backend
-      dockerfile: Dockerfile
-    container_name: practice_nihongo_app
-    ports:
-      - "80:8080"
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/practice_nihongo_db?characterEncoding=UTF-8
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=12345
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
-      - SPRING_SQL_INIT_MODE=never
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-    depends_on:
-      - postgres
 
 volumes:
   postgres_data:

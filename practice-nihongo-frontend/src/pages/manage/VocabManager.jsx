@@ -25,6 +25,12 @@ export default function VocabManager() {
   // Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  // Unified Modal State
+  const [modalTab, setModalTab] = useState('single'); // 'single' or 'bulk'
+  const [bulkInput, setBulkInput] = useState('');
+  const [previewData, setPreviewData] = useState([]);
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
+
   const [formData, setFormData] = useState({
     word: '',
     reading: '',
@@ -64,23 +70,26 @@ export default function VocabManager() {
 
   // Filtered List
   const filteredVocabs = React.useMemo(() => {
-    if (!selectedBookId) return vocabs;
-    return vocabs.filter(v => v.bookId?.toString() === selectedBookId.toString() || v.book?.id?.toString() === selectedBookId.toString());
+    if (!selectedBookId || selectedBookId === "") return vocabs || [];
+    return (vocabs || []).filter(v => {
+      const vBookId = v.bookId || v.book?.id;
+      return vBookId?.toString() === selectedBookId.toString();
+    });
   }, [vocabs, selectedBookId]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const [vocabRes, bookRes] = await Promise.all([
-        vocabService.getAll(),
+        vocabService.getAll({ includePersonal: true }),
         bookService.getAll()
       ]);
-      setVocabs(vocabRes.data);
-      setBooks(bookRes.data.filter(b => b.type && b.type.includes('VOCABULARY')));
+      setVocabs(Array.isArray(vocabRes.data) ? vocabRes.data : []);
+      setBooks(Array.isArray(bookRes.data) ? bookRes.data.filter(b => b.type && b.type.includes('VOCABULARY')) : []);
       setError(null);
     } catch (err) {
       setError('Không thể tải dữ liệu.');
-      console.error(err);
+      console.error('Fetch Error:', err);
     } finally {
       setLoading(false);
     }
@@ -111,6 +120,7 @@ export default function VocabManager() {
       setFormData(prev => ({ ...prev, bookId: selectedBookId }));
     }
     setEditingId(null);
+    setModalTab('single');
     setIsModalOpen(true);
   };
 
@@ -154,6 +164,67 @@ export default function VocabManager() {
       message.error({ content: 'Lỗi khi gọi AI: ' + err.message, key: 'ai_fill' });
     } finally {
       setIsAiLoading(false);
+    }
+  };
+
+  const handleBulkAiProcess = async () => {
+    if (!bulkInput.trim()) return message.warning('Vui lòng dán nội dung cần xử lý');
+    if (!selectedBookId) return message.warning('Vui lòng chọn giáo trình trước khi nhập hàng loạt');
+
+    setIsAiProcessing(true);
+    const hide = message.loading('AI đang phân tích dữ liệu hàng loạt...', 0);
+    try {
+      const res = await fetchWithAuth(`${API_BASE_URL}/ai/generate-bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: bulkInput,
+          type: 'VOCABULARY'
+        })
+      });
+      if (!res.ok) throw new Error('AI processing failed');
+      const data = await res.json();
+      setPreviewData(data.map(item => ({ ...item, selected: true })));
+      message.success('Đã phân tích xong! Vui lòng kiểm tra lại bảng bên dưới.');
+    } catch (err) {
+      message.error('Lỗi khi xử lý hàng loạt: ' + err.message);
+    } finally {
+      setIsAiProcessing(false);
+      hide();
+    }
+  };
+
+  const handleSaveBulk = async () => {
+    const itemsToSave = previewData.filter(item => item.selected);
+    if (itemsToSave.length === 0) return message.warning('Không có từ nào được chọn để lưu');
+
+    const hide = message.loading(`Đang lưu ${itemsToSave.length} từ vựng...`, 0);
+    try {
+      const payload = itemsToSave.map(item => ({
+        word: item.word,
+        reading: item.reading,
+        meaning: item.meaning,
+        example: item.example,
+        exampleMeaning: item.exampleMeaning,
+        book: { id: parseInt(selectedBookId) },
+        week: formData.week ? parseInt(formData.week) : null,
+        day: formData.day ? parseInt(formData.day) : null
+      }));
+
+      // Direct loop or use a bulk endpoint if available
+      for (const item of payload) {
+        await vocabService.create(item);
+      }
+
+      message.success(`Đã lưu thành công ${itemsToSave.length} từ vựng!`);
+      setIsBulkModalOpen(false);
+      setBulkInput('');
+      setPreviewData([]);
+      fetchData();
+    } catch (err) {
+      message.error('Lỗi khi lưu dữ liệu: ' + err.message);
+    } finally {
+      hide();
     }
   };
 
@@ -249,21 +320,21 @@ export default function VocabManager() {
             {vocabs.length > 0 && (
               <button
                 onClick={handleDeleteAll}
-                className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-700 dark:hover:bg-red-800 px-5 py-2.5 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-2"
+                className="bg-red-50 hover:bg-red-100 text-red-600 px-5 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2"
               >
                 <DeleteOutlined className="text-[10px]" />
-                {selectedBookId ? 'Xóa sách này' : 'Xóa tất cả'}
+                {selectedBookId ? 'Xóa sách' : 'Xóa hết'}
               </button>
             )}
             <button
               onClick={() => navigate('/grammar/books')}
-              className="px-5 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm bg-white dark:bg-slate-900"
+              className="px-5 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-900 transition-all shadow-sm"
             >
               Giáo trình
             </button>
             <button
               onClick={openAddModal}
-              className="bg-black text-white dark:bg-white dark:text-black px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-sm flex items-center gap-2"
+              className="bg-black text-white dark:bg-white dark:text-black px-6 py-2.5 rounded-lg text-xs font-bold hover:opacity-80 transition-all shadow-xl flex items-center gap-2"
             >
               <PlusOutlined className="text-[10px]" />
               Thêm mới
@@ -365,169 +436,234 @@ export default function VocabManager() {
         )}
       </div>
 
-      {/* Modal Form */}
+      {/* Unified Add/Bulk Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 my-auto">
-            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                {editingId ? 'Chỉnh sửa từ vựng' : 'Thêm từ vựng mới'}
-              </h2>
-              {selectedBookId && !editingId && (
-                <div className="mt-1">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Thêm vào: </span>
-                  <span className="text-[11px] font-black text-black dark:text-white uppercase tracking-tight">
-                    {books.find(b => b.id.toString() === selectedBookId.toString())?.title}
-                  </span>
-                </div>
-              )}
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="p-2 text-slate-400 hover:text-black dark:hover:text-white transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center px-1">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Từ vựng</label>
-                    <button
-                      type="button"
-                      onClick={handleAiAutoFill}
-                      disabled={isAiLoading}
-                      className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 disabled:opacity-40 transition-colors flex items-center gap-1"
-                    >
-                      <span>✨ AI Điền Nhanh</span>
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    name="word"
-                    value={formData.word}
-                    onChange={handleInputChange}
-                    placeholder="Ví dụ: 食べる"
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all text-lg font-bold rounded-xl"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Cách đọc (Hiragana)</label>
-                  <input
-                    type="text"
-                    name="reading"
-                    value={formData.reading}
-                    onChange={handleInputChange}
-                    placeholder="Ví dụ: たべる"
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className={`space-y-2 ${selectedBookId && !editingId ? 'md:col-span-2' : ''}`}>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Ý nghĩa (VN)</label>
-                  <input
-                    type="text"
-                    name="meaning"
-                    value={formData.meaning}
-                    onChange={handleInputChange}
-                    placeholder="Ví dụ: Ăn"
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
-                  />
-                </div>
-                {(!selectedBookId || editingId) && (
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Giáo trình</label>
-                    <select
-                      name="bookId"
-                      value={formData.bookId}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
-                    >
-                      <option value="" className="dark:bg-slate-950">-- Chọn giáo trình --</option>
-                      {books.map(b => <option key={b.id} value={b.id} className="dark:bg-slate-950">{b.title}</option>)}
-                    </select>
-                  </div>
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md overflow-y-auto">
+          <div className={`bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full ${modalTab === 'bulk' ? 'max-w-6xl' : 'max-w-lg'} rounded-[32px] shadow-2xl flex flex-col max-h-[95vh] animate-in fade-in zoom-in duration-300 transition-all overflow-hidden`}>
+            {/* Header with Tabs */}
+            <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
+              <div className="flex items-center gap-8">
+                <button 
+                  onClick={() => setModalTab('single')}
+                  className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all pb-1 ${modalTab === 'single' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-slate-300 dark:text-slate-600 hover:text-slate-400'}`}
+                >
+                  {editingId ? 'CHỈNH SỬA' : 'THÊM THỦ CÔNG'}
+                </button>
+                {!editingId && (
+                  <button 
+                    onClick={() => setModalTab('bulk')}
+                    className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all pb-1 ${modalTab === 'bulk' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-slate-300 dark:text-slate-600 hover:text-slate-400'}`}
+                  >
+                    AI NHẬP HÀNG LOẠT
+                  </button>
                 )}
               </div>
+              <button onClick={() => setIsModalOpen(false)} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 hover:text-black dark:hover:text-white transition-colors">
+                Đóng
+              </button>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Bài / Tuần (1-50)</label>
-                  <select
-                    name="week"
-                    value={formData.week}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
-                  >
-                    <option value="" className="dark:bg-slate-950">-- Không chọn --</option>
-                    {[...Array(50)].map((_, i) => (
-                      <option key={i + 1} value={i + 1} className="dark:bg-slate-950">Bài / Tuần {i + 1}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Ngày (1-7)</label>
-                  <select
-                    name="day"
-                    value={formData.day}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
-                  >
-                    <option value="" className="dark:bg-slate-950">-- Không chọn --</option>
-                    {[...Array(7)].map((_, i) => (
-                      <option key={i + 1} value={i + 1} className="dark:bg-slate-950">Ngày {i + 1}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+            {modalTab === 'single' ? (
+              <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto hide-scrollbar">
+                 <div className="grid grid-cols-2 gap-8">
+                   <div className="space-y-2">
+                     <div className="flex justify-between items-center px-1">
+                       <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">Từ vựng</label>
+                       <button type="button" onClick={handleAiAutoFill} disabled={isAiLoading} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-black dark:text-white text-[9px] font-black rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter flex items-center gap-1">
+                         <span>✨</span> AI ĐIỀN
+                       </button>
+                     </div>
+                     <input 
+                       type="text" 
+                       name="word" 
+                       value={formData.word} 
+                       onChange={handleInputChange} 
+                       placeholder="Chữ Hán/Kana" 
+                       required 
+                       className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Cách đọc</label>
+                     <input 
+                       type="text" 
+                       name="reading" 
+                       value={formData.reading} 
+                       onChange={handleInputChange} 
+                       placeholder="Hiragana" 
+                       required 
+                       className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                     />
+                   </div>
+                 </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Câu ví dụ (JP)</label>
-                <textarea
-                  name="example"
-                  value={formData.example}
-                  onChange={handleInputChange}
-                  placeholder="Ví dụ: ご飯uを食べる"
-                  rows="2"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all resize-none rounded-xl"
-                ></textarea>
-              </div>
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Ý nghĩa</label>
+                   <input 
+                     type="text" 
+                     name="meaning" 
+                     value={formData.meaning} 
+                     onChange={handleInputChange} 
+                     placeholder="Tiếng Việt" 
+                     required 
+                     className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                   />
+                 </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Nghĩa ví dụ (VN)</label>
-                <textarea
-                  name="exampleMeaning"
-                  value={formData.exampleMeaning}
-                  onChange={handleInputChange}
-                  placeholder="Ví dụ: Ăn cơm"
-                  rows="2"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all resize-none rounded-xl"
-                ></textarea>
-              </div>
+                 <div className="grid grid-cols-2 gap-8">
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Ví dụ (JP)</label>
+                     <input 
+                       type="text" 
+                       name="exampleSentence" 
+                       value={formData.exampleSentence} 
+                       onChange={handleInputChange} 
+                       placeholder="..." 
+                       className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Dịch nghĩa</label>
+                     <input 
+                       type="text" 
+                       name="exampleMeaning" 
+                       value={formData.exampleMeaning} 
+                       onChange={handleInputChange} 
+                       placeholder="..." 
+                       className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                     />
+                   </div>
+                 </div>
 
-              <div className="pt-4 flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-6 py-4 border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-xl shadow-black/10 dark:shadow-none"
-                >
-                  {editingId ? 'Cập nhật' : 'Lưu dữ liệu'}
-                </button>
+                 <div className="grid grid-cols-2 gap-8">
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 px-1">Giáo trình</label>
+                     <select 
+                       name="bookId" 
+                       value={formData.bookId} 
+                       onChange={handleInputChange} 
+                       className="w-full px-1 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-xs outline-none transition-all"
+                     >
+                       <option value="" className="dark:bg-slate-950">-- Chọn --</option>
+                       {books.map(b => <option key={b.id} value={b.id} className="dark:bg-slate-950">{b.title}</option>)}
+                     </select>
+                   </div>
+                   <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 px-1">Tuần</label>
+                       <input type="number" name="week" value={formData.week} onChange={handleInputChange} placeholder="W" className="w-full px-1 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-xs outline-none transition-all" />
+                     </div>
+                     <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 px-1">Ngày</label>
+                       <input type="number" name="day" value={formData.day} onChange={handleInputChange} placeholder="D" className="w-full px-1 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-xs outline-none transition-all" />
+                     </div>
+                   </div>
+                 </div>
+
+                 <div className="pt-4">
+                   <button 
+                     type="submit" 
+                     className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:opacity-80 transition-all shadow-xl"
+                   >
+                     {editingId ? 'CẬP NHẬT' : 'LƯU DỮ LIỆU'}
+                   </button>
+                 </div>
+              </form>
+            ) : (
+              <div className="flex-grow overflow-hidden flex flex-col p-8 gap-8">
+                 <div className="flex flex-col md:flex-row gap-8 flex-grow overflow-hidden">
+                    <div className="w-full md:w-1/3 flex flex-col gap-4">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Nội dung thô (Raw Text)</label>
+                      <textarea
+                        value={bulkInput}
+                        onChange={(e) => setBulkInput(e.target.value)}
+                        placeholder="Ví dụ: &#10;1. 食べる - ăn&#10;2. 行く - đi&#10;3. 寝る - ngủ"
+                        className="flex-grow w-full p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 text-slate-900 dark:text-white outline-none transition-all resize-none rounded-3xl text-sm leading-relaxed"
+                      ></textarea>
+                      <button
+                        onClick={handleBulkAiProcess}
+                        disabled={isAiProcessing || !bulkInput.trim()}
+                        className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl disabled:opacity-30 flex items-center justify-center gap-2"
+                      >
+                        {isAiProcessing ? (
+                          <div className="w-4 h-4 border-2 border-slate-400 border-t-white dark:border-t-black rounded-full animate-spin"></div>
+                        ) : 'AI PHÂN TÍCH'}
+                      </button>
+                    </div>
+
+                    <div className="flex-grow flex flex-col gap-4 overflow-hidden">
+                      <div className="flex justify-between items-center">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">
+                          Bản xem trước ({previewData.length} từ)
+                        </label>
+                        {previewData.length > 0 && (
+                          <div className="flex gap-4">
+                             <button onClick={() => setPreviewData(prev => prev.map(d => ({...d, selected: true})))} className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest">Chọn tất cả</button>
+                             <button onClick={() => setPreviewData(prev => prev.map(d => ({...d, selected: false})))} className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Bỏ chọn</button>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex-grow bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden overflow-y-auto shadow-inner">
+                        {previewData.length > 0 ? (
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead className="sticky top-0 bg-slate-100 dark:bg-slate-900 z-10 border-b border-slate-200 dark:border-slate-800">
+                              <tr>
+                                <th className="p-4 w-10 text-center"></th>
+                                <th className="p-4 font-bold text-slate-500 uppercase tracking-wider text-center">Từ vựng</th>
+                                <th className="p-4 font-bold text-slate-500 uppercase tracking-wider text-center">Cách đọc</th>
+                                <th className="p-4 font-bold text-slate-500 uppercase tracking-wider text-center">Ý nghĩa</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                              {previewData.map((item, idx) => (
+                                <tr key={idx} className="hover:bg-white dark:hover:bg-slate-900 transition-colors">
+                                  <td className="p-4 text-center">
+                                    <input type="checkbox" checked={item.selected} onChange={() => {
+                                        const newData = [...previewData];
+                                        newData[idx].selected = !newData[idx].selected;
+                                        setPreviewData(newData);
+                                      }} className="w-4 h-4 rounded border-slate-300 accent-black dark:accent-white" />
+                                  </td>
+                                  <td className="p-4 text-center">
+                                    <div className="font-bold text-slate-900 dark:text-white text-base">{item.word}</div>
+                                  </td>
+                                  <td className="p-4 text-center text-slate-600 dark:text-slate-400 font-medium">
+                                    {item.reading}
+                                  </td>
+                                  <td className="p-4 text-center text-black dark:text-white font-black uppercase tracking-widest">
+                                    {item.meaning}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <div className="h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-700 space-y-4 py-20">
+                            <div className="text-6xl opacity-10 font-black italic">AI VOCAB</div>
+                            <p className="text-sm italic font-medium">Dán danh sách từ vựng và nhấn phân tích</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                 </div>
+
+                 <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex gap-4">
+                      <select value={selectedBookId} onChange={(e) => setSelectedBookId(e.target.value)} className="px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none">
+                        <option value="">-- Chọn giáo trình --</option>
+                        {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex gap-4">
+                      <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 font-black text-[11px] uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">HỦY</button>
+                      <button onClick={handleSaveBulk} disabled={previewData.length === 0} className="px-10 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-xl disabled:opacity-30">
+                        LƯU ({previewData.filter(i => i.selected).length} từ)
+                      </button>
+                    </div>
+                 </div>
               </div>
-            </form>
+            )}
           </div>
         </div>
       )}

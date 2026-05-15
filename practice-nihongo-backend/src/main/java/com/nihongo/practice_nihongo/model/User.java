@@ -28,11 +28,11 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(columnDefinition = "varchar(255) default 'STUDENT'")
+    @Column(name = "role", length = 255)
     @Builder.Default
     private String role = "STUDENT";
 
-    @Column(name = "jlpt_level", columnDefinition = "varchar(10) default 'N3'")
+    @Column(name = "jlpt_level", length = 10)
     @Builder.Default
     private String jlptLevel = "N3";
 

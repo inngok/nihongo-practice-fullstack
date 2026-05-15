@@ -4,6 +4,8 @@ import grammarService from '../../api/grammarService';
 import bookService from '../../api/bookService';
 import { Modal, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined } from '@ant-design/icons';
+import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 export default function GrammarManager() {
   const navigate = useNavigate();
@@ -14,13 +16,18 @@ export default function GrammarManager() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [modalTab, setModalTab] = useState('single'); // 'single' or 'bulk'
+  const [bulkInput, setBulkInput] = useState('');
+  const [previewData, setPreviewData] = useState([]);
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const { fetchWithAuth } = useAuth();
 
   // Filter State
   const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
   
   // Form State
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     structure: '',
     meaning: '',
@@ -81,8 +88,11 @@ export default function GrammarManager() {
 
   // Filtered List
   const filteredGrammars = React.useMemo(() => {
-    if (!selectedBookId) return grammars;
-    return grammars.filter(g => g.bookId?.toString() === selectedBookId.toString() || g.book?.id?.toString() === selectedBookId.toString());
+    if (!selectedBookId || selectedBookId === "") return grammars || [];
+    return (grammars || []).filter(g => {
+      const gBookId = g.bookId || g.book?.id;
+      return gBookId?.toString() === selectedBookId.toString();
+    });
   }, [grammars, selectedBookId]);
 
   const fetchData = async () => {
@@ -92,8 +102,8 @@ export default function GrammarManager() {
         grammarService.getAll(),
         bookService.getAll()
       ]);
-      setGrammars(grammarRes.data);
-      setBooks(bookRes.data.filter(b => b.type && b.type.includes('GRAMMAR')));
+      setGrammars(Array.isArray(grammarRes.data) ? grammarRes.data : []);
+      setBooks(Array.isArray(bookRes.data) ? bookRes.data.filter(b => b.type && b.type.includes('GRAMMAR')) : []);
       setError(null);
     } catch (err) {
       setError('Không thể tải dữ liệu.');
@@ -129,7 +139,69 @@ export default function GrammarManager() {
       setFormData(prev => ({ ...prev, bookId: selectedBookId }));
     }
     setEditingId(null);
+    setModalTab('single');
     setIsModalOpen(true);
+  };
+
+  const handleBulkAiProcess = async () => {
+    if (!bulkInput.trim()) return message.warning('Vui lòng dán nội dung cần xử lý');
+    if (!selectedBookId) return message.warning('Vui lòng chọn giáo trình trước khi nhập hàng loạt');
+
+    setIsAiProcessing(true);
+    const hide = message.loading('AI đang phân tích ngữ pháp hàng loạt...', 0);
+    try {
+      const res = await fetchWithAuth(`${API_BASE_URL}/ai/generate-bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: bulkInput,
+          type: 'GRAMMAR'
+        })
+      });
+      if (!res.ok) throw new Error('AI processing failed');
+      const data = await res.json();
+      setPreviewData(data.map(item => ({ ...item, selected: true })));
+      message.success('Đã phân tích xong Ngữ pháp!');
+    } catch (err) {
+      message.error('Lỗi khi xử lý hàng loạt: ' + err.message);
+    } finally {
+      setIsAiProcessing(false);
+      hide();
+    }
+  };
+
+  const handleSaveBulk = async () => {
+    const itemsToSave = previewData.filter(item => item.selected);
+    if (itemsToSave.length === 0) return message.warning('Không có cấu trúc nào được chọn');
+
+    const hide = message.loading(`Đang lưu ${itemsToSave.length} cấu trúc ngữ pháp...`, 0);
+    try {
+      const payload = itemsToSave.map(item => ({
+        structure: item.structure,
+        meaning: item.meaning,
+        explanation: item.explanation,
+        exampleSentence: item.exampleSentence,
+        exampleMeaning: item.exampleMeaning,
+        level: item.level || 'N3',
+        book: { id: parseInt(selectedBookId) },
+        week: formData.week ? parseInt(formData.week) : null,
+        day: formData.day ? parseInt(formData.day) : null
+      }));
+
+      for (const item of payload) {
+        await grammarService.create(item);
+      }
+
+      message.success(`Đã lưu thành công ${itemsToSave.length} cấu trúc!`);
+      setIsModalOpen(false);
+      setBulkInput('');
+      setPreviewData([]);
+      fetchData();
+    } catch (err) {
+      message.error('Lỗi khi lưu dữ liệu: ' + err.message);
+    } finally {
+      hide();
+    }
   };
 
   const openEditModal = (grammar) => {
@@ -145,6 +217,7 @@ export default function GrammarManager() {
       day: grammar.day || 1
     });
     setEditingId(grammar.id);
+    setModalTab('single');
     setIsModalOpen(true);
   };
 
@@ -154,7 +227,7 @@ export default function GrammarManager() {
       ...formData,
       book: formData.bookId ? { id: parseInt(formData.bookId) } : null
     };
-    delete payload.bookId; // Remove bookId from payload before sending to backend
+    delete payload.bookId;
 
     try {
       if (editingId) {
@@ -196,7 +269,6 @@ export default function GrammarManager() {
     <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 bg-transparent">
       <div className="max-w-7xl mx-auto">
         
-        {/* Minimalist Monochrome Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-slate-100 dark:border-slate-800">
           <div className="space-y-1.5">
             <div className="flex items-baseline gap-2">
@@ -208,13 +280,13 @@ export default function GrammarManager() {
           <div className="flex gap-3 self-start md:self-auto">
             <button
               onClick={() => navigate('/grammar/books')}
-              className="px-5 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-xs font-bold bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+              className="px-5 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-900 transition-all shadow-sm"
             >
               Giáo trình
             </button>
             <button
               onClick={openAddModal}
-              className="bg-black text-white dark:bg-white dark:text-black px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-sm flex items-center gap-2"
+              className="bg-black text-white dark:bg-white dark:text-black px-6 py-2.5 rounded-lg text-xs font-bold hover:opacity-80 transition-all shadow-xl flex items-center gap-2"
             >
               <PlusOutlined className="text-[10px]" />
               Thêm mới
@@ -222,7 +294,6 @@ export default function GrammarManager() {
           </div>
         </div>
 
-        {/* Filter Bar */}
         <div className="flex gap-4 mb-8 p-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl items-center">
           <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
             <FilterOutlined className="text-xs" />
@@ -248,7 +319,6 @@ export default function GrammarManager() {
           )}
         </div>
 
-        {/* Content */}
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="w-6 h-6 border-2 border-slate-100 dark:border-slate-800 border-t-black dark:border-t-white rounded-full animate-spin"></div>
@@ -312,172 +382,224 @@ export default function GrammarManager() {
         )}
       </div>
 
-      {/* Modal Form */}
+      {/* Unified Add/Bulk Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center text-left">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {editingId ? 'Chỉnh sửa ngữ pháp' : 'Thêm ngữ pháp mới'}
-                </h2>
-                {selectedBookId && !editingId && (
-                  <div className="mt-1">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Thêm vào: </span>
-                    <span className="text-[11px] font-black text-black dark:text-white uppercase tracking-tight">
-                      {books.find(b => b.id.toString() === selectedBookId.toString())?.title}
-                    </span>
-                  </div>
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md overflow-y-auto">
+          <div className={`bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full ${modalTab === 'bulk' ? 'max-w-6xl' : 'max-w-lg'} rounded-[32px] shadow-2xl flex flex-col max-h-[95vh] animate-in fade-in zoom-in duration-300 transition-all overflow-hidden`}>
+            {/* Header with Tabs */}
+            <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
+              <div className="flex items-center gap-8">
+                <button 
+                  onClick={() => setModalTab('single')}
+                  className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all pb-1 ${modalTab === 'single' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-slate-300 dark:text-slate-600 hover:text-slate-400'}`}
+                >
+                  {editingId ? 'CHỈNH SỬA' : 'THÊM THỦ CÔNG'}
+                </button>
+                {!editingId && (
+                  <button 
+                    onClick={() => setModalTab('bulk')}
+                    className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all pb-1 ${modalTab === 'bulk' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-slate-300 dark:text-slate-600 hover:text-slate-400'}`}
+                  >
+                    AI NHẬP HÀNG LOẠT
+                  </button>
                 )}
               </div>
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="p-2 text-slate-400 hover:text-black dark:hover:text-white transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button onClick={() => setIsModalOpen(false)} className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-300 hover:text-black dark:hover:text-white transition-colors">
+                Đóng
               </button>
             </div>
-            
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className={`space-y-2 ${selectedBookId && !editingId ? 'md:col-span-2' : ''}`}>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Cấu trúc</label>
-                  <input
-                    type="text"
-                    name="structure"
-                    value={formData.structure}
-                    onChange={handleInputChange}
-                    placeholder="Ví dụ: ~たことがある"
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
-                  />
-                </div>
-                {(!selectedBookId || editingId) && (
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Giáo trình</label>
-                    <select
-                      name="bookId"
-                      value={formData.bookId}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
-                    >
-                      <option value="" className="dark:bg-slate-950">-- Chọn giáo trình --</option>
-                      {books.map(b => <option key={b.id} value={b.id} className="dark:bg-slate-950">{b.title}</option>)}
-                    </select>
-                  </div>
-                )}
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className={`space-y-2 ${selectedBookId && !editingId ? 'md:col-span-2' : ''}`}>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Ý nghĩa</label>
-                  <input
-                    type="text"
-                    name="meaning"
-                    value={formData.meaning}
-                    onChange={handleInputChange}
-                    placeholder="Ý nghĩa tiếng Việt"
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
-                  />
-                </div>
-                {(!selectedBookId || editingId) && (
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Level</label>
-                    <select
-                      name="level"
-                      value={formData.level}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
-                    >
-                      {levels.map(l => <option key={l} value={l} className="dark:bg-slate-950">{l}</option>)}
-                    </select>
-                  </div>
-                )}
-              </div>
+            {modalTab === 'single' ? (
+              <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto hide-scrollbar">
+                 <div className="grid grid-cols-2 gap-8">
+                   <div className="space-y-2">
+                     <div className="flex justify-between items-center px-1">
+                        <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">Cấu trúc</label>
+                        <button type="button" onClick={() => setModalTab('bulk')} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-black dark:text-white text-[9px] font-black rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter flex items-center gap-1">
+                          <span>✨</span> AI ĐIỀN
+                        </button>
+                      </div>
+                     <input 
+                       type="text" 
+                       name="structure" 
+                       value={formData.structure} 
+                       onChange={handleInputChange} 
+                       placeholder="Ví dụ: ~たことがある" 
+                       required 
+                       className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Ý nghĩa</label>
+                     <input 
+                       type="text" 
+                       name="meaning" 
+                       value={formData.meaning} 
+                       onChange={handleInputChange} 
+                       placeholder="Tiếng Việt" 
+                       required 
+                       className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                     />
+                   </div>
+                 </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Bài / Tuần (1-50)</label>
-                  <select
-                    name="week"
-                    value={formData.week}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
-                  >
-                    {[...Array(50)].map((_, i) => (
-                      <option key={i + 1} value={i + 1} className="dark:bg-slate-950">Bài / Tuần {i + 1}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Ngày (1-7)</label>
-                  <select
-                    name="day"
-                    value={formData.day}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
-                  >
-                    {[...Array(7)].map((_, i) => (
-                      <option key={i + 1} value={i + 1} className="dark:bg-slate-950">Ngày {i + 1}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Giải thích</label>
+                   <textarea 
+                     name="explanation" 
+                     value={formData.explanation} 
+                     onChange={handleInputChange} 
+                     rows="2" 
+                     placeholder="Cách dùng cấu trúc này..." 
+                     className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all resize-none placeholder:text-slate-200 dark:placeholder:text-slate-700"
+                   ></textarea>
+                 </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Giải thích</label>
-                <textarea
-                  name="explanation"
-                  value={formData.explanation}
-                  onChange={handleInputChange}
-                  placeholder="Cách dùng, lưu ý..."
-                  rows="3"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all resize-none rounded-xl"
-                ></textarea>
-              </div>
+                 <div className="grid grid-cols-2 gap-8">
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Ví dụ (JP)</label>
+                     <input 
+                       type="text" 
+                       name="exampleSentence" 
+                       value={formData.exampleSentence} 
+                       onChange={handleInputChange} 
+                       placeholder="..." 
+                       className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Dịch nghĩa</label>
+                     <input 
+                       type="text" 
+                       name="exampleMeaning" 
+                       value={formData.exampleMeaning} 
+                       onChange={handleInputChange} 
+                       placeholder="..." 
+                       className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                     />
+                   </div>
+                 </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Câu ví dụ (JP)</label>
-                  <input
-                    type="text"
-                    name="exampleSentence"
-                    value={formData.exampleSentence}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Nghĩa ví dụ (VN)</label>
-                  <input
-                    type="text"
-                    name="exampleMeaning"
-                    value={formData.exampleMeaning}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all rounded-xl"
-                  />
-                </div>
-              </div>
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 px-1">Giáo trình</label>
+                   <select 
+                     name="bookId" 
+                     value={formData.bookId} 
+                     onChange={handleInputChange} 
+                     className="w-full px-1 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-xs outline-none transition-all"
+                   >
+                     <option value="" className="dark:bg-slate-950">-- Chọn --</option>
+                     {books.map(b => <option key={b.id} value={b.id} className="dark:bg-slate-950">{b.title}</option>)}
+                   </select>
+                 </div>
 
-              <div className="pt-4 flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-6 py-4 border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-xl shadow-black/10 dark:shadow-none"
-                >
-                  {editingId ? 'Cập nhật' : 'Lưu dữ liệu'}
-                </button>
+                 <div className="pt-4">
+                   <button 
+                     type="submit" 
+                     className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:opacity-80 transition-all shadow-xl"
+                   >
+                     {editingId ? 'CẬP NHẬT' : 'LƯU DỮ LIỆU'}
+                   </button>
+                 </div>
+              </form>
+            ) : (
+              <div className="flex-grow overflow-hidden flex flex-col p-8 gap-8">
+                 <div className="flex flex-col md:flex-row gap-8 flex-grow overflow-hidden">
+                    <div className="w-full md:w-1/3 flex flex-col gap-4">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Nội dung thô (Raw Text)</label>
+                      <textarea
+                        value={bulkInput}
+                        onChange={(e) => setBulkInput(e.target.value)}
+                        placeholder="Ví dụ: &#10;1. ~たことがある&#10;2. ~ほうがいい&#10;3. ~なければならない"
+                        className="flex-grow w-full p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/10 focus:border-black text-slate-900 dark:text-white outline-none transition-all resize-none rounded-3xl text-sm leading-relaxed"
+                      ></textarea>
+                      <button
+                        onClick={handleBulkAiProcess}
+                        disabled={isAiProcessing || !bulkInput.trim()}
+                        className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl disabled:opacity-30 flex items-center justify-center gap-2"
+                      >
+                        {isAiProcessing ? (
+                          <div className="w-4 h-4 border-2 border-slate-400 border-t-white dark:border-t-black rounded-full animate-spin"></div>
+                        ) : 'AI PHÂN TÍCH'}
+                      </button>
+                    </div>
+
+                    <div className="flex-grow flex flex-col gap-4 overflow-hidden">
+                      <div className="flex justify-between items-center">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">
+                          Bản xem trước ({previewData.length} cấu trúc)
+                        </label>
+                        {previewData.length > 0 && (
+                          <div className="flex gap-4">
+                             <button onClick={() => setPreviewData(prev => prev.map(d => ({...d, selected: true})))} className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest">Chọn tất cả</button>
+                             <button onClick={() => setPreviewData(prev => prev.map(d => ({...d, selected: false})))} className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Bỏ chọn</button>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex-grow bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden overflow-y-auto shadow-inner">
+                        {previewData.length > 0 ? (
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead className="sticky top-0 bg-slate-100 dark:bg-slate-900 z-10 border-b border-slate-200 dark:border-slate-800">
+                              <tr>
+                                <th className="p-4 w-10 text-center"></th>
+                                <th className="p-4 font-bold text-slate-500 uppercase tracking-wider text-center">Cấu trúc</th>
+                                <th className="p-4 font-bold text-slate-500 uppercase tracking-wider text-center">Ý nghĩa</th>
+                                <th className="p-4 font-bold text-slate-500 uppercase tracking-wider text-center">Ví dụ</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                              {previewData.map((item, idx) => (
+                                <tr key={idx} className="hover:bg-white dark:hover:bg-slate-900 transition-colors">
+                                  <td className="p-4 text-center">
+                                    <input type="checkbox" checked={item.selected} onChange={() => {
+                                        const newData = [...previewData];
+                                        newData[idx].selected = !newData[idx].selected;
+                                        setPreviewData(newData);
+                                      }} className="w-4 h-4 rounded border-slate-300 accent-black dark:accent-white" />
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="font-bold text-slate-900 dark:text-white text-base">{item.structure}</div>
+                                    <div className="text-black dark:text-white font-black uppercase tracking-widest text-[10px] opacity-50">{item.level}</div>
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="font-medium text-slate-900 dark:text-white">{item.meaning}</div>
+                                    <div className="text-slate-400 italic line-clamp-1">{item.explanation}</div>
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="text-slate-700 dark:text-slate-300 line-clamp-1">{item.exampleSentence}</div>
+                                    <div className="text-slate-400 text-[10px] line-clamp-1 italic">{item.exampleMeaning}</div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <div className="h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-700 space-y-4 py-20">
+                            <div className="text-6xl opacity-10 font-black italic">AI GRAMMAR</div>
+                            <p className="text-sm italic">Dán danh sách cấu trúc và nhấn phân tích</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                 </div>
+
+                 <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex gap-4">
+                      <select value={selectedBookId} onChange={(e) => setSelectedBookId(e.target.value)} className="px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none">
+                        <option value="">-- Chọn giáo trình --</option>
+                        {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex gap-4">
+                      <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 font-black text-[11px] uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">HỦY</button>
+                      <button onClick={handleSaveBulk} disabled={previewData.length === 0} className="px-10 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-xl disabled:opacity-30">
+                        LƯU ({previewData.filter(i => i.selected).length} cấu trúc)
+                      </button>
+                    </div>
+                 </div>
               </div>
-            </form>
+            )}
           </div>
         </div>
       )}
