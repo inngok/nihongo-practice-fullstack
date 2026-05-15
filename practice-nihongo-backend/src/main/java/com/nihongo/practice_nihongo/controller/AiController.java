@@ -8,11 +8,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/ai")
 @CrossOrigin(origins = "*")
-public class AIController {
+public class AiController {
 
     private final AiService aiService;
 
-    public AIController(AiService aiService) {
+    public AiController(AiService aiService) {
         this.aiService = aiService;
     }
 
