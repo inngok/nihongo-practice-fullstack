@@ -129,18 +129,28 @@ public class AiService {
     }
 
     private String buildPrompt(String rawData, String type) {
-        String schema = type.equals("kanjis") 
-            ? "[{\"character\": \"...\", \"kunyomi\": \"...\", \"onyomi\": \"...\", \"hanviet\": \"...\", \"meaning\": \"...\", \"examples\": \"...\", \"week\": null, \"day\": null, \"page\": null}]"
-            : "[{\"word\": \"...\", \"reading\": \"...\", \"meaning\": \"...\", \"example\": \"...\", \"exampleMeaning\": \"...\", \"week\": null, \"day\": null, \"page\": null}]";
+        String schema;
+        String typeUpper = type != null ? type.toUpperCase() : "";
+
+        if (typeUpper.contains("KANJI")) {
+            schema = "[{\"character\": \"...\", \"kunyomi\": \"...\", \"onyomi\": \"...\", \"hanviet\": \"...\", \"meaning\": \"...\", \"examples\": \"...\", \"week\": null, \"day\": null, \"page\": null}]";
+        } else if (typeUpper.contains("GRAMMAR")) {
+            schema = "[{\"structure\": \"...\", \"meaning\": \"...\", \"explanation\": \"...\", \"exampleSentence\": \"...\", \"exampleMeaning\": \"...\", \"level\": \"N3\", \"week\": null, \"day\": null}]";
+        } else {
+            schema = "[{\"word\": \"...\", \"reading\": \"...\", \"meaning\": \"...\", \"example\": \"...\", \"exampleMeaning\": \"...\", \"week\": null, \"day\": null, \"page\": null}]";
+        }
 
         return "You are a professional Japanese data formatter. Convert the following messy data into a valid JSON array strictly following this schema: " + schema + 
                ". \n\nInput data:\n" + rawData + 
                "\n\nRules:\n" +
                "1. Return ONLY the JSON array. No other text.\n" +
                "2. Ensure all fields are present. Use null for numeric fields (week, day, page) and empty strings for text fields if information is missing.\n" +
-               "3. For Kanji, separate kunyomi and onyomi correctly if possible. If only one reading is provided, try to identify if it is Kun or On.\n" +
-               "4. For Examples, please format as: 'Word (Reading): Meaning'.\n" +
-               "5. Ensure the JSON is valid and encoded in UTF-8.";
+               "3. For Kanji, separate kunyomi and onyomi correctly if possible. If only one reading is provided, try to identify if it is Kun or On. If the Vietnamese meaning (\"meaning\") is missing, translate the Kanji's meaning into Vietnamese.\n" +
+               "4. For Vocabulary, if the Vietnamese meaning (\"meaning\") of the word/phrase is missing or empty, you MUST translate and populate the meaning in Vietnamese.\n" +
+               "5. For Vocabulary/Grammar, if the Japanese example sentence (\"example\" or \"exampleSentence\") or its Vietnamese translation (\"exampleMeaning\") is missing, you MUST generate a natural, beginner-friendly Japanese example sentence containing that word/structure and translate it correctly into Vietnamese for \"exampleMeaning\".\n" +
+               "6. For Grammar, if explanation is missing, provide a short, clear explanation in Vietnamese about how to use the structure.\n" +
+               "7. For Kanji, the \"examples\" field MUST contain 3-5 high-quality vocabulary entries. Each entry MUST follow this exact format: \"Word (Reading): Vietnamese meaning\". Separate each entry with a semicolon (;). Example: \"地形 (ちけい): địa hình; 形成 (けいせい): hình thành;\".\n" +
+               "8. Ensure the JSON is valid, properly escaped, and encoded in UTF-8.";
     }
 
     private String callGemini(String prompt) throws Exception {
@@ -149,24 +159,39 @@ public class AiService {
             throw new Exception("No Gemini API keys configured");
         }
 
+        // Define models in priority order: Smartest (3 Flash) -> Reliable (1.5 Flash)
+        List<String> modelPriority = List.of("gemini-3-flash-preview", "gemini-1.5-flash");
+        
         int maxRetries = keys.size();
         Exception lastException = null;
 
         for (int i = 0; i < maxRetries; i++) {
             String activeKey = getNextApiKey(keys);
-            try {
-                return executeGeminiCall(prompt, activeKey);
-            } catch (Exception e) {
-                System.err.println("Gemini call failed with key [index " + (keyIndex.get() % keys.size()) + "]: " + e.getMessage());
-                lastException = e;
+            
+            // Try each model in priority order for the current key
+            for (String model : modelPriority) {
+                try {
+                    return executeGeminiCall(prompt, activeKey, model);
+                } catch (Exception e) {
+                    // Only fallback to next model/key if it's a rate limit error (429) or quota error
+                    String errorMsg = e.getMessage().toLowerCase();
+                    if (errorMsg.contains("429") || errorMsg.contains("quota") || errorMsg.contains("limit")) {
+                        System.err.println("Model " + model + " limit reached for key [index " + (keyIndex.get() % keys.size()) + "]. Falling back...");
+                        lastException = e;
+                        continue; // Try next model or next key
+                    }
+                    // For other errors, rethrow or log and continue to next key
+                    lastException = e;
+                    break; 
+                }
             }
         }
 
-        throw new Exception("All Gemini API keys in pool exhausted. Last error: " + (lastException != null ? lastException.getMessage() : "Unknown"));
+        throw new Exception("All Gemini models and keys in pool exhausted. Last error: " + (lastException != null ? lastException.getMessage() : "Unknown"));
     }
 
-    private String executeGeminiCall(String prompt, String activeKey) throws Exception {
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
+    private String executeGeminiCall(String prompt, String activeKey, String model) throws Exception {
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent";
 
         Map<String, Object> requestBody = Map.of(
             "contents", List.of(

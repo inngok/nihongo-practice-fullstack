@@ -4,6 +4,9 @@ import com.nihongo.practice_nihongo.model.Grammar;
 import com.nihongo.practice_nihongo.service.GrammarService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.ResponseEntity;
 
 import io.swagger.v3.oas.annotations.Operation;
 import java.util.List;
@@ -55,5 +58,29 @@ public class GrammarController {
     @Operation(summary = "Lấy ngữ pháp theo cấp độ", description = "Lọc danh sách ngữ pháp theo N1, N2, N3, N4, N5")
     public List<Grammar> getByLevel(@PathVariable String level) {
         return grammarService.getByLevel(level);
+    }
+
+    @Operation(summary = "Xóa tất cả ngữ pháp hoặc theo sách")
+    @DeleteMapping("/all")
+    public ResponseEntity<Void> deleteAllGrammars(@RequestParam(required = false) Long bookId) {
+        // Admin check
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).build();
+        }
+        
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ADMIN"));
+        
+        if (!isAdmin) {
+            return ResponseEntity.status(403).build();
+        }
+
+        if (bookId != null) {
+            grammarService.deleteGrammarsByBook(bookId);
+        } else {
+            grammarService.deleteAllGrammars();
+        }
+        return ResponseEntity.ok().build();
     }
 }

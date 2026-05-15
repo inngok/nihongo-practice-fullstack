@@ -11,4 +11,5 @@ public interface GrammarRepository extends JpaRepository<Grammar, Long> {
     // Bạn có thể thêm các hàm tìm kiếm nhanh ở đây, ví dụ:
     List<Grammar> findByLevel(String level);
     List<Grammar> findByStructureContaining(String keyword);
+    List<Grammar> findByBookId(Long bookId);
 }

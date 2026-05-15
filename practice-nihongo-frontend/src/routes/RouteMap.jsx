@@ -16,6 +16,7 @@ const Register = lazy(() => import("../pages/auth/Register"));
 // Grammar
 const Grammar = lazy(() => import("../pages/grammar/Grammar"));
 const ConfusingGrammar = lazy(() => import("../pages/grammar/ConfusingGrammar"));
+const StudyPage = lazy(() => import("../pages/grammar/StudyPage"));
 
 // Vocabulary
 const Vocabulary = lazy(() => import("../pages/vocabulary/Vocabulary"));
@@ -53,25 +54,23 @@ const UserManager = lazy(() => import("../pages/manage/UserManager"));
 
 // --- Layout & Route Wrappers ---
 
+const StudyPageWrapper = () => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const bookId = searchParams.get('bookId') || '';
+  return <StudyPage key={`${location.pathname}-${bookId}`} />;
+};
+
 const PageLoader = () => (
-  <div className="min-h-[calc(100vh-80px)] mt-20 flex items-center justify-center bg-white">
+  <div className="min-h-[calc(100vh-80px)] mt-20 flex items-center justify-center bg-white dark:bg-transparent">
     <div className="w-6 h-6 border-2 border-slate-100 border-t-black rounded-full animate-spin"></div>
   </div>
 );
 
 const UserLayout = () => (
-  <div className="flex flex-col min-h-screen bg-white relative">
+  <div className="flex flex-col min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300 relative">
     <ScrollToTopButton />
     <Header />
-
-    {/* Slogan Badge */}
-    <div className="fixed right-6 top-24 z-[1001] hidden lg:block pointer-events-none select-none">
-      <div className="bg-white/80 backdrop-blur-md border border-slate-100 px-4 py-2 rounded-xl shadow-sm flex items-center gap-3">
-        <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-400 italic whitespace-nowrap">
-          "If you can dream it, you can do it"
-        </p>
-      </div>
-    </div>
 
     <main className="flex-grow flex flex-col">
       <Suspense fallback={<PageLoader />}>
@@ -102,18 +101,36 @@ const AdminRoute = ({ children }) => {
 };
 
 const Fallback = () => (
-  <div className="min-h-[calc(100vh-80px)] mt-20 flex-grow flex items-center justify-center bg-white text-slate-500 font-bold text-lg">
+  <div className="min-h-[calc(100vh-80px)] mt-20 flex-grow flex items-center justify-center bg-white dark:bg-transparent text-slate-500 dark:text-slate-400 font-bold text-lg">
     <div className="text-center space-y-4">
       <div>Trang đang phát triển</div>
     </div>
   </div>
 );
 
+import { ConfigProvider, theme as antdTheme } from "antd";
+import { useTheme } from "../context/ThemeContext";
+
 // --- Main Router ---
 
 export default function RouteMap() {
+  const { isDark } = useTheme();
+
   return (
-    <Routes>
+    <ConfigProvider
+      theme={{
+        algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+        token: {
+          fontFamily: "Inter, sans-serif",
+          ...(isDark ? {
+            colorBgBase: '#020617', // Slate 950
+            colorBgContainer: '#0f172a', // Slate 900
+            colorBorder: '#1e293b', // Slate 800
+          } : {})
+        }
+      }}
+    >
+      <Routes>
       {/* Public & User Routes */}
       <Route element={<UserLayout />}>
         <Route index element={<Home />} />
@@ -123,12 +140,14 @@ export default function RouteMap() {
         {/* Grammar Section */}
         <Route path="grammar">
           <Route index element={<Grammar />} />
+          <Route path="study" element={<StudyPageWrapper />} />
           <Route path="confusing" element={<ConfusingGrammar />} />
         </Route>
 
         {/* Vocabulary Section */}
         <Route path="vocabulary">
           <Route index element={<Vocabulary />} />
+          <Route path="study" element={<StudyPageWrapper />} />
         </Route>
         <Route path="my-vocab" element={<PersonalVocab />} />
 
@@ -187,6 +206,7 @@ export default function RouteMap() {
         <Route path="kanji/manage" element={<KanjiManager />} />
       </Route>
     </Routes>
+  </ConfigProvider>
   );
 }
 

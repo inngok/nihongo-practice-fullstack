@@ -3,17 +3,17 @@ import { Link } from 'react-router-dom';
 
 export default function Home() {
   return (
-    <div className="w-full h-full flex-grow bg-white flex flex-col items-center justify-center pt-32 pb-16 md:py-24 px-4 md:px-6 font-sans relative overflow-hidden">
+    <div className="w-full h-full flex-grow bg-white dark:bg-slate-950 flex flex-col items-center justify-center pt-32 pb-16 md:py-24 px-4 md:px-6 font-sans relative overflow-hidden transition-colors duration-300">
 
 
 
       {/* Hero Section */}
       <div className="w-full max-w-4xl flex flex-col items-center text-center gap-2 md:gap-3 mb-6 md:mb-8 relative z-10">
 
-        <h1 className="text-4xl md:text-7xl font-black text-slate-900 tracking-tighter leading-tight">
+        <h1 className="text-4xl md:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-tight">
           Luyện tiếng Nhật Online
         </h1>
-        <p className="text-sm md:text-lg text-slate-500 max-w-lg mx-auto leading-relaxed mt-2 font-medium">
+        <p className="text-sm md:text-lg text-slate-500 dark:text-slate-400 max-w-lg mx-auto leading-relaxed mt-2 font-medium">
           Môi trường học tập chuyên sâu cho hành trình chinh phục tiếng Nhật. Tập trung vào những điều quan trọng nhất.
         </p>
       </div>
@@ -25,15 +25,15 @@ export default function Home() {
           {/* Grammar Card */}
           <Link
             to="/grammar"
-            className="group bg-white p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-slate-100 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_70px_-20px_rgba(0,0,0,0.08)] hover:border-slate-200 transition-all duration-500 flex flex-col items-start justify-center gap-4 md:gap-6"
+            className="group bg-white dark:bg-slate-900/60 p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-slate-100 dark:border-slate-850 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_70px_-20px_rgba(0,0,0,0.08)] hover:border-slate-200 dark:hover:border-slate-700 transition-all duration-500 flex flex-col items-start justify-center gap-4 md:gap-6"
           >
             <div className="space-y-2 md:space-y-3">
-              <h3 className="text-2xl md:text-3xl font-black text-slate-900">Ngữ Pháp</h3>
-              <p className="text-sm md:text-slate-500 leading-relaxed max-w-[280px]">
+              <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">Ngữ Pháp</h3>
+              <p className="text-sm md:text-slate-500 dark:text-slate-400 leading-relaxed max-w-[280px]">
                 Khám phá các cấu trúc và mẫu câu phức tạp với các phân tích chi tiết và khoa học.
               </p>
             </div>
-            <div className="mt-4 text-[10px] font-black tracking-[0.2em] text-slate-900 uppercase underline underline-offset-4 group-hover:text-slate-500 transition-colors">
+            <div className="mt-4 text-[10px] font-black tracking-[0.2em] text-slate-900 dark:text-slate-100 uppercase underline underline-offset-4 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors">
               Bắt đầu học
             </div>
           </Link>
@@ -41,15 +41,15 @@ export default function Home() {
           {/* Vocabulary Card */}
           <Link
             to="/vocabulary"
-            className="group bg-white p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-slate-100 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_70px_-20px_rgba(0,0,0,0.08)] hover:border-slate-200 transition-all duration-500 flex flex-col items-start justify-center gap-4 md:gap-6"
+            className="group bg-white dark:bg-slate-900/60 p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-slate-100 dark:border-slate-850 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_70px_-20px_rgba(0,0,0,0.08)] hover:border-slate-200 dark:hover:border-slate-700 transition-all duration-500 flex flex-col items-start justify-center gap-4 md:gap-6"
           >
             <div className="space-y-2 md:space-y-3">
-              <h3 className="text-2xl md:text-3xl font-black text-slate-900">Từ Vựng</h3>
-              <p className="text-sm md:text-slate-500 leading-relaxed max-w-[280px]">
+              <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">Từ Vựng</h3>
+              <p className="text-sm md:text-slate-500 dark:text-slate-400 leading-relaxed max-w-[280px]">
                 Mở rộng vốn từ vựng thông qua các danh sách chọn lọc và ứng dụng các từ mới.
               </p>
             </div>
-            <div className="mt-4 text-[10px] font-black tracking-[0.2em] text-slate-900 uppercase underline underline-offset-4 group-hover:text-slate-500 transition-colors">
+            <div className="mt-4 text-[10px] font-black tracking-[0.2em] text-slate-900 dark:text-slate-100 uppercase underline underline-offset-4 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors">
               Bắt đầu học
             </div>
           </Link>
@@ -57,15 +57,15 @@ export default function Home() {
           {/* Kanji Card */}
           <Link
             to="/kanji"
-            className="group bg-white p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-slate-100 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_70px_-20px_rgba(0,0,0,0.08)] hover:border-slate-200 transition-all duration-500 flex flex-col items-start justify-center gap-4 md:gap-6"
+            className="group bg-white dark:bg-slate-900/60 p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-slate-100 dark:border-slate-850 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_70px_-20px_rgba(0,0,0,0.08)] hover:border-slate-200 dark:hover:border-slate-700 transition-all duration-500 flex flex-col items-start justify-center gap-4 md:gap-6"
           >
             <div className="space-y-2 md:space-y-3">
-              <h3 className="text-2xl md:text-3xl font-black text-slate-900">Hán Tự</h3>
-              <p className="text-sm md:text-slate-500 leading-relaxed max-w-[280px]">
+              <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">Hán Tự</h3>
+              <p className="text-sm md:text-slate-500 dark:text-slate-400 leading-relaxed max-w-[280px]">
                 Ghi nhớ và luyện tập cách viết, cách đọc các chữ Hán quan trọng trong kỳ thi N3.
               </p>
             </div>
-            <div className="mt-2 text-[10px] font-black tracking-[0.2em] text-slate-900 uppercase underline underline-offset-4 group-hover:text-slate-500 transition-colors">
+            <div className="mt-2 text-[10px] font-black tracking-[0.2em] text-slate-900 dark:text-slate-100 uppercase underline underline-offset-4 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors">
               Bắt đầu học
             </div>
           </Link>
@@ -77,17 +77,19 @@ export default function Home() {
       <div className="mt-8 md:mt-10 relative z-10 flex flex-wrap items-center justify-center gap-4 w-full">
         <Link
           to="/grammar/confusing"
-          className="group px-8 py-4 bg-slate-50 border border-slate-100 rounded-[2rem] hover:bg-black hover:border-black hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
+          className="group px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-[2rem] hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
         >
-          <span className="text-[10px] md:text-[11px] font-black tracking-[0.3em] uppercase text-slate-500 group-hover:text-white transition-colors">
+          <span className="text-[10px] md:text-[11px] font-black tracking-[0.3em] uppercase text-slate-500 dark:text-slate-400 group-hover:text-white dark:group-hover:text-black transition-colors">
             Phân biệt Ngữ pháp
           </span>
         </Link>
         <Link
-          to="/listening"
-          className="group px-8 py-4 bg-indigo-50/50 border border-indigo-100/50 rounded-[2rem] hover:bg-black hover:border-black hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 flex items-center gap-2"
+          to="/ai-chat"
+          className="group px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-[2rem] hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
         >
-
+          <span className="text-[10px] md:text-[11px] font-black tracking-[0.3em] uppercase text-slate-500 dark:text-slate-400 group-hover:text-white dark:group-hover:text-black transition-colors">
+            Đàm thoại AI
+          </span>
         </Link>
       </div>
     </div>

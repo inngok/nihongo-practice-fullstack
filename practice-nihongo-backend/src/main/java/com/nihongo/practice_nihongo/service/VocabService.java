@@ -109,4 +109,14 @@ public class VocabService {
     public void deleteVocab(Long id) {
         vocabRepository.deleteById(id);
     }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteVocabsByBook(Long bookId) {
+        vocabRepository.deleteByBookId(bookId);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteAllVocabs() {
+        vocabRepository.deleteAll();
+    }
 }

@@ -35,12 +35,23 @@ public class GrammarService {
         grammar.setExampleMeaning(grammarDetails.getExampleMeaning());
         grammar.setLevel(grammarDetails.getLevel());
         grammar.setBook(grammarDetails.getBook());
+        grammar.setWeek(grammarDetails.getWeek());
+        grammar.setDay(grammarDetails.getDay());
         return grammarRepository.save(grammar);
     }
 
     public void deleteGrammar(Long id) {
         Grammar grammar = getGrammarById(id);
         grammarRepository.delete(grammar);
+    }
+
+    public void deleteAllGrammars() {
+        grammarRepository.deleteAll();
+    }
+
+    public void deleteGrammarsByBook(Long bookId) {
+        List<Grammar> grammars = grammarRepository.findByBookId(bookId);
+        grammarRepository.deleteAll(grammars);
     }
 
     public List<Grammar> getByLevel(String level) {

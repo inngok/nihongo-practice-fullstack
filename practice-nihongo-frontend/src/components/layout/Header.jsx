@@ -11,9 +11,9 @@ export default function Header() {
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
 
   return (
-    <header className="fixed top-0 z-[1000] w-full bg-white/95 backdrop-blur-sm border-b border-slate-50 px-4 md:px-12 py-3 md:py-4 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4 transition-all duration-500">
+    <header className="fixed top-0 z-[1000] w-full bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm border-b border-slate-50 dark:border-slate-900 px-4 md:px-12 py-3 md:py-4 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4 transition-all duration-500">
       <div className="flex w-full md:w-auto md:flex-1 items-center justify-between md:justify-start gap-6">
-        <Link to="/" className="font-black text-xl tracking-tighter text-black uppercase">
+        <Link to="/" className="font-black text-xl tracking-tighter text-black dark:text-white uppercase">
           Nihongo
         </Link>
 
@@ -101,23 +101,22 @@ export default function Header() {
         </div>
       </div>
 
-      <nav className="flex items-center gap-4 md:gap-8 text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-400 overflow-x-auto no-scrollbar w-full md:w-auto justify-center">
+      <nav className="flex items-center gap-4 md:gap-8 text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-550 overflow-x-auto no-scrollbar w-full md:w-auto justify-center">
         {[
           { path: '/', label: 'Trang chủ' },
           { path: '/grammar', label: 'Ngữ pháp' },
           { path: '/vocabulary', label: 'Từ vựng' },
           { path: '/kanji', label: 'Hán tự' },
           ...(currentUser ? [
-            { path: '/my-vocab', label: 'Sổ tay' },
-            { path: '/ai-chat', label: 'Đàm thoại AI' }
+            { path: '/my-vocab', label: 'Sổ tay' }
           ] : []),
         ].map(nav => (
           <Link
             key={nav.path}
             to={nav.path}
             className={`transition-all whitespace-nowrap py-1 border-b-2 ${(nav.path === '/' && pathname === '/') || (nav.path !== '/' && (pathname === nav.path || pathname.startsWith(nav.path + '/')))
-                ? 'text-black border-black'
-                : 'border-transparent hover:text-black hover:border-slate-200'
+                ? 'text-black border-black dark:text-white dark:border-white'
+                : 'border-transparent hover:text-black dark:hover:text-white hover:border-slate-200 dark:hover:hover:border-slate-800'
               }`}
           >
             {nav.label}
@@ -165,16 +164,16 @@ export default function Header() {
             trigger={['click', 'hover']}
             placement="bottomRight"
           >
-            <div className="w-8 h-8 rounded-full bg-black hover:bg-slate-800 text-white flex items-center justify-center cursor-pointer text-xs font-black uppercase tracking-wider shadow-sm transition-all duration-300 select-none">
+            <div className="w-8 h-8 rounded-full bg-black dark:bg-white text-white dark:text-black hover:bg-slate-800 dark:hover:bg-slate-200 flex items-center justify-center cursor-pointer text-xs font-black uppercase tracking-wider shadow-sm transition-all duration-300 select-none">
               {currentUser.name?.charAt(0).toUpperCase()}
             </div>
           </Dropdown>
         ) : (
           <>
-            <Link to="/login" className="text-slate-400 hover:text-black transition-colors">
+            <Link to="/login" className="text-slate-400 hover:text-black dark:hover:text-white transition-colors">
               Đăng nhập
             </Link>
-            <Link to="/register" className="bg-black text-white px-4 py-2 rounded-xl hover:bg-slate-800 transition-colors">
+            <Link to="/register" className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors">
               Đăng ký
             </Link>
           </>

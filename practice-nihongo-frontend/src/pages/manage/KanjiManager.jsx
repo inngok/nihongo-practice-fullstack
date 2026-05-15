@@ -3,7 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import kanjiService from '../../api/kanjiService';
 import bookService from '../../api/bookService';
 import { Modal, message } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 export default function KanjiManager() {
   const navigate = useNavigate();
@@ -14,12 +16,18 @@ export default function KanjiManager() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { fetchWithAuth } = useAuth();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [modalTab, setModalTab] = useState('single'); // 'single' or 'bulk'
+  const [bulkInput, setBulkInput] = useState('');
+  const [previewData, setPreviewData] = useState([]);
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
 
   // Filter State
   const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
   
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     character: '',
     kunyomi: '',
@@ -61,28 +69,34 @@ export default function KanjiManager() {
 
   // Filtered List
   const filteredKanjis = React.useMemo(() => {
-    if (!selectedBookId) return kanjis;
-    return kanjis.filter(k => k.bookId?.toString() === selectedBookId.toString() || k.book?.id?.toString() === selectedBookId.toString());
+    if (!selectedBookId || selectedBookId === "") return kanjis || [];
+    return (kanjis || []).filter(k => {
+      const kBookId = k.bookId || k.book?.id;
+      return kBookId?.toString() === selectedBookId.toString();
+    });
   }, [kanjis, selectedBookId]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [kanjiRes, bookRes] = await Promise.all([
+      const [kanjiSettled, bookSettled] = await Promise.allSettled([
         kanjiService.getAll(),
         bookService.getAll()
       ]);
-      setKanjis(kanjiRes.data);
-      setBooks(bookRes.data.filter(b => b.type && b.type.includes('KANJI')));
+
+      const kanjiData = kanjiSettled.status === 'fulfilled' ? kanjiSettled.value.data : [];
+      const booksData = bookSettled.status === 'fulfilled' ? bookSettled.value.data : [];
+
+      setKanjis(Array.isArray(kanjiData) ? kanjiData : []);
+      setBooks(Array.isArray(booksData) ? booksData.filter(b => b.type && b.type.includes('KANJI')) : []);
       setError(null);
     } catch (err) {
       setError('Không thể tải dữ liệu.');
-      console.error(err);
+      console.error('fetchData unexpected error:', err);
     } finally {
       setLoading(false);
     }
   };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -110,6 +124,7 @@ export default function KanjiManager() {
       setFormData(prev => ({ ...prev, bookId: selectedBookId }));
     }
     setEditingId(null);
+    setModalTab('single');
     setIsModalOpen(true);
   };
 
@@ -127,6 +142,7 @@ export default function KanjiManager() {
       page: kanji.page || ''
     });
     setEditingId(kanji.id);
+    setModalTab('single');
     setIsModalOpen(true);
   };
 
@@ -149,8 +165,93 @@ export default function KanjiManager() {
       fetchData();
       message.success(editingId ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
     } catch (err) {
-      console.error(err);
+      console.error('Submit Kanji error:', err);
       message.error('Đã có lỗi xảy ra!');
+    }
+  };
+
+  const handleDeleteAll = () => {
+    const bookTitle = selectedBookId 
+      ? books.find(b => b.id.toString() === selectedBookId.toString())?.title || 'sách này'
+      : 'tất cả hệ thống';
+
+    Modal.confirm({
+      title: 'Xác nhận Xóa Hàng Loạt ⚠️',
+      content: `Bạn có chắc chắn muốn xóa toàn bộ Hán tự thuộc ${bookTitle}? Hành động này KHÔNG THỂ khôi phục!`,
+      okText: 'Tôi đồng ý, Xóa tất cả',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await kanjiService.deleteAll(selectedBookId);
+          fetchData();
+          message.success('Đã xóa sạch toàn bộ Hán tự thành công!');
+        } catch (err) {
+          message.error('Gặp lỗi khi xóa hàng loạt: ' + err.message);
+          console.error(err);
+        }
+      }
+    });
+  };
+
+  const handleBulkAiProcess = async () => {
+    if (!bulkInput.trim()) return message.warning('Vui lòng dán nội dung cần xử lý');
+    if (!selectedBookId) return message.warning('Vui lòng chọn giáo trình trước khi nhập hàng loạt');
+
+    setIsAiProcessing(true);
+    const hide = message.loading('AI đang phân tích Hán tự hàng loạt...', 0);
+    try {
+      const res = await fetchWithAuth(`${API_BASE_URL}/ai/generate-bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: bulkInput,
+          type: 'KANJI'
+        })
+      });
+      if (!res.ok) throw new Error('AI processing failed');
+      const data = await res.json();
+      setPreviewData(data.map(item => ({ ...item, selected: true })));
+      message.success('Đã phân tích xong Hán tự!');
+    } catch (err) {
+      message.error('Lỗi khi xử lý hàng loạt: ' + err.message);
+    } finally {
+      setIsAiProcessing(false);
+      hide();
+    }
+  };
+
+  const handleSaveBulk = async () => {
+    const itemsToSave = previewData.filter(item => item.selected);
+    if (itemsToSave.length === 0) return message.warning('Không có chữ Hán nào được chọn');
+
+    const hide = message.loading(`Đang lưu ${itemsToSave.length} chữ Hán...`, 0);
+    try {
+      const payload = itemsToSave.map(item => ({
+        character: item.character,
+        kunyomi: item.kunyomi,
+        onyomi: item.onyomi,
+        hanviet: item.hanviet,
+        meaning: item.meaning,
+        examples: item.examples,
+        book: { id: parseInt(selectedBookId) },
+        week: formData.week ? parseInt(formData.week) : null,
+        day: formData.day ? parseInt(formData.day) : null
+      }));
+
+      for (const item of payload) {
+        await kanjiService.create(item);
+      }
+
+      message.success(`Đã lưu thành công ${itemsToSave.length} chữ Hán!`);
+      setIsModalOpen(false);
+      setBulkInput('');
+      setPreviewData([]);
+      fetchData();
+    } catch (err) {
+      message.error('Lỗi khi lưu dữ liệu: ' + err.message);
+    } finally {
+      hide();
     }
   };
 
@@ -175,47 +276,64 @@ export default function KanjiManager() {
   };
 
   return (
-    <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500">
+    <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 bg-transparent">
       <div className="max-w-7xl mx-auto">
         
         {/* Minimalist Monochrome Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-slate-100">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-slate-100 dark:border-slate-800">
           <div className="space-y-1.5">
             <div className="flex items-baseline gap-2">
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quản lý Hán tự</h1>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">/ Kanji</span>
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Quản lý Hán tự</h1>
+              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">/ Kanji</span>
             </div>
-            <p className="text-slate-400 text-xs font-medium">Hệ thống dữ liệu Kanji & Hán Việt chi tiết</p>
+            <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">Cập nhật kho Hán tự giáo trình hệ thống</p>
           </div>
-          <button 
-            onClick={openAddModal} 
-            className="bg-black text-white px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 transition-all shadow-sm flex items-center gap-2 self-start md:self-auto"
-          >
-            <PlusOutlined className="text-[10px]" />
-            Thêm mới
-          </button>
+          <div className="flex gap-3 self-start md:self-auto">
+            {filteredKanjis.length > 0 && (
+              <button
+                onClick={handleDeleteAll}
+                className="bg-red-50 hover:bg-red-100 text-red-600 px-5 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2"
+              >
+                <DeleteOutlined className="text-[10px]" />
+                {selectedBookId ? 'Xóa sách' : 'Xóa hết'}
+              </button>
+            )}
+            <button
+              onClick={() => navigate('/grammar/books')}
+              className="px-5 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-900 transition-all shadow-sm"
+            >
+              Giáo trình
+            </button>
+            <button
+              onClick={openAddModal}
+              className="bg-black text-white dark:bg-white dark:text-black px-6 py-2.5 rounded-lg text-xs font-bold hover:opacity-80 transition-all shadow-xl flex items-center gap-2"
+            >
+              <PlusOutlined className="text-[10px]" />
+              Thêm mới
+            </button>
+          </div>
         </div>
 
         {/* Filter Bar */}
-        <div className="flex gap-4 mb-8 p-6 bg-slate-50 border border-slate-100 rounded-2xl items-center">
-          <div className="flex items-center gap-2 text-slate-400">
+        <div className="flex gap-4 mb-8 p-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl items-center">
+          <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
             <FilterOutlined className="text-xs" />
             <span className="text-[10px] font-bold uppercase tracking-widest">Bộ lọc nhanh:</span>
           </div>
           <select
             value={selectedBookId}
             onChange={(e) => setSelectedBookId(e.target.value)}
-            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 focus:ring-2 focus:ring-black/5 outline-none transition-all"
+            className="px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-black/5 outline-none transition-all"
           >
-            <option value="">-- Tất cả giáo trình --</option>
+            <option value="" className="dark:bg-slate-950">-- Tất cả giáo trình --</option>
             {books.map(b => (
-              <option key={b.id} value={b.id}>{b.title}</option>
+              <option key={b.id} value={b.id} className="dark:bg-slate-950">{b.title}</option>
             ))}
           </select>
           {selectedBookId && (
             <button 
               onClick={() => setSelectedBookId('')}
-              className="text-[10px] font-bold text-slate-300 hover:text-red-500 uppercase tracking-tighter transition-colors"
+              className="text-[10px] font-bold text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 uppercase tracking-tighter transition-colors"
             >
               Xóa lọc
             </button>
@@ -224,39 +342,39 @@ export default function KanjiManager() {
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <div className="w-6 h-6 border-2 border-slate-100 border-t-black rounded-full animate-spin"></div>
+            <div className="w-6 h-6 border-2 border-slate-100 dark:border-slate-800 border-t-black dark:border-t-white rounded-full animate-spin"></div>
           </div>
         ) : (
-          <div className="border border-slate-100 rounded-xl overflow-hidden">
+          <div className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/50">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Hán tự</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Hán Việt</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Âm On/Kun</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Ý nghĩa</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400">Giáo trình</th>
-                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 text-right">Hành động</th>
+                <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Hán tự</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Hán Việt</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Âm On/Kun</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Ý nghĩa</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Giáo trình</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 text-right">Hành động</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-850">
                 {filteredKanjis.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-5 font-bold text-slate-900 text-2xl leading-none">{item.character}</td>
+                  <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors group">
+                    <td className="px-6 py-5 font-bold text-slate-900 dark:text-white text-2xl leading-none">{item.character}</td>
                     <td className="px-6 py-5">
-                      <span className="font-bold text-slate-700 uppercase tracking-widest text-[11px] bg-slate-50 px-2 py-1 rounded">
+                      <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest text-[11px] bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded">
                         {item.hanviet}
                       </span>
                     </td>
                     <td className="px-6 py-5">
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">ON: <span className="text-slate-900">{item.onyomi}</span></span>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">KUN: <span className="text-slate-600">{item.kunyomi}</span></span>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">ON: <span className="text-slate-900 dark:text-slate-200">{item.onyomi}</span></span>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-tight">KUN: <span className="text-slate-600 dark:text-slate-300">{item.kunyomi}</span></span>
                       </div>
                     </td>
-                    <td className="px-6 py-5 text-slate-500 text-[13px] italic">{item.meaning}</td>
+                    <td className="px-6 py-5 text-slate-500 dark:text-slate-400 text-[13px] italic">{item.meaning}</td>
                     <td className="px-6 py-5">
-                      <span className="text-[10px] font-bold text-slate-500 bg-slate-100/70 text-slate-600 px-2.5 py-1.5 rounded-lg uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-800/70 text-slate-600 px-2.5 py-1.5 rounded-lg uppercase tracking-wider">
                         {item.book?.title || 'Chưa phân loại'}{item.page ? ` • Trang ${item.page}` : ''}
                       </span>
                     </td>
@@ -264,14 +382,14 @@ export default function KanjiManager() {
                       <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => openEditModal(item)} 
-                          className="p-2 text-slate-400 hover:text-black transition-colors"
+                          className="p-2 text-slate-400 hover:text-black dark:hover:text-white transition-colors"
                           title="Sửa"
                         >
                           <EditOutlined className="text-base" />
                         </button>
                         <button 
                           onClick={() => handleDelete(item.id)} 
-                          className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                          className="p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                           title="Xóa"
                         >
                           <DeleteOutlined className="text-base" />
@@ -286,90 +404,223 @@ export default function KanjiManager() {
         )}
       </div>
 
+      {/* Unified Add/Bulk Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-            <div className="p-8 border-b border-slate-100 flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900">{editingId ? 'Chỉnh sửa Hán tự' : 'Thêm Hán tự mới'}</h2>
-                {selectedBookId && !editingId && (
-                  <div className="mt-1">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Thêm vào: </span>
-                    <span className="text-[11px] font-black text-black uppercase tracking-tight">
-                      {books.find(b => b.id.toString() === selectedBookId.toString())?.title}
-                    </span>
-                  </div>
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md overflow-y-auto">
+          <div className={`bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full ${modalTab === 'bulk' ? 'max-w-6xl' : 'max-w-lg'} rounded-[32px] shadow-2xl flex flex-col max-h-[95vh] animate-in fade-in zoom-in duration-300 transition-all overflow-hidden`}>
+            {/* Header with Tabs */}
+            <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
+              <div className="flex items-center gap-8">
+                <button 
+                  onClick={() => setModalTab('single')}
+                  className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all pb-1 ${modalTab === 'single' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-slate-300 dark:text-slate-600 hover:text-slate-400'}`}
+                >
+                  {editingId ? 'CHỈNH SỬA' : 'THÊM THỦ CÔNG'}
+                </button>
+                {!editingId && (
+                  <button 
+                    onClick={() => setModalTab('bulk')}
+                    className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all pb-1 ${modalTab === 'bulk' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-slate-300 dark:text-slate-600 hover:text-slate-400'}`}
+                  >
+                    AI NHẬP HÀNG LOẠT
+                  </button>
                 )}
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:text-black transition-colors">Đóng</button>
+              <button onClick={() => setIsModalOpen(false)} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 hover:text-black dark:hover:text-white transition-colors">
+                Đóng
+              </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-8 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Chữ Hán</label>
-                  <input type="text" name="character" value={formData.character} onChange={handleInputChange} required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Âm Hán Việt</label>
-                  <input type="text" name="hanviet" value={formData.hanviet} onChange={handleInputChange} required placeholder="Ví dụ: NHẤT" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none uppercase" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className={`space-y-2 ${selectedBookId && !editingId ? 'md:col-span-2' : ''}`}>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ý nghĩa</label>
-                  <input type="text" name="meaning" value={formData.meaning} onChange={handleInputChange} required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
-                </div>
-                {(!selectedBookId || editingId) && (
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Bộ sách</label>
-                    <select name="bookId" value={formData.bookId} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                      <option value="">-- Chọn --</option>
-                      {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
-                    </select>
-                  </div>
-                )}
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Âm ON</label>
-                  <input type="text" name="onyomi" value={formData.onyomi} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Âm KUN</label>
-                  <input type="text" name="kunyomi" value={formData.kunyomi} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
-                </div>
-              </div>
+            {modalTab === 'single' ? (
+              <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto hide-scrollbar">
+                 <div className="grid grid-cols-2 gap-8">
+                   <div className="space-y-2">
+                     <div className="flex justify-between items-center px-1">
+                       <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">Hán tự</label>
+                       <button type="button" onClick={() => setModalTab('bulk')} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-black dark:text-white text-[9px] font-black rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter flex items-center gap-1">
+                         <ThunderboltOutlined className="text-[10px]" /> AI ĐIỀN
+                       </button>
+                     </div>
+                     <input 
+                       type="text" 
+                       name="character" 
+                       value={formData.character} 
+                       onChange={handleInputChange} 
+                       placeholder="Chữ Hán" 
+                       required 
+                       className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Hán Việt</label>
+                     <input 
+                       type="text" 
+                       name="hanviet" 
+                       value={formData.hanviet} 
+                       onChange={handleInputChange} 
+                       placeholder="ÂM HÁN VIỆT" 
+                       required 
+                       className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700 uppercase" 
+                     />
+                   </div>
+                 </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ví dụ (Một ví dụ mỗi dòng)</label>
-                <textarea name="examples" value={formData.examples} onChange={handleInputChange} rows="3" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none resize-none" placeholder="Ví dụ: &#10;一人: một người&#10;二人: hai người"></textarea>
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Ý nghĩa</label>
+                   <input 
+                     type="text" 
+                     name="meaning" 
+                     value={formData.meaning} 
+                     onChange={handleInputChange} 
+                     placeholder="Tiếng Việt" 
+                     required 
+                     className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                   />
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-8">
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Âm ON</label>
+                     <input 
+                       type="text" 
+                       name="onyomi" 
+                       value={formData.onyomi} 
+                       onChange={handleInputChange} 
+                       placeholder="Onyomi" 
+                       className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Âm KUN</label>
+                     <input 
+                       type="text" 
+                       name="kunyomi" 
+                       value={formData.kunyomi} 
+                       onChange={handleInputChange} 
+                       placeholder="Kunyomi" 
+                       className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                     />
+                   </div>
+                 </div>
+
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 px-1">Giáo trình</label>
+                   <select 
+                     name="bookId" 
+                     value={formData.bookId} 
+                     onChange={handleInputChange} 
+                     required
+                     className="w-full px-1 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-xs outline-none transition-all"
+                   >
+                     <option value="" className="dark:bg-slate-950">-- Chọn --</option>
+                     {books.map(b => <option key={b.id} value={b.id} className="dark:bg-slate-950">{b.title}</option>)}
+                   </select>
+                 </div>
+
+                 <div className="pt-4">
+                   <button 
+                     type="submit" 
+                     className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:opacity-80 transition-all shadow-xl"
+                   >
+                     {editingId ? 'CẬP NHẬT' : 'LƯU DỮ LIỆU'}
+                   </button>
+                 </div>
+              </form>
+            ) : (
+              <div className="flex-grow overflow-hidden flex flex-col p-8 gap-8">
+                 <div className="flex flex-col md:flex-row gap-8 flex-grow overflow-hidden">
+                    <div className="w-full md:w-1/3 flex flex-col gap-4">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Nội dung thô (Raw Text)</label>
+                      <textarea
+                        value={bulkInput}
+                        onChange={(e) => setBulkInput(e.target.value)}
+                        placeholder="Ví dụ: &#10;1. 食 - thực - ăn&#10;2. 行 - hành - đi&#10;3. 寝 - tẩm - ngủ"
+                        className="flex-grow w-full p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:border-black dark:focus:border-white text-slate-900 dark:text-white outline-none transition-all resize-none rounded-3xl text-sm leading-relaxed"
+                      ></textarea>
+                      <button
+                        onClick={handleBulkAiProcess}
+                        disabled={isAiProcessing || !bulkInput.trim()}
+                        className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl disabled:opacity-30 flex items-center justify-center gap-2"
+                      >
+                        {isAiProcessing ? (
+                          <div className="w-4 h-4 border-2 border-slate-400 border-t-white dark:border-t-black rounded-full animate-spin"></div>
+                        ) : 'AI PHÂN TÍCH'}
+                      </button>
+                    </div>
+
+                    <div className="flex-grow flex flex-col gap-4 overflow-hidden">
+                      <div className="flex justify-between items-center">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">
+                          Bản xem trước ({previewData.length} chữ)
+                        </label>
+                        {previewData.length > 0 && (
+                          <div className="flex gap-4">
+                             <button onClick={() => setPreviewData(prev => prev.map(d => ({...d, selected: true})))} className="text-[10px] font-black text-black dark:text-white uppercase tracking-widest">Chọn tất cả</button>
+                             <button onClick={() => setPreviewData(prev => prev.map(d => ({...d, selected: false})))} className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Bỏ chọn</button>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex-grow bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-3xl overflow-hidden overflow-y-auto shadow-inner">
+                        {previewData.length > 0 ? (
+                          <table className="w-full text-left border-collapse text-xs">
+                            <thead className="sticky top-0 bg-slate-100 dark:bg-slate-900 z-10 border-b border-slate-200 dark:border-slate-800">
+                              <tr>
+                                <th className="p-4 w-10 text-center"></th>
+                                <th className="p-4 font-bold text-slate-500 uppercase tracking-wider text-center">Hán tự</th>
+                                <th className="p-4 font-bold text-slate-500 uppercase tracking-wider text-center">Hán Việt</th>
+                                <th className="p-4 font-bold text-slate-500 uppercase tracking-wider text-center">ON/KUN</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                              {previewData.map((item, idx) => (
+                                <tr key={idx} className="hover:bg-white dark:hover:bg-slate-900 transition-colors">
+                                  <td className="p-4 text-center">
+                                    <input type="checkbox" checked={item.selected} onChange={() => {
+                                        const newData = [...previewData];
+                                        newData[idx].selected = !newData[idx].selected;
+                                        setPreviewData(newData);
+                                      }} className="w-4 h-4 rounded border-slate-300 accent-black dark:accent-white" />
+                                  </td>
+                                  <td className="p-4 text-center">
+                                    <div className="font-bold text-slate-900 dark:text-white text-2xl">{item.character}</div>
+                                    <div className="text-slate-400 italic text-[10px]">{item.meaning}</div>
+                                  </td>
+                                  <td className="p-4 text-center font-black text-black dark:text-white uppercase tracking-widest">{item.hanviet}</td>
+                                  <td className="p-4">
+                                    <div className="text-slate-700 dark:text-slate-300">ON: {item.onyomi}</div>
+                                    <div className="text-slate-400 text-[10px]">KUN: {item.kunyomi}</div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <div className="h-full flex flex-col items-center justify-center text-slate-300 dark:text-slate-700 space-y-4 py-20">
+                            <div className="text-6xl opacity-10 font-black italic">AI KANJI</div>
+                            <p className="text-sm italic">Dán danh sách Kanji và nhấn phân tích</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                 </div>
+
+                 <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex gap-4">
+                      <select value={selectedBookId} onChange={(e) => setSelectedBookId(e.target.value)} className="px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none">
+                        <option value="">-- Chọn giáo trình --</option>
+                        {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex gap-4">
+                      <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 font-black text-[11px] uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">HỦY</button>
+                      <button onClick={handleSaveBulk} disabled={previewData.length === 0 || !selectedBookId} className="px-10 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-xl disabled:opacity-30">
+                        LƯU ({previewData.filter(i => i.selected).length} chữ)
+                      </button>
+                    </div>
+                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Tuần (1-10)</label>
-                  <select name="week" value={formData.week} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                    <option value="">-- Chọn --</option>
-                    {[...Array(10)].map((_, i) => <option key={i+1} value={i+1}>Tuần {i+1}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Ngày (1-7)</label>
-                  <select name="day" value={formData.day} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none">
-                    <option value="">-- Chọn --</option>
-                    {[...Array(7)].map((_, i) => <option key={i+1} value={i+1}>Ngày {i+1}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Số Trang</label>
-                  <input type="number" name="page" value={formData.page} onChange={handleInputChange} placeholder="Ví dụ: 15" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" />
-                </div>
-              </div>
-              <div className="pt-4 flex gap-4">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-6 py-4 border border-slate-200 rounded-2xl font-bold">Hủy</button>
-                <button type="submit" className="flex-1 px-6 py-4 bg-black text-white rounded-2xl font-bold">{editingId ? 'Cập nhật' : 'Lưu'}</button>
-              </div>
-            </form>
+            )}
           </div>
         </div>
       )}
