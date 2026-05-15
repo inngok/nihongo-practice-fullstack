@@ -7,6 +7,7 @@ const grammarService = {
   create: (data) => apiClient.post('/grammars', data),
   update: (id, data) => apiClient.put(`/grammars/${id}`, data),
   delete: (id) => apiClient.delete(`/grammars/${id}`),
+  deleteAll: (bookId) => apiClient.delete(`/grammars/all${bookId ? `?bookId=${bookId}` : ''}`),
 };
 
 export default grammarService;

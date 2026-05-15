@@ -3,6 +3,7 @@ import vocabService from '../../api/vocabService';
 import flashcardService from '../../api/flashcardService';
 import vocabFolderService from '../../api/vocabFolderService';
 import { Modal, message } from 'antd';
+import { ThunderboltOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
@@ -471,7 +472,7 @@ export default function PersonalVocab() {
                         Sửa mục
                       </button>
                       {currentFolder.sourceUrl && (
-                        <a href={currentFolder.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest text-blue-600 hover:text-blue-800 hover:border-blue-200 transition-all shadow-sm">
+                        <a href={currentFolder.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest text-slate-900 hover:border-black transition-all shadow-sm">
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                           Nguồn / Link
                         </a>
@@ -508,7 +509,7 @@ export default function PersonalVocab() {
                           </button>
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id); }} 
-                            className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-red-500 transition-colors"
+                            className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-slate-950 transition-colors"
                           >
                             Xóa
                           </button>
@@ -543,7 +544,7 @@ export default function PersonalVocab() {
                         </div>
                         <div className="flex gap-3">
                           <button onClick={() => openEditModal(item)} className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-black transition-colors">Sửa</button>
-                          <button onClick={() => handleDeletePersonal(item.id)} className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-red-500 transition-colors">Xóa</button>
+                          <button onClick={() => handleDeletePersonal(item.id)} className="text-[9px] font-black uppercase tracking-widest text-slate-300 hover:text-slate-950 transition-colors">Xóa</button>
                         </div>
                       </div>
                       
@@ -586,9 +587,9 @@ export default function PersonalVocab() {
                       type="button"
                       onClick={handleAiAutoFill}
                       disabled={isAiLoading}
-                      className="text-[9px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-800 disabled:opacity-40 transition-colors flex items-center gap-1"
+                      className="text-[9px] font-black uppercase tracking-widest text-slate-900 hover:text-black disabled:opacity-40 transition-colors flex items-center gap-1"
                     >
-                      <span>✨ AI Điền Nhanh</span>
+                      <ThunderboltOutlined className="text-[10px]" /> AI Điền Nhanh
                     </button>
                   </div>
                   <input

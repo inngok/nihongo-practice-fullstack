@@ -45,6 +45,15 @@ public class GrammarService {
         grammarRepository.delete(grammar);
     }
 
+    public void deleteAllGrammars() {
+        grammarRepository.deleteAll();
+    }
+
+    public void deleteGrammarsByBook(Long bookId) {
+        List<Grammar> grammars = grammarRepository.findByBookId(bookId);
+        grammarRepository.deleteAll(grammars);
+    }
+
     public List<Grammar> getByLevel(String level) {
         return grammarRepository.findByLevel(level);
     }

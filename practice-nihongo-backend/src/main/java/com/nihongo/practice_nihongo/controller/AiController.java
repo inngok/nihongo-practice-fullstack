@@ -4,66 +4,50 @@ import com.nihongo.practice_nihongo.service.AiService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
-import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 @RequestMapping("/api/ai")
 @CrossOrigin(origins = "*")
-public class AiController {
+public class AIController {
 
     private final AiService aiService;
 
-    public AiController(AiService aiService) {
+    public AIController(AiService aiService) {
         this.aiService = aiService;
     }
 
-    @Operation(summary = "Xử lý dữ liệu thô bằng AI để nhập hàng loạt")
-    @PostMapping("/generate-bulk")
-    public ResponseEntity<String> generateBulk(@RequestBody Map<String, String> request) {
-        String rawData = request.get("text");
-        String type = request.get("type"); // "KANJI", "VOCABULARY", or "GRAMMAR"
-        
-        if (rawData == null || rawData.isEmpty()) {
-            return ResponseEntity.badRequest().body("Text data is required");
-        }
-
+    @PostMapping("/format-import")
+    public ResponseEntity<String> formatImport(@RequestBody Map<String, String> request) {
         try {
-            String formattedJson = aiService.formatDataForImport(rawData, type);
-            return ResponseEntity.ok(formattedJson);
+            String rawData = request.get("rawData");
+            String type = request.get("type");
+            String result = aiService.formatDataForImport(rawData, type);
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error processing AI request: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
 
-    @Operation(summary = "Tự động phân tích và sinh thông tin từ vựng bằng AI")
     @GetMapping("/generate-vocab")
     public ResponseEntity<String> generateVocab(@RequestParam String word) {
-        if (word == null || word.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("Word is required");
-        }
         try {
-            String jsonResult = aiService.generateVocabDetails(word);
-            return ResponseEntity.ok(jsonResult);
+            String result = aiService.generateVocabDetails(word);
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error processing AI request: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
 
-    @Operation(summary = "Đàm thoại tiếng Nhật thực tế nhập vai với AI")
     @PostMapping("/chat")
-    public ResponseEntity<String> chatWithAi(@RequestBody Map<String, Object> request) {
-        String scenario = (String) request.get("scenario");
-        String userMessage = (String) request.get("userMessage");
-        java.util.List<java.util.Map<String, String>> history = (java.util.List<java.util.Map<String, String>>) request.get("history");
-
-        if (userMessage == null || userMessage.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("User message is required");
-        }
+    public ResponseEntity<String> chat(@RequestBody Map<String, Object> request) {
         try {
-            String jsonResult = aiService.generateChatResponse(scenario, history, userMessage);
-            return ResponseEntity.ok(jsonResult);
+            String scenario = (String) request.get("scenario");
+            java.util.List<Map<String, String>> history = (java.util.List<Map<String, String>>) request.get("history");
+            String userMessage = (String) request.get("userMessage");
+            String result = aiService.generateChatResponse(scenario, history, userMessage);
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error processing AI chat: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
 }

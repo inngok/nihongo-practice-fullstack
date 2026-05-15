@@ -634,13 +634,13 @@ export default function StudyPage() {
                     onChange={e => !feedback && setUserInput(e.target.value)}
                     placeholder="Nhập đáp án..."
                     className={`w-full py-6 px-10 rounded-full border-2 outline-none text-center text-xl font-bold transition-all shadow-xl bg-transparent ${
-                      feedback === 'correct' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 
-                      feedback === 'incorrect' ? 'border-red-500 text-red-600 dark:text-red-400' : 'border-black/5 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white'
+                      feedback === 'correct' ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white bg-slate-50/50 dark:bg-slate-900/50' : 
+                      feedback === 'incorrect' ? 'border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500' : 'border-black/5 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white'
                     }`}
                   />
                 </form>
                 {feedback === 'incorrect' && (
-                  <p className="text-red-500 font-black text-xs uppercase animate-bounce">Sai rồi! Đáp án là: {currentItem.answer}</p>
+                  <p className="text-slate-500 dark:text-slate-400 font-black text-xs uppercase animate-bounce">Sai rồi! Đáp án là: {currentItem.answer}</p>
                 )}
               </div>
             </div>
@@ -682,8 +682,8 @@ export default function StudyPage() {
                   onChange={e => !feedback && setUserInput(e.target.value)}
                   placeholder="Nghe và điền ngữ pháp..."
                   className={`w-full py-6 px-10 rounded-full border-2 outline-none text-center text-xl font-bold transition-all shadow-xl bg-transparent ${
-                    feedback === 'correct' ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 
-                    feedback === 'incorrect' ? 'border-red-500 text-red-600 dark:text-red-400' : 'border-black/5 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white'
+                    feedback === 'correct' ? 'border-slate-900 dark:border-white text-slate-900 dark:text-white bg-slate-50/50 dark:bg-slate-900/50' : 
+                    feedback === 'incorrect' ? 'border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500' : 'border-black/5 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white'
                   }`}
                 />
               </form>
@@ -713,11 +713,11 @@ export default function StudyPage() {
             let btnState = "bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 hover:border-black dark:hover:border-white text-slate-700 dark:text-slate-300 hover:shadow-md";
             if (feedback) {
               if (opt === currentItem.answer) {
-                 btnState = "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500 text-emerald-700 dark:text-emerald-400 shadow-inner";
+                 btnState = "bg-slate-900 text-white dark:bg-white dark:text-black border-slate-900 dark:border-white shadow-inner scale-[0.98]";
               } else if (userInput === opt) {
-                 btnState = "bg-red-50 dark:bg-red-950/30 border-red-500 text-red-700 dark:text-red-400 shadow-inner";
+                 btnState = "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 opacity-70";
               } else {
-                 btnState = "bg-slate-50 dark:bg-slate-800/20 border-slate-100 dark:border-slate-800 text-slate-300 dark:text-slate-700 opacity-50";
+                 btnState = "bg-slate-50/50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800 text-slate-300 dark:text-slate-700 opacity-30";
               }
             } else if (userInput === opt) {
                btnState = "bg-black dark:bg-white border-black dark:border-white text-white dark:text-black";

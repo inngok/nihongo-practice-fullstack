@@ -157,15 +157,15 @@ export default function Dashboard() {
           <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-6 lg:col-span-2">
             <div className="flex items-center justify-between pb-4 border-b border-slate-50 dark:border-slate-800">
               <div className="flex items-center gap-2">
-                <ThunderboltOutlined className="text-slate-800 dark:text-yellow-400 text-lg" />
+                <ThunderboltOutlined className="text-slate-800 dark:text-white text-lg" />
                 <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">Tài nguyên AI (Gemini Flash)</h3>
               </div>
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                 aiUsage.isKeyConfigured 
                   ? 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700' 
-                  : 'bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/50'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700'
               }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${aiUsage.isKeyConfigured ? 'bg-slate-500' : 'bg-red-500 animate-pulse'}`}></span>
+                <span className={`w-1.5 h-1.5 rounded-full ${aiUsage.isKeyConfigured ? 'bg-slate-500' : 'bg-slate-900 dark:bg-white animate-pulse'}`}></span>
                 {aiUsage.isKeyConfigured ? 'API Key Active' : 'Chưa cấu hình API Key'}
               </span>
             </div>
@@ -206,8 +206,8 @@ export default function Dashboard() {
                 <span className="text-base font-black text-slate-800 dark:text-white flex items-center gap-1.5">
                   {aiUsage.fail > 0 ? (
                     <>
-                      <CloseCircleOutlined className="text-red-500 text-xs animate-pulse" />
-                      <span className="text-red-600 dark:text-red-400 font-black">{aiUsage.fail}</span>
+                      <CloseCircleOutlined className="text-slate-500 text-xs animate-pulse" />
+                      <span className="text-slate-900 dark:text-white font-black">{aiUsage.fail}</span>
                     </>
                   ) : (
                     <>

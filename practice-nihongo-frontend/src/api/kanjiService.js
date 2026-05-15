@@ -6,6 +6,7 @@ const kanjiService = {
   create: (data) => apiClient.post('/kanjis', data),
   update: (id, data) => apiClient.put(`/kanjis/${id}`, data),
   delete: (id) => apiClient.delete(`/kanjis/${id}`),
+  deleteAll: (bookId) => apiClient.delete(`/kanjis/all${bookId ? `?bookId=${bookId}` : ''}`),
 };
 
 export default kanjiService;

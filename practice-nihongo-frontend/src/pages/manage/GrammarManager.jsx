@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import grammarService from '../../api/grammarService';
 import bookService from '../../api/bookService';
 import { Modal, message } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
 
@@ -41,11 +41,11 @@ export default function GrammarManager() {
   });
 
   const levelStyles = {
-    N1: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20',
-    N2: 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/20',
-    N3: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/20',
-    N4: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20',
-    N5: 'text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-850',
+    N1: 'text-slate-900 dark:text-white bg-slate-200 dark:bg-slate-700 font-black',
+    N2: 'text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 font-bold',
+    N3: 'text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-850 font-semibold',
+    N4: 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800',
+    N5: 'text-slate-400 dark:text-slate-500 bg-transparent border border-slate-100 dark:border-slate-800',
   };
 
   const levels = ['N1', 'N2', 'N3', 'N4', 'N5'];
@@ -98,16 +98,20 @@ export default function GrammarManager() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [grammarRes, bookRes] = await Promise.all([
+      const [grammarSettled, bookSettled] = await Promise.allSettled([
         grammarService.getAll(),
         bookService.getAll()
       ]);
-      setGrammars(Array.isArray(grammarRes.data) ? grammarRes.data : []);
-      setBooks(Array.isArray(bookRes.data) ? bookRes.data.filter(b => b.type && b.type.includes('GRAMMAR')) : []);
+
+      const grammarData = grammarSettled.status === 'fulfilled' ? grammarSettled.value.data : [];
+      const booksData = bookSettled.status === 'fulfilled' ? bookSettled.value.data : [];
+
+      setGrammars(Array.isArray(grammarData) ? grammarData : []);
+      setBooks(Array.isArray(booksData) ? booksData.filter(b => b.type && b.type.includes('GRAMMAR')) : []);
       setError(null);
     } catch (err) {
       setError('Không thể tải dữ liệu.');
-      console.error(err);
+      console.error('fetchData unexpected error:', err);
     } finally {
       setLoading(false);
     }
@@ -245,10 +249,34 @@ export default function GrammarManager() {
     }
   };
 
+  const handleDeleteAll = () => {
+    const bookTitle = selectedBookId 
+      ? books.find(b => b.id.toString() === selectedBookId.toString())?.title || 'sách này'
+      : 'tất cả hệ thống';
+
+    Modal.confirm({
+      title: 'Xác nhận Xóa Hàng Loạt ⚠️',
+      content: `Bạn có chắc chắn muốn xóa toàn bộ ngữ pháp thuộc ${bookTitle}? Hành động này KHÔNG THỂ khôi phục!`,
+      okText: 'Tôi đồng ý, Xóa tất cả',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await grammarService.deleteAll(selectedBookId);
+          fetchData();
+          message.success('Đã xóa sạch toàn bộ ngữ pháp thành công!');
+        } catch (err) {
+          message.error('Gặp lỗi khi xóa hàng loạt: ' + err.message);
+          console.error(err);
+        }
+      }
+    });
+  };
+
   const handleDelete = (id) => {
     Modal.confirm({
       title: 'Xác nhận xóa',
-      content: 'Bạn có chắc chắn muốn xóa cấu trúc này? Hành động này không thể hoàn tác.',
+      content: 'Bạn có chắc chắn muốn xóa cấu trúc này?',
       okText: 'Xóa',
       okType: 'danger',
       cancelText: 'Hủy',
@@ -275,9 +303,18 @@ export default function GrammarManager() {
               <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Quản lý Ngữ pháp</h1>
               <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">/ Grammar</span>
             </div>
-            <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">Biên tập nội dung ngữ pháp hệ thống chi tiết</p>
+            <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">Cập nhật kho ngữ pháp giáo trình hệ thống</p>
           </div>
           <div className="flex gap-3 self-start md:self-auto">
+            {filteredGrammars.length > 0 && (
+              <button
+                onClick={handleDeleteAll}
+                className="bg-red-50 hover:bg-red-100 text-red-600 px-5 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2"
+              >
+                <DeleteOutlined className="text-[10px]" />
+                {selectedBookId ? 'Xóa sách' : 'Xóa hết'}
+              </button>
+            )}
             <button
               onClick={() => navigate('/grammar/books')}
               className="px-5 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-900 transition-all shadow-sm"
@@ -416,7 +453,7 @@ export default function GrammarManager() {
                      <div className="flex justify-between items-center px-1">
                         <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">Cấu trúc</label>
                         <button type="button" onClick={() => setModalTab('bulk')} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-black dark:text-white text-[9px] font-black rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter flex items-center gap-1">
-                          <span>✨</span> AI ĐIỀN
+                          <ThunderboltOutlined className="text-[10px]" /> AI ĐIỀN
                         </button>
                       </div>
                      <input 
@@ -486,6 +523,7 @@ export default function GrammarManager() {
                      name="bookId" 
                      value={formData.bookId} 
                      onChange={handleInputChange} 
+                     required
                      className="w-full px-1 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-xs outline-none transition-all"
                    >
                      <option value="" className="dark:bg-slate-950">-- Chọn --</option>
@@ -593,7 +631,7 @@ export default function GrammarManager() {
                     </div>
                     <div className="flex gap-4">
                       <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 font-black text-[11px] uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">HỦY</button>
-                      <button onClick={handleSaveBulk} disabled={previewData.length === 0} className="px-10 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-xl disabled:opacity-30">
+                      <button onClick={handleSaveBulk} disabled={previewData.length === 0 || !selectedBookId} className="px-10 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-xl disabled:opacity-30">
                         LƯU ({previewData.filter(i => i.selected).length} cấu trúc)
                       </button>
                     </div>

@@ -92,4 +92,17 @@ public class KanjiService {
     public void deleteKanji(Long id) {
         kanjiRepository.deleteById(id);
     }
+
+    public void deleteAllKanjis() {
+        kanjiRepository.deleteAll();
+    }
+
+    public void deleteKanjisByBook(Long bookId) {
+        List<Kanji> kanjis = kanjiRepository.findByBookId(bookId);
+        kanjiRepository.deleteAll(kanjis);
+    }
+
+    public void deleteKanjisByIds(List<Long> ids) {
+        kanjiRepository.deleteAllById(ids);
+    }
 }

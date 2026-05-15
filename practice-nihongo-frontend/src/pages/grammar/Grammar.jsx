@@ -12,23 +12,37 @@ export default function Grammar() {
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
 
   useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
     bookService.getAll()
       .then(res => {
-        const grammarBooks = res.data.filter(book => book.type && book.type.includes('GRAMMAR'));
-        setBooks(grammarBooks);
+        if (isMounted) {
+          const data = Array.isArray(res.data) ? res.data : [];
+          const grammarBooks = data.filter(book => book.type && book.type.includes('GRAMMAR'));
+          setBooks(grammarBooks);
+        }
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .catch(err => {
+        console.error('Fetch Grammar Books error:', err);
+        if (isMounted) setBooks([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+    return () => { isMounted = false; };
   }, []);
 
-  const filteredBooks = books.filter(book => {
-    if (!currentUser) return true; // Show all books if not logged in
-    const bookLevel = book.levelLabel?.toUpperCase() || '';
-    const bookTitle = book.title?.toUpperCase() || '';
-    const bookJpTitle = book.japaneseTitle?.toUpperCase() || '';
-    const targetLvl = currentUser.jlptLevel?.toUpperCase() || 'N3';
-    return bookLevel.includes(targetLvl) || bookTitle.includes(targetLvl) || bookJpTitle.includes(targetLvl);
-  });
+  const filteredBooks = React.useMemo(() => {
+    if (!Array.isArray(books)) return [];
+    return books.filter(book => {
+      if (!currentUser) return true;
+      const bookLevel = (book.levelLabel || '').toUpperCase();
+      const bookTitle = (book.title || '').toUpperCase();
+      const bookJpTitle = (book.japaneseTitle || '').toUpperCase();
+      const targetLvl = (currentUser.jlptLevel || 'N3').toUpperCase();
+      return bookLevel.includes(targetLvl) || bookTitle.includes(targetLvl) || bookJpTitle.includes(targetLvl);
+    });
+  }, [books, currentUser]);
 
   return (
     <div className="min-h-screen w-full bg-transparent flex flex-col items-center pt-24 md:pt-28 pb-16 px-6 font-sans relative overflow-hidden selection:bg-slate-200 dark:selection:bg-slate-800">

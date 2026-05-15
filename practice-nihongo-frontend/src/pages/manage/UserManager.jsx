@@ -122,8 +122,8 @@ export default function UserManager() {
         return (
           <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
             isUserAdmin 
-              ? 'bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border-red-100 dark:border-red-900/50' 
-              : 'bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/50'
+              ? 'bg-slate-900 text-white dark:bg-white dark:text-black border-slate-900 dark:border-white' 
+              : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-100 dark:border-slate-800'
           }`}>
             {role ? role.toUpperCase() : 'STUDENT'}
           </span>
@@ -141,9 +141,9 @@ export default function UserManager() {
             onConfirm={() => handleDelete(record.id)}
             okText="Xóa"
             cancelText="Hủy"
-            okButtonProps={{ danger: true }}
+            okButtonProps={{ className: 'bg-slate-900 dark:bg-white text-white dark:text-black border-none font-bold rounded-lg px-4' }}
           >
-            <Button type="text" danger className="dark:text-red-400 dark:hover:text-red-300 flex items-center justify-center" icon={<DeleteOutlined />} />
+            <Button type="text" className="text-slate-400 hover:text-black dark:hover:text-white flex items-center justify-center transition-colors" icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
       ),

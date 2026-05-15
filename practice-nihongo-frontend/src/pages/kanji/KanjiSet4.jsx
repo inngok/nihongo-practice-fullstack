@@ -207,9 +207,9 @@ export default function KanjiSet4() {
   // Declarative style selector for quiz option buttons (No nested if-else)
   const getQuizOptionClass = (option) => {
     if (quizSelectedOption === null) return "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-900 dark:text-white";
-    if (option === quizQuestions[quizIndex]?.correctAnswer) return "bg-emerald-50 dark:bg-emerald-950 border-emerald-500 text-emerald-800 dark:text-emerald-200 font-extrabold shadow-sm";
-    if (option === quizSelectedOption) return "bg-rose-50 dark:bg-rose-950 border-rose-500 text-rose-800 dark:text-rose-200 font-extrabold shadow-sm";
-    return "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-850 text-slate-300 dark:text-slate-700 opacity-60";
+    if (option === quizQuestions[quizIndex]?.correctAnswer) return "bg-slate-900 text-white dark:bg-white dark:text-black border-slate-900 dark:border-white font-black scale-[0.98] shadow-md shadow-black/10 dark:shadow-none";
+    if (option === quizSelectedOption) return "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 opacity-70";
+    return "bg-slate-50/50 dark:bg-slate-950 border-slate-100 dark:border-slate-850 text-slate-300 dark:text-slate-700 opacity-40";
   };
 
   const handleTypingSubmit = (e) => {
@@ -250,7 +250,122 @@ export default function KanjiSet4() {
     }
   };
 
+  const handleOpenDetail = (kanji) => {
+    setSelectedKanji(kanji);
+    setIsDetailModalOpen(true);
+  };
+
   const formattedBookCode = book ? `SET ${String(book.num || bookId).padStart(2, '0')}` : 'SET --';
+
+  // Helper to parse examples string: "地形 (ちけい): địa hình" -> {word, reading, meaning}
+  const parseExamples = (examplesStr) => {
+    if (!examplesStr) return [];
+    
+    // Split by semicolon (preferred), newline, or period
+    let parts = [];
+    if (examplesStr.includes(';')) {
+      parts = examplesStr.split(';').map(s => s.trim()).filter(Boolean);
+    } else if (examplesStr.includes('\n')) {
+      parts = examplesStr.split('\n').map(s => s.trim()).filter(Boolean);
+    } else {
+      parts = examplesStr.split('.').map(s => s.trim()).filter(Boolean);
+    }
+
+    return parts.map(s => {
+      // Match "Word (Reading): Meaning"
+      const match = s.match(/^(.*?)\((.*?)\):\s*(.*)/);
+      if (match) {
+        return { 
+          word: match[1].trim(), 
+          reading: match[2].trim(), 
+          meaning: match[3].trim() 
+        };
+      }
+      // Fallback for "Word: Meaning"
+      if (s.includes(':')) {
+        const [word, ...rest] = s.split(':');
+        return { word: word.trim(), reading: '', meaning: rest.join(':').trim() };
+      }
+      return { word: s.trim(), reading: '', meaning: '' };
+    });
+  };
+
+  const hasAnyExamples = filteredKanjis.some(k => k.examples && k.examples.trim() !== '');
+
+  const DetailedKanjiCard = ({ kanji }) => {
+    const examples = parseExamples(kanji.examples);
+    return (
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 mb-10 shadow-sm">
+        {/* Top Info Section */}
+        <div className="flex gap-10 mb-8 pb-8 border-b border-slate-50 dark:border-slate-850 relative">
+          {/* Big Kanji Frame */}
+          <div 
+            onClick={() => handleOpenDetail(kanji)}
+            className="w-32 h-32 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-center shrink-0 cursor-pointer hover:border-slate-400 transition-colors"
+          >
+            <span className="text-7xl font-black text-slate-900 dark:text-white select-none">{kanji.character}</span>
+          </div>
+
+          {/* Core Info */}
+          <div className="flex-1 pt-1">
+             <div className="flex flex-col mb-6">
+                <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest mb-1">Ý NGHĨA</span>
+                <h2 className="text-3xl font-bold text-slate-900 dark:text-white uppercase">{kanji.hanviet || 'CHƯA CÓ'}</h2>
+             </div>
+
+             <div className="flex gap-16">
+                <div>
+                  <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest block mb-1">ÂM ON</span>
+                  <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{kanji.onyomi || '—'}</p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest block mb-1">ÂM KUN</span>
+                  <p className="text-lg font-bold text-slate-800 dark:text-slate-200">{kanji.kunyomi || '—'}</p>
+                </div>
+             </div>
+          </div>
+
+          {/* Vocab Count & Save */}
+          <div className="flex flex-col items-end gap-6">
+             <div className="text-right flex flex-col items-center">
+                <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest mb-1">TỪ VỰNG</span>
+                <span className="text-4xl font-black text-slate-400 dark:text-slate-500 leading-none">{examples.length}</span>
+                <span className="text-slate-300 mt-1">
+                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7" />
+                   </svg>
+                </span>
+             </div>
+
+             <button
+                onClick={(e) => handleAddFlashcard(kanji, e)}
+                className="text-slate-300 hover:text-rose-500 transition-colors"
+              >
+                {addedKanjiIds.has(kanji.id) ? (
+                  <HeartFilled className="text-rose-500 text-xl" />
+                ) : (
+                  <HeartOutlined className="text-xl" />
+                )}
+              </button>
+          </div>
+        </div>
+
+        {/* Vocabulary Grid */}
+        {examples.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+             {examples.map((ex, idx) => (
+               <div key={idx} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:border-slate-300 transition-all relative">
+                  <span className="absolute top-4 right-5 text-[9px] font-bold text-slate-200 dark:text-slate-800 tracking-widest">#{idx + 1}</span>
+                  <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{ex.word}</h4>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-600 mb-2">{ex.reading}</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 font-bold">{ex.meaning}</p>
+               </div>
+             ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen w-full bg-white dark:bg-slate-950 flex flex-col items-center pt-20 md:pt-24 pb-16 px-6 font-sans select-none">
@@ -335,7 +450,15 @@ export default function KanjiSet4() {
                 <div className="w-8 h-8 border-3 border-slate-100 border-t-black rounded-full animate-spin"></div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Đang tải...</p>
               </div>
+            ) : hasAnyExamples ? (
+               /* DETAILED LIST VIEW (When vocabulary exists) */
+               <div className="flex flex-col">
+                  {filteredKanjis.map((kanji, index) => (
+                    <DetailedKanjiCard key={kanji.id} kanji={kanji} index={index} />
+                  ))}
+               </div>
             ) : (
+              /* SIMPLE GRID VIEW (When no vocabulary) */
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                 {filteredKanjis.map((kanji, index) => (
                   <div
@@ -491,7 +614,7 @@ export default function KanjiSet4() {
               <div className="space-y-8 max-w-md mx-auto">
                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
                   <span>Câu hỏi {quizIndex + 1} / {quizQuestions.length}</span>
-                  <span className="text-emerald-500">Đúng: {quizScore}</span>
+                  <span className="text-slate-900 dark:text-white font-black underline decoration-slate-300">Đúng: {quizScore}</span>
                 </div>
 
                 <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-[2.5rem] p-8 text-center shadow-lg shadow-slate-100 dark:shadow-none">
@@ -565,9 +688,9 @@ export default function KanjiSet4() {
                     autoFocus
                     className={`w-full py-4 px-5 rounded-2xl outline-none border transition-all text-sm font-black text-center uppercase tracking-widest ${
                       typingFeedback === 'correct'
-                        ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-500 text-emerald-800 dark:text-emerald-200 shadow-md shadow-emerald-500/5'
+                        ? 'bg-slate-900 text-white dark:bg-white dark:text-black border-slate-900 dark:border-white shadow-xl scale-[0.98]'
                         : typingFeedback === 'incorrect'
-                        ? 'bg-rose-50 dark:bg-rose-950 border-rose-500 text-rose-800 dark:text-rose-200 shadow-md shadow-rose-500/5 focus:ring-2 focus:ring-rose-200'
+                        ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 opacity-70'
                         : 'bg-slate-50 dark:bg-slate-900 border-slate-150 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-slate-100 dark:focus:ring-slate-800 text-slate-900 dark:text-white'
                     }`}
                   />
@@ -579,8 +702,8 @@ export default function KanjiSet4() {
                 </form>
 
                 {typingFeedback === 'incorrect' && (
-                  <div className="p-4 bg-amber-50/70 border border-amber-100 rounded-2xl text-center">
-                    <p className="text-xs text-amber-800 font-bold leading-relaxed">❌ Nhập chưa chính xác! Gợi ý đáp án đúng: <span className="uppercase text-sm font-black text-slate-900 tracking-wider underline">{filteredKanjis[typingIndex]?.hanviet}</span></p>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-center">
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-bold leading-relaxed">❌ Nhập chưa chính xác! Gợi ý đáp án đúng: <span className="uppercase text-sm font-black text-slate-900 dark:text-white tracking-wider underline">{filteredKanjis[typingIndex]?.hanviet}</span></p>
                   </div>
                 )}
               </div>

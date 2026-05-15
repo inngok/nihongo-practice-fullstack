@@ -8,13 +8,24 @@ export default function Kanji() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
     bookService.getAll()
       .then(res => {
-        const kanjiBooks = res.data.filter(book => book.type && book.type.includes('KANJI'));
-        setBooks(kanjiBooks);
+        if (isMounted) {
+          const data = Array.isArray(res.data) ? res.data : [];
+          const kanjiBooks = data.filter(book => book.type && book.type.includes('KANJI'));
+          setBooks(kanjiBooks);
+        }
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .catch(err => {
+        console.error('Fetch Kanji Books error:', err);
+        if (isMounted) setBooks([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+    return () => { isMounted = false; };
   }, []);
 
 

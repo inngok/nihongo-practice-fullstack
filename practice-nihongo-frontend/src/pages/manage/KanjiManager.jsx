@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import kanjiService from '../../api/kanjiService';
 import bookService from '../../api/bookService';
 import { Modal, message } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
 
@@ -79,21 +79,24 @@ export default function KanjiManager() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [kanjiRes, bookRes] = await Promise.all([
+      const [kanjiSettled, bookSettled] = await Promise.allSettled([
         kanjiService.getAll(),
         bookService.getAll()
       ]);
-      setKanjis(Array.isArray(kanjiRes.data) ? kanjiRes.data : []);
-      setBooks(Array.isArray(bookRes.data) ? bookRes.data.filter(b => b.type && b.type.includes('KANJI')) : []);
+
+      const kanjiData = kanjiSettled.status === 'fulfilled' ? kanjiSettled.value.data : [];
+      const booksData = bookSettled.status === 'fulfilled' ? bookSettled.value.data : [];
+
+      setKanjis(Array.isArray(kanjiData) ? kanjiData : []);
+      setBooks(Array.isArray(booksData) ? booksData.filter(b => b.type && b.type.includes('KANJI')) : []);
       setError(null);
     } catch (err) {
       setError('Không thể tải dữ liệu.');
-      console.error(err);
+      console.error('fetchData unexpected error:', err);
     } finally {
       setLoading(false);
     }
   };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -162,9 +165,33 @@ export default function KanjiManager() {
       fetchData();
       message.success(editingId ? 'Cập nhật thành công!' : 'Thêm mới thành công!');
     } catch (err) {
-      console.error(err);
+      console.error('Submit Kanji error:', err);
       message.error('Đã có lỗi xảy ra!');
     }
+  };
+
+  const handleDeleteAll = () => {
+    const bookTitle = selectedBookId 
+      ? books.find(b => b.id.toString() === selectedBookId.toString())?.title || 'sách này'
+      : 'tất cả hệ thống';
+
+    Modal.confirm({
+      title: 'Xác nhận Xóa Hàng Loạt ⚠️',
+      content: `Bạn có chắc chắn muốn xóa toàn bộ Hán tự thuộc ${bookTitle}? Hành động này KHÔNG THỂ khôi phục!`,
+      okText: 'Tôi đồng ý, Xóa tất cả',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await kanjiService.deleteAll(selectedBookId);
+          fetchData();
+          message.success('Đã xóa sạch toàn bộ Hán tự thành công!');
+        } catch (err) {
+          message.error('Gặp lỗi khi xóa hàng loạt: ' + err.message);
+          console.error(err);
+        }
+      }
+    });
   };
 
   const handleBulkAiProcess = async () => {
@@ -259,9 +286,18 @@ export default function KanjiManager() {
               <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Quản lý Hán tự</h1>
               <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">/ Kanji</span>
             </div>
-            <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">Hệ thống dữ liệu Kanji & Hán Việt chi tiết</p>
+            <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">Cập nhật kho Hán tự giáo trình hệ thống</p>
           </div>
           <div className="flex gap-3 self-start md:self-auto">
+            {filteredKanjis.length > 0 && (
+              <button
+                onClick={handleDeleteAll}
+                className="bg-red-50 hover:bg-red-100 text-red-600 px-5 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2"
+              >
+                <DeleteOutlined className="text-[10px]" />
+                {selectedBookId ? 'Xóa sách' : 'Xóa hết'}
+              </button>
+            )}
             <button
               onClick={() => navigate('/grammar/books')}
               className="px-5 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-900 transition-all shadow-sm"
@@ -402,7 +438,7 @@ export default function KanjiManager() {
                      <div className="flex justify-between items-center px-1">
                        <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">Hán tự</label>
                        <button type="button" onClick={() => setModalTab('bulk')} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-black dark:text-white text-[9px] font-black rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter flex items-center gap-1">
-                         <span>✨</span> AI ĐIỀN
+                         <ThunderboltOutlined className="text-[10px]" /> AI ĐIỀN
                        </button>
                      </div>
                      <input 
@@ -473,6 +509,7 @@ export default function KanjiManager() {
                      name="bookId" 
                      value={formData.bookId} 
                      onChange={handleInputChange} 
+                     required
                      className="w-full px-1 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-xs outline-none transition-all"
                    >
                      <option value="" className="dark:bg-slate-950">-- Chọn --</option>
@@ -577,7 +614,7 @@ export default function KanjiManager() {
                     </div>
                     <div className="flex gap-4">
                       <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 font-black text-[11px] uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">HỦY</button>
-                      <button onClick={handleSaveBulk} disabled={previewData.length === 0} className="px-10 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-xl disabled:opacity-30">
+                      <button onClick={handleSaveBulk} disabled={previewData.length === 0 || !selectedBookId} className="px-10 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-xl disabled:opacity-30">
                         LƯU ({previewData.filter(i => i.selected).length} chữ)
                       </button>
                     </div>

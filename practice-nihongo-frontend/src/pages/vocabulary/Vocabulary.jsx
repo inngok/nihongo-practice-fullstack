@@ -10,23 +10,37 @@ export default function Vocabulary() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
     bookService.getAll()
       .then(res => {
-        const vocabBooks = res.data.filter(book => book.type && book.type.includes('VOCABULARY'));
-        setBooks(vocabBooks);
+        if (isMounted) {
+          const data = Array.isArray(res.data) ? res.data : [];
+          const vocabBooks = data.filter(book => book.type && book.type.includes('VOCABULARY'));
+          setBooks(vocabBooks);
+        }
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .catch(err => {
+        console.error('Fetch Vocabulary Books error:', err);
+        if (isMounted) setBooks([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+    return () => { isMounted = false; };
   }, []);
 
-  const filteredBooks = books.filter(book => {
-    if (!currentUser) return true; // Show all books if not logged in
-    const bookLevel = book.levelLabel?.toUpperCase() || '';
-    const bookTitle = book.title?.toUpperCase() || '';
-    const bookJpTitle = book.japaneseTitle?.toUpperCase() || '';
-    const targetLvl = currentUser.jlptLevel?.toUpperCase() || 'N3';
-    return bookLevel.includes(targetLvl) || bookTitle.includes(targetLvl) || bookJpTitle.includes(targetLvl);
-  });
+  const filteredBooks = React.useMemo(() => {
+    if (!Array.isArray(books)) return [];
+    return books.filter(book => {
+      if (!currentUser) return true;
+      const bookLevel = (book.levelLabel || '').toUpperCase();
+      const bookTitle = (book.title || '').toUpperCase();
+      const bookJpTitle = (book.japaneseTitle || '').toUpperCase();
+      const targetLvl = (currentUser.jlptLevel || 'N3').toUpperCase();
+      return bookLevel.includes(targetLvl) || bookTitle.includes(targetLvl) || bookJpTitle.includes(targetLvl);
+    });
+  }, [books, currentUser]);
 
   return (
     <div className="min-h-screen w-full bg-white dark:bg-transparent flex flex-col items-center pt-24 md:pt-28 pb-16 px-6 font-sans relative overflow-hidden">

@@ -6,9 +6,9 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-de
 
 // Static lookup maps for premium typographical tags, eliminating conditional if-else branches in JSX
 const CATEGORY_STYLES = {
-  KANJI: 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-900/50',
-  GRAMMAR: 'bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-900/50',
-  VOCABULARY: 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/50'
+  KANJI: 'bg-slate-900 text-white dark:bg-white dark:text-black border-slate-900 dark:border-white',
+  GRAMMAR: 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white border-slate-200 dark:border-slate-700',
+  VOCABULARY: 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800'
 };
 
 const CATEGORY_LABELS = {

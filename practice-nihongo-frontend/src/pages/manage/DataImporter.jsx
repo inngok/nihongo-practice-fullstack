@@ -446,7 +446,7 @@ export default function DataImporter() {
             <div className="space-y-0.5">
               <span className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">Trạng thái AI</span>
               <div className="flex items-center gap-2">
-                <span className={`w-1.5 h-1.5 rounded-full ${aiUsage?.isKeyConfigured ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400 dark:bg-slate-600'}`}></span>
+                <span className={`w-1.5 h-1.5 rounded-full ${aiUsage?.isKeyConfigured ? 'bg-slate-900 dark:bg-white animate-pulse' : 'bg-slate-400 dark:bg-slate-600'}`}></span>
                 <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                   {aiUsage ? `Còn lại: ${aiUsage.remaining} / ${aiUsage.limit} lượt` : 'Engine Ready'}
                 </span>
@@ -469,7 +469,7 @@ export default function DataImporter() {
                   onClick={() => setDataType('kanjis')}
                   className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${dataType === 'kanjis'
                       ? 'bg-slate-900 text-white dark:bg-white dark:text-black'
-                      : 'bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-850'
+                      : 'bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                     }`}
                 >
                   Hán Tự
@@ -478,7 +478,7 @@ export default function DataImporter() {
                   onClick={() => setDataType('vocabs')}
                   className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${dataType === 'vocabs'
                       ? 'bg-slate-900 text-white dark:bg-white dark:text-black'
-                      : 'bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-850'
+                      : 'bg-slate-50 dark:bg-slate-950 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
                     }`}
                 >
                   Từ Vựng
@@ -504,7 +504,7 @@ export default function DataImporter() {
                   <button
                     onClick={handleAISmartFormat}
                     disabled={!rawInput.trim()}
-                    className="w-full py-4 bg-white dark:bg-transparent border-2 border-slate-900 dark:border-slate-700 text-slate-900 dark:text-white hover:border-slate-700 dark:hover:border-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 dark:hover:bg-slate-850 transition-all disabled:opacity-30 flex items-center justify-center"
+                    className="w-full py-4 bg-white dark:bg-transparent border-2 border-slate-900 dark:border-slate-700 text-slate-900 dark:text-white hover:border-slate-700 dark:hover:border-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-900 hover:text-white dark:hover:bg-white dark:hover:text-black transition-all disabled:opacity-30 flex items-center justify-center"
                   >
                     Xử lý bằng AI
                   </button>
@@ -520,7 +520,7 @@ export default function DataImporter() {
               </div>
               <button
                 onClick={downloadTemplate}
-                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:border-indigo-300 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-sm active:scale-95 flex items-center"
+                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white hover:border-slate-900 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all shadow-sm active:scale-95 flex items-center"
               >
                 <span>Tải File Mẫu Chuẩn</span>
               </button>
@@ -542,7 +542,7 @@ export default function DataImporter() {
               <button
                 onClick={() => aiFileInputRef.current.click()}
                 disabled={isProcessingAI}
-                className="group flex flex-col items-center justify-center gap-1 p-6 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400 hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-indigo-800 dark:hover:text-indigo-300 rounded-2xl font-bold transition-all shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50"
+                className="group flex flex-col items-center justify-center gap-1 p-6 bg-slate-50/50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-900 dark:hover:border-white rounded-2xl font-bold transition-all shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50"
               >
                 <span className="text-xs uppercase tracking-widest flex items-center mt-2">File Bừa (AI Tự Xử)</span>
                 <span className="text-[9px] text-indigo-400 dark:text-indigo-500 normal-case font-normal font-sans mb-2">File lộn xộn, AI tự nắn</span>
@@ -616,7 +616,7 @@ export default function DataImporter() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-8 shadow-2xl space-y-6 transform scale-100 transition-all animate-scale-in">
             {/* Icon & Title */}
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 flex items-center justify-center text-amber-600 dark:text-amber-400">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-900 dark:text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                 </svg>
@@ -635,7 +635,7 @@ export default function DataImporter() {
               </div>
               <div className="flex justify-between text-xs font-semibold">
                 <span className="text-slate-500 dark:text-slate-400">Bản ghi trùng (đã có):</span>
-                <span className="text-slate-900 dark:text-white text-amber-600 dark:text-amber-400 font-bold">{duplicateItems.length}</span>
+                <span className="text-slate-900 dark:text-white text-slate-900 dark:text-white font-bold">{duplicateItems.length}</span>
               </div>
               
               {/* Short preview of some duplicates */}
