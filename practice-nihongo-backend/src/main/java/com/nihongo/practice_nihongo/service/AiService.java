@@ -124,7 +124,9 @@ public class AiService {
             return res;
         } catch (Exception e) {
             recordAiUsage(false);
-            throw e;
+            System.err.println("Gemini Error: " + e.getMessage());
+            String safeError = e.getMessage() != null ? e.getMessage().replace("\"", "'").replace("\n", " ") : "Unknown Error";
+            return String.format("{\"reading\": \"[Lỗi AI]\", \"meaning\": \"Server AI từ chối: %s\", \"example\": \"\", \"exampleMeaning\": \"\"}", safeError);
         }
     }
 
@@ -159,8 +161,9 @@ public class AiService {
             throw new Exception("No Gemini API keys configured");
         }
 
-        // Define models in priority order: Smartest (3 Flash) -> Reliable (1.5 Flash)
-        List<String> modelPriority = List.of("gemini-3-flash-preview", "gemini-1.5-flash");
+        // Use modern 2026 models based on the user's available quota
+        // Automatically fallback to 2.5 Flash when 3 Flash hits the 20/day limit
+        List<String> modelPriority = List.of("gemini-3-flash", "gemini-2.5-flash", "gemini-2-flash");
         
         int maxRetries = keys.size();
         Exception lastException = null;
@@ -168,26 +171,20 @@ public class AiService {
         for (int i = 0; i < maxRetries; i++) {
             String activeKey = getNextApiKey(keys);
             
-            // Try each model in priority order for the current key
             for (String model : modelPriority) {
                 try {
                     return executeGeminiCall(prompt, activeKey, model);
                 } catch (Exception e) {
-                    // Only fallback to next model/key if it's a rate limit error (429) or quota error
-                    String errorMsg = e.getMessage().toLowerCase();
-                    if (errorMsg.contains("429") || errorMsg.contains("quota") || errorMsg.contains("limit")) {
-                        System.err.println("Model " + model + " limit reached for key [index " + (keyIndex.get() % keys.size()) + "]. Falling back...");
-                        lastException = e;
-                        continue; // Try next model or next key
-                    }
-                    // For other errors, rethrow or log and continue to next key
+                    System.err.println("AI Error with model " + model + ": " + e.getMessage());
                     lastException = e;
-                    break; 
+                    // Fallback to next model or next key if possible
+                    continue; 
                 }
             }
         }
 
-        throw new Exception("All Gemini models and keys in pool exhausted. Last error: " + (lastException != null ? lastException.getMessage() : "Unknown"));
+        System.err.println("CRITICAL: All AI models and keys exhausted. Last error: " + (lastException != null ? lastException.getMessage() : "Unknown"));
+        throw new Exception("Dịch vụ AI hiện không khả dụng. Vui lòng kiểm tra API Key hoặc hạn mức. Lỗi: " + (lastException != null ? lastException.getMessage() : "Unknown"));
     }
 
     private String executeGeminiCall(String prompt, String activeKey, String model) throws Exception {

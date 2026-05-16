@@ -30,8 +30,8 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "practice-nihongo-backend/target/*.jar"
-          target: "~/pracice-nihongo/practice-nihongo-backend/"
-          strip_components: 2
+          target: "~/pracice-nihongo/"
+          # Removed strip_components to preserve the 'target' directory structure for Dockerfile
 
       - name: Copy Docker files to EC2
         uses: appleboy/scp-action@master
@@ -58,5 +58,8 @@ jobs:
             sudo docker system prune -af || true
             sudo docker builder prune -af || true
             
-            # Start the application and database with a fresh build
+            # Stop any leftover standalone Java processes from previous manual runs
+            sudo pkill -9 java || true
+            
+            # Start the application and database with a fresh Docker build
             sudo docker compose up -d --build

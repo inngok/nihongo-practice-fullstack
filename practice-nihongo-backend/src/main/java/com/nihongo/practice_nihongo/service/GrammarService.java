@@ -28,15 +28,17 @@ public class GrammarService {
 
     public Grammar updateGrammar(Long id, Grammar grammarDetails) {
         Grammar grammar = getGrammarById(id);
-        grammar.setStructure(grammarDetails.getStructure());
-        grammar.setMeaning(grammarDetails.getMeaning());
-        grammar.setExplanation(grammarDetails.getExplanation());
-        grammar.setExampleSentence(grammarDetails.getExampleSentence());
-        grammar.setExampleMeaning(grammarDetails.getExampleMeaning());
-        grammar.setLevel(grammarDetails.getLevel());
-        grammar.setBook(grammarDetails.getBook());
-        grammar.setWeek(grammarDetails.getWeek());
-        grammar.setDay(grammarDetails.getDay());
+        
+        if (grammarDetails.getStructure() != null) grammar.setStructure(grammarDetails.getStructure());
+        if (grammarDetails.getMeaning() != null) grammar.setMeaning(grammarDetails.getMeaning());
+        if (grammarDetails.getExplanation() != null) grammar.setExplanation(grammarDetails.getExplanation());
+        if (grammarDetails.getExampleSentence() != null) grammar.setExampleSentence(grammarDetails.getExampleSentence());
+        if (grammarDetails.getExampleMeaning() != null) grammar.setExampleMeaning(grammarDetails.getExampleMeaning());
+        if (grammarDetails.getLevel() != null) grammar.setLevel(grammarDetails.getLevel());
+        if (grammarDetails.getBook() != null) grammar.setBook(grammarDetails.getBook());
+        if (grammarDetails.getWeek() != null) grammar.setWeek(grammarDetails.getWeek());
+        if (grammarDetails.getDay() != null) grammar.setDay(grammarDetails.getDay());
+        
         return grammarRepository.save(grammar);
     }
 

@@ -26,15 +26,7 @@ public class VocabService {
     }
 
     public List<Vocab> getSystemVocabs() {
-        return vocabRepository.findByUserIsNull();
-    }
-
-    public List<Vocab> getPersonalVocabs(Long userId) {
-        return vocabRepository.findByUserId(userId);
-    }
-
-    public List<Vocab> getSystemAndPersonalVocabs(Long userId) {
-        return vocabRepository.findByUserIdOrUserIsNull(userId);
+        return vocabRepository.findAll();
     }
 
     public List<Vocab> getVocabsByBook(Long bookId) {
@@ -54,10 +46,6 @@ public class VocabService {
             Book book = bookRepository.findById(vocab.getBook().getId()).orElse(null);
             vocab.setBook(book);
         }
-        if (vocab.getFolder() != null && vocab.getFolder().getId() != null) {
-            com.nihongo.practice_nihongo.model.VocabFolder folder = vocabFolderRepository.findById(vocab.getFolder().getId()).orElse(null);
-            vocab.setFolder(folder);
-        }
         return vocabRepository.save(vocab);
     }
 
@@ -67,40 +55,36 @@ public class VocabService {
                 Book book = bookRepository.findById(vocab.getBook().getId()).orElse(null);
                 vocab.setBook(book);
             }
-            if (vocab.getFolder() != null && vocab.getFolder().getId() != null) {
-                com.nihongo.practice_nihongo.model.VocabFolder folder = vocabFolderRepository.findById(vocab.getFolder().getId()).orElse(null);
-                vocab.setFolder(folder);
-            }
         }
         return vocabRepository.saveAll(vocabs);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void bulkUpdateVocabs(List<Long> ids, Integer week, Integer day) {
+        List<Vocab> vocabs = vocabRepository.findAllById(ids);
+        for (Vocab vocab : vocabs) {
+            if (week != null) vocab.setWeek(week);
+            if (day != null) vocab.setDay(day);
+        }
+        vocabRepository.saveAll(vocabs);
     }
 
     public Vocab updateVocab(Long id, Vocab vocab) {
         Vocab existing = vocabRepository.findById(id).orElse(null);
         if (existing != null) {
-            existing.setWord(vocab.getWord());
-            existing.setReading(vocab.getReading());
-            existing.setMeaning(vocab.getMeaning());
-            existing.setExample(vocab.getExample());
-            existing.setExampleMeaning(vocab.getExampleMeaning());
-            existing.setWeek(vocab.getWeek());
-            existing.setDay(vocab.getDay());
+            if (vocab.getWord() != null) existing.setWord(vocab.getWord());
+            if (vocab.getReading() != null) existing.setReading(vocab.getReading());
+            if (vocab.getMeaning() != null) existing.setMeaning(vocab.getMeaning());
+            if (vocab.getExample() != null) existing.setExample(vocab.getExample());
+            if (vocab.getExampleMeaning() != null) existing.setExampleMeaning(vocab.getExampleMeaning());
+            if (vocab.getWeek() != null) existing.setWeek(vocab.getWeek());
+            if (vocab.getDay() != null) existing.setDay(vocab.getDay());
 
             if (vocab.getBook() != null && vocab.getBook().getId() != null) {
                 Book book = bookRepository.findById(vocab.getBook().getId()).orElse(null);
                 existing.setBook(book);
-            } else {
-                existing.setBook(null);
             }
 
-            if (vocab.getFolder() != null && vocab.getFolder().getId() != null) {
-                com.nihongo.practice_nihongo.model.VocabFolder folder = vocabFolderRepository.findById(vocab.getFolder().getId()).orElse(null);
-                existing.setFolder(folder);
-            } else {
-                existing.setFolder(null);
-            }
-
-            // Keep the original user associated with the personal vocabulary
             return vocabRepository.save(existing);
         }
         return null;

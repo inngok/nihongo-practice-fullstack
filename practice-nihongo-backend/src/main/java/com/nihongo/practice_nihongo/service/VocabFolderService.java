@@ -10,11 +10,11 @@ import java.util.List;
 public class VocabFolderService {
 
     private final VocabFolderRepository vocabFolderRepository;
-    private final com.nihongo.practice_nihongo.repository.VocabRepository vocabRepository;
+    private final com.nihongo.practice_nihongo.repository.PersonalVocabRepository personalVocabRepository;
 
-    public VocabFolderService(VocabFolderRepository vocabFolderRepository, com.nihongo.practice_nihongo.repository.VocabRepository vocabRepository) {
+    public VocabFolderService(VocabFolderRepository vocabFolderRepository, com.nihongo.practice_nihongo.repository.PersonalVocabRepository personalVocabRepository) {
         this.vocabFolderRepository = vocabFolderRepository;
-        this.vocabRepository = vocabRepository;
+        this.personalVocabRepository = personalVocabRepository;
     }
 
     public List<VocabFolder> getFoldersByUser(Long userId) {
@@ -50,20 +50,14 @@ public class VocabFolderService {
 
     public void deleteFolder(Long id) {
         // Find and delete subfolders first
-        List<VocabFolder> allFolders = vocabFolderRepository.findAll();
-        for (VocabFolder f : allFolders) {
-            if (f.getParent() != null && f.getParent().getId().equals(id)) {
-                deleteFolder(f.getId()); // Recursive
-            }
+        List<VocabFolder> subFolders = vocabFolderRepository.findByParentId(id);
+        for (VocabFolder f : subFolders) {
+            deleteFolder(f.getId()); // Recursive
         }
         
-        // Find and delete vocabs in this folder
-        List<com.nihongo.practice_nihongo.model.Vocab> vocabs = vocabRepository.findAll();
-        for (com.nihongo.practice_nihongo.model.Vocab v : vocabs) {
-            if (v.getFolder() != null && v.getFolder().getId().equals(id)) {
-                vocabRepository.delete(v);
-            }
-        }
+        // Find and delete personal vocabs in this folder
+        List<com.nihongo.practice_nihongo.model.PersonalVocab> vocabs = personalVocabRepository.findByFolderId(id);
+        personalVocabRepository.deleteAll(vocabs);
         
         vocabFolderRepository.deleteById(id);
     }
