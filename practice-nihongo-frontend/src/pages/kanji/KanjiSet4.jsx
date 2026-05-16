@@ -493,7 +493,7 @@ export default function KanjiSet4() {
 
                     {/* Meta Footer */}
                     <div className="w-full text-center space-y-1.5 pt-3 mt-auto border-t border-slate-50 dark:border-slate-850">
-                      <span className="inline-block font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[10px]">
+                      <span className="inline-block font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[10px]">
                         {kanji.hanviet || 'CHƯA CÓ'}
                       </span>
                       <p className="text-slate-400 text-[10px] font-medium truncate max-w-full italic px-1">
@@ -559,7 +559,7 @@ export default function KanjiSet4() {
                       <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block mb-1">
                         ÂM HÁN VIỆT
                       </span>
-                      <h3 className="text-4xl font-extrabold text-slate-950 dark:text-white uppercase tracking-wide leading-none mb-4">
+                      <h3 className="text-4xl font-bold text-slate-950 dark:text-white uppercase tracking-wide leading-none mb-4">
                         {filteredKanjis[flashcardIndex].hanviet || 'CHƯA CÓ'}
                       </h3>
                       
@@ -730,100 +730,88 @@ export default function KanjiSet4() {
           onCancel={() => setIsDetailModalOpen(false)}
           footer={null}
           closeIcon={null}
-          width={580}
+          width={480}
           centered
           className="premium-kanji-modal"
           bodyStyle={{ padding: 0 }}
         >
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-white dark:bg-slate-900">
-            <div className="h-2 w-full bg-gradient-to-r from-slate-200 to-slate-900 dark:from-slate-800 dark:to-white"></div>
+          <div className="p-10 space-y-10 bg-white dark:bg-slate-950 rounded-[2.5rem]">
+            {/* Header */}
+            <div className="flex justify-between items-start">
+              <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+                {book ? book.title : ''} {selectedKanji.page ? `• ${selectedKanji.page}` : ''}
+              </span>
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                className="text-[10px] font-black text-slate-400 hover:text-black dark:hover:text-white uppercase tracking-widest transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
 
-            <div className="p-8 md:p-10 space-y-8">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-black tracking-widest text-slate-300 dark:text-slate-700 uppercase bg-slate-50 dark:bg-slate-950 px-3 py-1 rounded-full">
-                  {book ? book.title : ''} {selectedKanji.page ? `• Trang ${selectedKanji.page}` : ''}
-                </span>
-                <button
-                  onClick={() => setIsDetailModalOpen(false)}
-                  className="text-xs font-bold text-slate-400 dark:text-slate-600 hover:text-black dark:hover:text-white uppercase tracking-widest transition-colors"
-                >
-                  Đóng
-                </button>
+            {/* Core Info */}
+            <div className="text-center space-y-4">
+              <div className="text-8xl font-black text-slate-900 dark:text-white select-none leading-none">
+                {selectedKanji.character}
               </div>
-
-              {/* Character Details */}
-              <div className="flex items-center gap-8 border-b border-slate-50 dark:border-slate-850 pb-8">
-                <div className="w-24 h-24 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-3xl flex items-center justify-center shadow-inner">
-                  <span className="text-6xl font-black text-slate-900 dark:text-white select-none">{selectedKanji.character}</span>
-                </div>
-
-                <div className="space-y-1.5 flex-1">
-                  <span className="text-xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block">HÁN VIỆT</span>
-                  <h3 className="text-3xl font-black text-slate-950 dark:text-white uppercase tracking-wider leading-none">
-                    {selectedKanji.hanviet || 'CHƯA CÓ'}
-                  </h3>
-                  <p className="text-base text-slate-500 dark:text-slate-400 font-medium italic mt-1 leading-normal">
-                    {selectedKanji.meaning || 'Nghĩa chưa được cập nhật'}
-                  </p>
-                </div>
+              <div>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-widest">
+                  {selectedKanji.hanviet || 'CHƯA CÓ'}
+                </h3>
+                <p className="text-sm text-slate-500 font-medium italic mt-2">
+                  {selectedKanji.meaning || 'Nghĩa chưa được cập nhật'}
+                </p>
               </div>
+            </div>
 
-              {/* Readings Block */}
-              <div className="grid grid-cols-2 gap-6 bg-slate-50/50 dark:bg-slate-950/50 p-6 rounded-3xl border border-slate-150 dark:border-slate-800 text-left">
-                <div className="space-y-1">
-                  <span className="text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest block">Âm On (Onyomi)</span>
-                  <p className="text-base font-bold text-slate-900 dark:text-slate-200">{selectedKanji.onyomi || '—'}</p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest block">Âm Kun (Kunyomi)</span>
-                  <p className="text-base font-bold text-slate-700 dark:text-slate-300">{selectedKanji.kunyomi || '—'}</p>
-                </div>
+            {/* Readings */}
+            <div className="flex justify-center gap-16 border-y border-slate-100 dark:border-slate-800 py-6">
+              <div className="text-center">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">ON</span>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">{selectedKanji.onyomi || '—'}</p>
               </div>
+              <div className="text-center">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">KUN</span>
+                <p className="text-lg font-bold text-slate-900 dark:text-white">{selectedKanji.kunyomi || '—'}</p>
+              </div>
+            </div>
 
-              {/* Examples Block */}
-              <div className="space-y-3 text-left">
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Ví dụ minh họa & Từ vựng ghép</span>
-                
-                {selectedKanji.examples ? (
-                  <div className="bg-white dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 max-h-[160px] overflow-y-auto space-y-3 scrollbar-thin">
-                    {selectedKanji.examples.split('\n').filter(line => line.trim() !== '').map((line, idx) => (
-                      <div key={idx} className="flex gap-3 items-start text-sm">
-                        <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-600 rounded-full mt-2 flex-shrink-0"></span>
-                        <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed">{line}</p>
-                      </div>
-                    ))}
-                  </div>
+            {/* Examples */}
+            <div className="text-center">
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Ví dụ</span>
+              {selectedKanji.examples ? (
+                <div className="space-y-2 max-h-[160px] overflow-y-auto custom-scrollbar">
+                  {selectedKanji.examples.split('\n').filter(line => line.trim() !== '').map((line, idx) => (
+                    <p key={idx} className="text-sm text-slate-600 dark:text-slate-400 font-medium">{line}</p>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-slate-400 text-xs italic">Chưa có ví dụ mẫu.</p>
+              )}
+            </div>
+
+            {/* Action */}
+            <div className="pt-2">
+              <button
+                onClick={() => handleAddFlashcard(selectedKanji)}
+                className={`w-full py-4 rounded-full font-bold text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                  addedKanjiIds.has(selectedKanji.id)
+                    ? 'bg-slate-100 dark:bg-slate-900 text-slate-400 cursor-default'
+                    : 'bg-black dark:bg-white text-white dark:text-black hover:opacity-80'
+                }`}
+              >
+                {addedKanjiIds.has(selectedKanji.id) ? (
+                  <>
+                    <HeartFilled className="text-slate-400" />
+                    Đã lưu sổ tay
+                  </>
                 ) : (
-                  <div className="text-center py-6 border border-dashed border-slate-100 bg-slate-50/20 rounded-3xl">
-                    <p className="text-slate-400 text-xs italic">Chưa có ví dụ mẫu.</p>
-                  </div>
+                  <>
+                    <HeartOutlined />
+                    Lưu sổ tay
+                  </>
                 )}
-              </div>
-
-              {/* Bookmark Save Action Button inside modal */}
-              <div className="pt-2">
-                <button
-                  onClick={() => handleAddFlashcard(selectedKanji)}
-                  className={`w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center justify-center gap-2 ${
-                    addedKanjiIds.has(selectedKanji.id)
-                      ? 'bg-rose-50 dark:bg-rose-950 text-rose-500 dark:text-rose-400 border border-rose-100 dark:border-rose-900 shadow-rose-500/5 cursor-default'
-                      : 'bg-black dark:bg-white text-white dark:text-black hover:opacity-80 shadow-black/10'
-                  }`}
-                >
-                  {addedKanjiIds.has(selectedKanji.id) ? (
-                    <>
-                      <HeartFilled className="text-rose-500 text-xs" />
-                      Đã lưu trong Sổ tay ôn tập ❤️
-                    </>
-                  ) : (
-                    <>
-                      <HeartOutlined className="text-rose-400 text-xs" />
-                      Lưu vào Sổ tay ôn tập ❤️
-                    </>
-                  )}
-                </button>
-              </div>
-
+              </button>
             </div>
           </div>
         </Modal>

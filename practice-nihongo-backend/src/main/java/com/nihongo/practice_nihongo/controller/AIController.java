@@ -37,6 +37,26 @@ public class AIController {
         }
     }
 
+    @GetMapping("/generate-grammar")
+    public ResponseEntity<String> generateGrammar(@RequestParam String structure) {
+        try {
+            String result = aiService.generateGrammarDetails(structure);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/generate-kanji")
+    public ResponseEntity<String> generateKanji(@RequestParam String character) {
+        try {
+            String result = aiService.generateKanjiDetails(character);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
     @PostMapping("/chat")
     public ResponseEntity<String> chat(@RequestBody Map<String, Object> request) {
         try {

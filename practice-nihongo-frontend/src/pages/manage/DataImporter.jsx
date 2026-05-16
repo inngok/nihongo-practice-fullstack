@@ -12,6 +12,7 @@ export default function DataImporter() {
   const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [books, setBooks] = useState([]);
   const [selectedBook, setSelectedBook] = useState(null);
+  const [selectedWeek, setSelectedWeek] = useState(null);
   const { fetchWithAuth } = useAuth();
   const [messageApi, contextHolder] = message.useMessage();
   const fileInputRef = React.useRef(null);
@@ -204,10 +205,11 @@ export default function DataImporter() {
       return messageApi.error('Không tìm thấy bản ghi hợp lệ nào chứa Chữ Hán hoặc Từ Vựng!');
     }
 
-    // Inject selected book into each item
+    // Inject selected book and week into each item
     const finalData = validData.map(item => ({
       ...item,
-      book: { id: selectedBook }
+      book: { id: selectedBook },
+      ...(selectedWeek ? { week: parseInt(selectedWeek) } : {})
     }));
 
     setIsLoading(true);
@@ -581,23 +583,37 @@ export default function DataImporter() {
             ></textarea>
 
             <div className="mt-8 space-y-4">
-              <Select
-                showSearch
-                placeholder="Chọn giáo trình..."
-                className="w-full h-12"
-                onChange={setSelectedBook}
-                onFocus={fetchBooks}
-                value={selectedBook}
-                options={books
-                  .filter(book => {
-                    if (!book.type) return false;
-                    return dataType === 'kanjis' ? book.type.includes('KANJI') : book.type.includes('VOCABULARY');
-                  })
-                  .map(book => ({ value: book.id, label: book.title }))}
-                filterOption={(input, option) =>
-                  (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                }
-              />
+              <div className="grid grid-cols-3 gap-4">
+                <div className="col-span-2">
+                  <Select
+                    showSearch
+                    placeholder="Chọn giáo trình..."
+                    className="w-full h-12"
+                    onChange={setSelectedBook}
+                    onFocus={fetchBooks}
+                    value={selectedBook}
+                    options={books
+                      .filter(book => {
+                        if (!book.type) return false;
+                        return dataType === 'kanjis' ? book.type.includes('KANJI') : book.type.includes('VOCABULARY');
+                      })
+                      .map(book => ({ value: book.id, label: book.title }))}
+                    filterOption={(input, option) =>
+                      (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                  />
+                </div>
+                <div className="col-span-1">
+                  <Select
+                    placeholder="Bài học (Tùy chọn)"
+                    className="w-full h-12"
+                    onChange={setSelectedWeek}
+                    value={selectedWeek}
+                    allowClear
+                    options={Array.from({length: 50}, (_, i) => ({ value: i + 1, label: `Bài ${i + 1}` }))}
+                  />
+                </div>
+              </div>
 
               <button
                 onClick={handleImport}

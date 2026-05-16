@@ -290,6 +290,35 @@ export default function KanjiManager() {
     });
   };
 
+  const handleAiAutoFill = async () => {
+    if (!formData.character.trim()) return messageApi.warning('Vui lòng nhập Hán tự trước!');
+    
+    setIsAiProcessing(true);
+    const hide = messageApi.loading('AI đang phân tích Hán tự...', 0);
+    
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/ai/generate-kanji?character=${encodeURIComponent(formData.character)}`);
+      if (!response.ok) throw new Error('API Error');
+      const data = await response.json();
+      
+      setFormData(prev => ({
+        ...prev,
+        hanviet: data.hanviet || prev.hanviet,
+        meaning: data.meaning || prev.meaning,
+        onyomi: data.onyomi || prev.onyomi,
+        kunyomi: data.kunyomi || prev.kunyomi
+      }));
+      
+      messageApi.success('AI đã điền xong!');
+    } catch (err) {
+      console.error(err);
+      messageApi.error('Lỗi khi gọi AI: ' + err.message);
+    } finally {
+      hide();
+      setIsAiProcessing(false);
+    }
+  };
+
   const handleBulkAiProcess = async () => {
     if (!bulkInput.trim()) return messageApi.warning('Vui lòng dán nội dung cần xử lý');
     if (!selectedBookId) return messageApi.warning('Vui lòng chọn giáo trình trước khi nhập hàng loạt');
@@ -390,7 +419,7 @@ export default function KanjiManager() {
             {filteredKanjis.length > 0 && (
               <button
                 onClick={handleDeleteAll}
-                className="bg-red-50 hover:bg-red-100 text-red-600 px-5 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2"
+                className="px-5 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-rose-600 dark:hover:text-rose-400 transition-all shadow-sm flex items-center gap-2"
               >
                 <DeleteOutlined className="text-[10px]" />
                 {selectedBookId ? 'Xóa sách' : 'Xóa hết'}
@@ -504,7 +533,7 @@ export default function KanjiManager() {
                       </span>
                     </td>
                     <td className="px-6 py-5 text-right">
-                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-1 transition-opacity">
                         <button 
                           onClick={() => openEditModal(item)} 
                           className="p-2 text-slate-400 hover:text-black dark:hover:text-white transition-colors"
@@ -602,6 +631,7 @@ export default function KanjiManager() {
               <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Chuyển sang bài số</label>
               <input 
                 type="number"
+                min="1"
                 value={bulkUpdateData.week}
                 onChange={(e) => setBulkUpdateData(prev => ({ ...prev, week: e.target.value }))}
                 placeholder="VD: 1, 2..."
@@ -612,6 +642,7 @@ export default function KanjiManager() {
               <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Cập nhật trang số</label>
               <input 
                 type="number"
+                min="1"
                 value={bulkUpdateData.page}
                 onChange={(e) => setBulkUpdateData(prev => ({ ...prev, page: e.target.value }))}
                 placeholder="VD: 120, 121..."
@@ -656,7 +687,7 @@ export default function KanjiManager() {
                    <div className="space-y-2">
                      <div className="flex justify-between items-center px-1">
                        <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">Hán tự</label>
-                       <button type="button" onClick={() => setModalTab('bulk')} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-black dark:text-white text-[9px] font-black rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter flex items-center gap-1">
+                       <button type="button" onClick={handleAiAutoFill} disabled={isAiProcessing} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-black dark:text-white text-[9px] font-black rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter flex items-center gap-1 disabled:opacity-50">
                          <ThunderboltOutlined className="text-[10px]" /> AI ĐIỀN
                        </button>
                      </div>

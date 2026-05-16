@@ -130,6 +130,64 @@ public class AiService {
         }
     }
 
+    public String generateGrammarDetails(String structure) throws Exception {
+        try {
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
+                recordAiUsage(true);
+                return "{\"meaning\": \"[Không có API Key]\", \"explanation\": \"\", \"exampleSentence\": \"\", \"exampleMeaning\": \"\"}";
+            }
+            String prompt = "You are a professional Japanese teacher. For the Japanese grammar structure provided, " +
+                    "generate its Vietnamese meaning, a brief explanation of how to use it in Vietnamese, a natural Japanese example sentence, and the Vietnamese translation of that example sentence. " +
+                    "Return the response strictly as a JSON object with the following keys:\n" +
+                    "{\n" +
+                    "  \"meaning\": \"(Vietnamese meaning)\",\n" +
+                    "  \"explanation\": \"(Vietnamese explanation of usage)\",\n" +
+                    "  \"exampleSentence\": \"(natural Japanese example sentence)\",\n" +
+                    "  \"exampleMeaning\": \"(Vietnamese translation of the example sentence)\"\n" +
+                    "}\n" +
+                    "Do not include any formatting, markdown, or other text except the clean JSON object.\n" +
+                    "Structure: " + structure;
+            String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res;
+        } catch (Exception e) {
+            recordAiUsage(false);
+            System.err.println("Gemini Error: " + e.getMessage());
+            String safeError = e.getMessage() != null ? e.getMessage().replace("\"", "'").replace("\n", " ") : "Unknown Error";
+            return String.format("{\"meaning\": \"[Lỗi AI]\", \"explanation\": \"Server AI từ chối: %s\", \"exampleSentence\": \"\", \"exampleMeaning\": \"\"}", safeError);
+        }
+    }
+
+    public String generateKanjiDetails(String character) throws Exception {
+        try {
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
+                recordAiUsage(true);
+                return "{\"hanviet\": \"[Không có API Key]\", \"meaning\": \"\", \"onyomi\": \"\", \"kunyomi\": \"\"}";
+            }
+            String prompt = "You are a professional Japanese Kanji dictionary. For the provided Japanese Kanji character, " +
+                    "generate its Sino-Vietnamese reading (Âm Hán Việt), Vietnamese meaning, Onyomi (in Katakana), and Kunyomi (in Hiragana). " +
+                    "Return the response strictly as a JSON object with the following keys:\n" +
+                    "{\n" +
+                    "  \"hanviet\": \"(Sino-Vietnamese reading)\",\n" +
+                    "  \"meaning\": \"(Vietnamese meaning)\",\n" +
+                    "  \"onyomi\": \"(Onyomi in Katakana)\",\n" +
+                    "  \"kunyomi\": \"(Kunyomi in Hiragana)\"\n" +
+                    "}\n" +
+                    "Do not include any formatting, markdown, or other text except the clean JSON object.\n" +
+                    "Kanji: " + character;
+            String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res;
+        } catch (Exception e) {
+            recordAiUsage(false);
+            System.err.println("Gemini Error: " + e.getMessage());
+            String safeError = e.getMessage() != null ? e.getMessage().replace("\"", "'").replace("\n", " ") : "Unknown Error";
+            return String.format("{\"hanviet\": \"[Lỗi AI]\", \"meaning\": \"Server AI từ chối: %s\", \"onyomi\": \"\", \"kunyomi\": \"\"}", safeError);
+        }
+    }
+
     private String buildPrompt(String rawData, String type) {
         String schema;
         String typeUpper = type != null ? type.toUpperCase() : "";
