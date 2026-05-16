@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Dropdown, Space } from 'antd';
-import { DownOutlined, SettingOutlined, UserOutlined, ImportOutlined, DatabaseOutlined, PieChartOutlined } from '@ant-design/icons';
+import { DownOutlined, SettingOutlined, UserOutlined, ImportOutlined, DatabaseOutlined, PieChartOutlined, FontSizeOutlined } from '@ant-design/icons';
 
 export default function Header() {
   const pathname = useLocation().pathname;
@@ -26,10 +26,11 @@ export default function Header() {
                   { key: 'dashboard', label: <Link to="/manage" className="font-bold text-slate-600">Tổng quan</Link>, icon: <PieChartOutlined /> },
                   { key: '1', label: <Link to="/grammar/manage" className="font-bold text-slate-600">Ngữ pháp</Link>, icon: <SettingOutlined /> },
                   { key: 'vocab', label: <Link to="/vocabulary/manage" className="font-bold text-slate-600">Từ vựng</Link>, icon: <DatabaseOutlined /> },
-                  { key: '2', label: <Link to="/manage/users" className="font-bold text-slate-600">Người dùng</Link>, icon: <UserOutlined /> },
+                  { key: 'kanji', label: <Link to="/kanji/manage" className="font-bold text-slate-600">Hán tự</Link>, icon: <FontSizeOutlined /> },
                   { key: 'divider', type: 'divider' },
                   { key: '3', label: <Link to="/manage/import" className="font-bold text-slate-600">Import dữ liệu</Link>, icon: <ImportOutlined /> },
                   { key: '4', label: <Link to="/grammar/books" className="font-bold text-slate-600">Bộ sách</Link>, icon: <DatabaseOutlined /> },
+                  { key: 'ai', label: <Link to="/manage/ai" className="font-bold text-slate-600">Quản lý AI</Link>, icon: <PieChartOutlined /> },
                 ],
                 className: "p-2 rounded-2xl shadow-2xl border border-slate-50"
               }}

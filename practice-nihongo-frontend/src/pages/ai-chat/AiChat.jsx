@@ -208,8 +208,11 @@ export default function AiChat() {
               <span className="text-[10px] font-black tracking-[0.25em] text-slate-300 uppercase mb-2 block">
                 <ThunderboltOutlined className="mr-1" /> LUYỆN PHẢN XẠ THỜI GIAN THỰC
               </span>
-              <h1 className="text-4xl md:text-5xl font-extrabold text-slate-950 tracking-tight leading-none">
+              <h1 className="text-4xl md:text-5xl font-extrabold text-slate-950 tracking-tight leading-none flex flex-wrap items-center gap-4">
                 Đàm thoại Giao tiếp AI
+                <span className="px-3 py-1 bg-red-50 text-red-500 border border-red-100 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse">
+                  Chưa hoàn thiện
+                </span>
               </h1>
             </div>
             <p className="text-xs text-slate-400 font-medium max-w-sm md:text-right">

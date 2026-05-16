@@ -8,11 +8,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/ai")
 @CrossOrigin(origins = "*")
-public class AiController {
-
+public class AIController {
     private final AiService aiService;
 
-    public AiController(AiService aiService) {
+    public AIController(AiService aiService) {
         this.aiService = aiService;
     }
 
@@ -49,5 +48,10 @@ public class AiController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Object>> getStats() {
+        return ResponseEntity.ok(aiService.getAiUsageStats());
     }
 }

@@ -36,12 +36,28 @@ CREATE TABLE kanjis (
     level VARCHAR(10)
 );
 
--- Tạo bảng Vocabulary
-CREATE TABLE vocabularies (
+-- Tạo bảng Vocabulary (Chỉ dành cho Hệ thống/Giáo trình)
+CREATE TABLE vocabs (
     id SERIAL PRIMARY KEY,
     word VARCHAR(255) NOT NULL,
     reading VARCHAR(255),
     meaning VARCHAR(255),
-    example_sentence TEXT,
-    example_meaning TEXT
+    example TEXT,
+    example_meaning TEXT,
+    week INTEGER,
+    day INTEGER,
+    book_id INTEGER REFERENCES books(id) ON DELETE SET NULL
+);
+
+-- Tạo bảng Personal Vocabulary (Sổ tay cá nhân của từng User)
+CREATE TABLE personal_vocabs (
+    id SERIAL PRIMARY KEY,
+    word VARCHAR(255) NOT NULL,
+    reading VARCHAR(255),
+    meaning TEXT,
+    example TEXT,
+    example_meaning TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    folder_id INTEGER REFERENCES vocab_folders(id) ON DELETE SET NULL
 );

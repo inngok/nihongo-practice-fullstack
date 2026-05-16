@@ -16,7 +16,9 @@ const Register = lazy(() => import("../pages/auth/Register"));
 // Grammar
 const Grammar = lazy(() => import("../pages/grammar/Grammar"));
 const ConfusingGrammar = lazy(() => import("../pages/grammar/ConfusingGrammar"));
-const StudyPage = lazy(() => import("../pages/grammar/StudyPage"));
+const GrammarStudy = lazy(() => import("../pages/grammar/StudyPage"));
+const VocabStudy = lazy(() => import("../pages/vocabulary/VocabStudy"));
+const KanjiStudy = lazy(() => import("../pages/kanji/KanjiStudy"));
 
 // Vocabulary
 const Vocabulary = lazy(() => import("../pages/vocabulary/Vocabulary"));
@@ -28,7 +30,6 @@ const KanjiSet4 = lazy(() => import("../pages/kanji/KanjiSet4"));
 
 // Flashcards
 const Flashcards = lazy(() => import("../pages/flashcard/Flashcards"));
-
 
 // Exams & Specialized
 const ExamJLPT = lazy(() => import("../pages/exam/jlpt/ExamJLPT"));
@@ -51,14 +52,29 @@ const VocabManager = lazy(() => import("../pages/manage/VocabManager"));
 const KanjiManager = lazy(() => import("../pages/manage/KanjiManager"));
 const DataImporter = lazy(() => import("../pages/manage/DataImporter"));
 const UserManager = lazy(() => import("../pages/manage/UserManager"));
+const AiManager = lazy(() => import("../pages/manage/AiManager"));
 
 // --- Layout & Route Wrappers ---
 
-const StudyPageWrapper = () => {
+const GrammarStudyWrapper = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const bookId = searchParams.get('bookId') || '';
-  return <StudyPage key={`${location.pathname}-${bookId}`} />;
+  return <GrammarStudy key={`grammar-${bookId}`} />;
+};
+
+const VocabStudyWrapper = () => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const bookId = searchParams.get('bookId') || '';
+  return <VocabStudy key={`vocab-${bookId}`} />;
+};
+
+const KanjiStudyWrapper = () => {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const bookId = searchParams.get('bookId') || '';
+  return <KanjiStudy key={`kanji-${bookId}`} />;
 };
 
 const PageLoader = () => (
@@ -140,20 +156,21 @@ export default function RouteMap() {
         {/* Grammar Section */}
         <Route path="grammar">
           <Route index element={<Grammar />} />
-          <Route path="study" element={<StudyPageWrapper />} />
+          <Route path="study" element={<GrammarStudyWrapper />} />
           <Route path="confusing" element={<ConfusingGrammar />} />
         </Route>
 
         {/* Vocabulary Section */}
         <Route path="vocabulary">
           <Route index element={<Vocabulary />} />
-          <Route path="study" element={<StudyPageWrapper />} />
+          <Route path="study" element={<VocabStudyWrapper />} />
         </Route>
         <Route path="my-vocab" element={<PersonalVocab />} />
 
         {/* Kanji Section */}
         <Route path="kanji">
           <Route index element={<Kanji />} />
+          <Route path="study" element={<KanjiStudyWrapper />} />
           <Route path="set-4" element={<KanjiSet4 />} />
         </Route>
 
@@ -193,6 +210,7 @@ export default function RouteMap() {
           <Route path="books" element={<BookManager />} />
           <Route path="vocabulary" element={<VocabManager />} />
           <Route path="kanji" element={<KanjiManager />} />
+          <Route path="ai" element={<AiManager />} />
         </Route>
       </Route>
 

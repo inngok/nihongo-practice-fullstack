@@ -23,8 +23,8 @@ export default function AdminSidebar() {
     { path: '/vocabulary/manage', label: 'Từ vựng' },
     { path: '/kanji/manage', label: 'Hán tự' },
     { path: '/grammar/books', label: 'Bộ sách' },
-    { path: '/manage/users', label: 'Người dùng' },
     { path: '/manage/import', label: 'Import dữ liệu' },
+    { path: '/manage/ai', label: 'Quản lý AI' },
   ];
 
   return (

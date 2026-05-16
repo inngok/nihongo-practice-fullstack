@@ -78,13 +78,27 @@ public class KanjiService {
     }
 
     public Kanji updateKanji(Long id, Kanji kanji) {
-        if (kanjiRepository.existsById(id)) {
-            kanji.setId(id);
+        Optional<Kanji> existingOpt = kanjiRepository.findById(id);
+        if (existingOpt.isPresent()) {
+            Kanji existing = existingOpt.get();
+            
+            // Only update fields that are provided
+            if (kanji.getCharacter() != null) existing.setCharacter(kanji.getCharacter());
+            if (kanji.getHanviet() != null) existing.setHanviet(kanji.getHanviet());
+            if (kanji.getKunyomi() != null) existing.setKunyomi(kanji.getKunyomi());
+            if (kanji.getOnyomi() != null) existing.setOnyomi(kanji.getOnyomi());
+            if (kanji.getMeaning() != null) existing.setMeaning(kanji.getMeaning());
+            if (kanji.getExamples() != null) existing.setExamples(kanji.getExamples());
+            if (kanji.getWeek() != null) existing.setWeek(kanji.getWeek());
+            if (kanji.getDay() != null) existing.setDay(kanji.getDay());
+            if (kanji.getPage() != null) existing.setPage(kanji.getPage());
+            
             if (kanji.getBook() != null && kanji.getBook().getId() != null) {
                 Book book = bookRepository.findById(kanji.getBook().getId()).orElse(null);
-                kanji.setBook(book);
+                existing.setBook(book);
             }
-            return kanjiRepository.save(kanji);
+            
+            return kanjiRepository.save(existing);
         }
         return null;
     }

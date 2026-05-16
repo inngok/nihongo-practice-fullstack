@@ -25,22 +25,14 @@ public class Vocab {
     private Integer week;
     private Integer day;
 
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "book_id")
     private Book book;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    @com.fasterxml.jackson.annotation.JsonIgnore
-    private User user;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "folder_id")
-    private VocabFolder folder;
-
     public Vocab() {}
 
-    public Vocab(Long id, String word, String reading, String meaning, String example, String exampleMeaning, Integer week, Integer day, Book book, User user, VocabFolder folder) {
+    public Vocab(Long id, String word, String reading, String meaning, String example, String exampleMeaning, Integer week, Integer day, Book book) {
         this.id = id;
         this.word = word;
         this.reading = reading;
@@ -50,8 +42,6 @@ public class Vocab {
         this.week = week;
         this.day = day;
         this.book = book;
-        this.user = user;
-        this.folder = folder;
     }
 
     // Manual Getters and Setters
@@ -73,10 +63,6 @@ public class Vocab {
     public void setDay(Integer day) { this.day = day; }
     public Book getBook() { return book; }
     public void setBook(Book book) { this.book = book; }
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
-    public VocabFolder getFolder() { return folder; }
-    public void setFolder(VocabFolder folder) { this.folder = folder; }
 
     public static class VocabBuilder {
         private Long id;
@@ -88,8 +74,6 @@ public class Vocab {
         private Integer week;
         private Integer day;
         private Book book;
-        private User user;
-        private VocabFolder folder;
 
         public VocabBuilder id(Long id) { this.id = id; return this; }
         public VocabBuilder word(String word) { this.word = word; return this; }
@@ -100,11 +84,9 @@ public class Vocab {
         public VocabBuilder week(Integer week) { this.week = week; return this; }
         public VocabBuilder day(Integer day) { this.day = day; return this; }
         public VocabBuilder book(Book book) { this.book = book; return this; }
-        public VocabBuilder user(User user) { this.user = user; return this; }
-        public VocabBuilder folder(VocabFolder folder) { this.folder = folder; return this; }
 
         public Vocab build() {
-            return new Vocab(id, word, reading, meaning, example, exampleMeaning, week, day, book, user, folder);
+            return new Vocab(id, word, reading, meaning, example, exampleMeaning, week, day, book);
         }
     }
 

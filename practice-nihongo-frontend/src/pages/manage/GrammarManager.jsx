@@ -26,6 +26,9 @@ export default function GrammarManager() {
 
   // Filter State
   const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
+  const [bulkUpdateData, setBulkUpdateData] = useState({ week: '', day: '', bookId: '' });
   
   // Form State
   const [formData, setFormData] = useState({
@@ -116,6 +119,59 @@ export default function GrammarManager() {
       setLoading(false);
     }
   };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(filteredGrammars.map(g => g.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectItem = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = () => {
+    Modal.confirm({
+      title: 'Xác nhận xóa hàng loạt',
+      content: `Bạn có chắc chắn muốn xóa ${selectedIds.length} cấu trúc ngữ pháp đã chọn?`,
+      okText: 'Xóa hàng loạt',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await Promise.all(selectedIds.map(id => grammarService.delete(id)));
+          message.success(`Đã xóa ${selectedIds.length} cấu trúc`);
+          setSelectedIds([]);
+          fetchData();
+        } catch (err) {
+          message.error('Có lỗi xảy ra khi xóa hàng loạt');
+        }
+      }
+    });
+  };
+
+  const handleBulkUpdate = async () => {
+    try {
+      await Promise.all(selectedIds.map(id => 
+        grammarService.update(id, { 
+          week: bulkUpdateData.week || undefined,
+          day: bulkUpdateData.day || undefined,
+          book: bulkUpdateData.bookId ? { id: parseInt(bulkUpdateData.bookId) } : undefined
+        })
+      ));
+      message.success('Đã cập nhật hàng loạt thành công');
+      setIsBulkUpdateOpen(false);
+      setSelectedIds([]);
+      fetchData();
+    } catch (err) {
+      message.error('Lỗi khi cập nhật hàng loạt');
+    }
+  };
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -365,6 +421,14 @@ export default function GrammarManager() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+                  <th className="px-6 py-4 w-10">
+                    <input 
+                      type="checkbox" 
+                      onChange={handleSelectAll}
+                      checked={selectedIds.length === filteredGrammars.length && filteredGrammars.length > 0}
+                      className="w-4 h-4 rounded border-slate-200 dark:border-slate-800 text-black dark:text-white focus:ring-0 cursor-pointer"
+                    />
+                  </th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Cấu trúc</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Ý nghĩa</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Level</th>
@@ -375,7 +439,15 @@ export default function GrammarManager() {
               <tbody className="divide-y divide-slate-50 dark:divide-slate-850">
                 {filteredGrammars.length > 0 ? (
                   filteredGrammars.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors group">
+                    <tr key={item.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors group ${selectedIds.includes(item.id) ? 'bg-slate-50/80 dark:bg-slate-850/50' : ''}`}>
+                      <td className="px-6 py-5">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedIds.includes(item.id)}
+                          onChange={() => handleSelectItem(item.id)}
+                          className="w-4 h-4 rounded border-slate-200 dark:border-slate-800 text-black dark:text-white focus:ring-0 cursor-pointer"
+                        />
+                      </td>
                       <td className="px-6 py-5 font-bold text-slate-900 dark:text-white">{item.structure}</td>
                       <td className="px-6 py-5 text-slate-500 dark:text-slate-400 text-[13px] italic">{item.meaning}</td>
                       <td className="px-6 py-5">
@@ -418,6 +490,97 @@ export default function GrammarManager() {
           </div>
         )}
       </div>
+
+      {/* Floating Bulk Actions Bar */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[500] animate-in slide-in-from-bottom-10 duration-300">
+          <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white px-8 py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex items-center gap-10 border border-slate-100 dark:border-slate-800 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-medium uppercase tracking-widest text-slate-400">Đã chọn</span>
+              <span className="text-lg font-medium">{selectedIds.length}</span>
+            </div>
+            
+            <div className="h-6 w-px bg-slate-100 dark:bg-slate-800" />
+            
+            <div className="flex items-center gap-6">
+              <button 
+                onClick={() => setIsBulkUpdateOpen(true)}
+                className="text-[10px] font-semibold uppercase tracking-widest hover:text-black dark:hover:text-white transition-colors flex items-center gap-2 text-slate-500"
+              >
+                <EditOutlined className="text-xs" /> Cập nhật nhanh
+              </button>
+              <button 
+                onClick={handleBulkDelete}
+                className="text-[10px] font-semibold uppercase tracking-widest text-red-500/80 hover:text-red-500 transition-colors flex items-center gap-2"
+              >
+                <DeleteOutlined className="text-xs" /> Xóa hàng loạt
+              </button>
+              <button 
+                onClick={() => setSelectedIds([])}
+                className="text-[10px] font-medium uppercase tracking-widest text-slate-300 hover:text-slate-500 transition-colors"
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Update Modal */}
+      <Modal
+        title={<span className="text-[11px] font-semibold uppercase tracking-widest text-slate-900 dark:text-white">CẬP NHẬT HÀNG LOẠT ({selectedIds.length})</span>}
+        open={isBulkUpdateOpen}
+        onCancel={() => setIsBulkUpdateOpen(false)}
+        onOk={handleBulkUpdate}
+        okText="CẬP NHẬT"
+        cancelText="HỦY"
+        centered
+        className="custom-modal"
+        okButtonProps={{ className: 'bg-black dark:bg-white text-white dark:text-black font-semibold text-[10px] rounded-lg' }}
+        cancelButtonProps={{ className: 'font-semibold text-[10px] rounded-lg' }}
+      >
+        <div className="py-6 space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Thay đổi giáo trình</label>
+            <select 
+              value={bulkUpdateData.bookId} 
+              onChange={(e) => setBulkUpdateData(prev => ({ ...prev, bookId: e.target.value }))}
+              className="w-full px-1 py-2 bg-transparent border-b border-slate-100 dark:border-slate-800 outline-none focus:border-black dark:focus:border-white transition-all text-sm font-medium"
+            >
+              <option value="">-- Giữ nguyên --</option>
+              {books.map(b => (
+                <option key={b.id} value={b.id}>{b.title}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Tuần</label>
+                <input 
+                  type="number"
+                  value={bulkUpdateData.week}
+                  onChange={(e) => setBulkUpdateData(prev => ({ ...prev, week: e.target.value }))}
+                  placeholder="VD: 1, 2..."
+                  className="w-full px-1 py-2 bg-transparent border-b border-slate-100 dark:border-slate-800 outline-none focus:border-black dark:focus:border-white transition-all text-sm font-medium"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Ngày</label>
+                <input 
+                  type="number"
+                  value={bulkUpdateData.day}
+                  onChange={(e) => setBulkUpdateData(prev => ({ ...prev, day: e.target.value }))}
+                  placeholder="VD: 1, 2..."
+                  className="w-full px-1 py-2 bg-transparent border-b border-slate-100 dark:border-slate-800 outline-none focus:border-black dark:focus:border-white transition-all text-sm font-medium"
+                />
+              </div>
+            </div>
+          </div>
+          <p className="text-[9px] text-slate-300 italic">* Bỏ trống nếu không muốn thay đổi trường đó</p>
+        </div>
+      </Modal>
 
       {/* Unified Add/Bulk Modal */}
       {isModalOpen && (

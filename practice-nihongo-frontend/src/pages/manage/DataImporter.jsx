@@ -182,6 +182,11 @@ export default function DataImporter() {
       } else if (item.trangso && !item.page) {
         normalized.page = parseInt(item.trangso);
       }
+
+      // Map 'lesson' or 'bài' to 'week' for DB storage
+      if ((item.lesson || item.bai || item.bài || item.lesson_number) && !item.week) {
+        normalized.week = parseInt(item.lesson || item.bai || item.bài || item.lesson_number);
+      }
       
       return normalized;
     });
@@ -286,13 +291,13 @@ export default function DataImporter() {
     let headers = '';
     let filename = '';
     if (dataType === 'kanjis') {
-      headers = 'character,kunyomi,onyomi,hanviet,meaning,examples,week,day\n';
-      headers += '一,ひと.つ,イチ,NHẤT,một,"一人 (ひとり): một người\\n一日 (ついたch): ngày mùng một",1,1\n';
-      filename = 'kanji_template_standard.csv';
+      headers = 'character,kunyomi,onyomi,hanviet,meaning,examples,lesson\n';
+      headers += '一,ひと.つ,イチ,NHẤT,một,"一人 (ひとり): một người\\n一日 (ついたch): ngày mùng một",1\n';
+      filename = 'kanji_template_lesson.csv';
     } else {
-      headers = 'word,reading,meaning,example,exampleMeaning,week,day\n';
-      headers += '食べる,たべる,Ăn,ご飯を食べる,Ăn cơm,1,1\n';
-      filename = 'vocab_template_standard.csv';
+      headers = 'word,reading,meaning,example,exampleMeaning,lesson\n';
+      headers += '食べる,たべる,Ăn,ご飯を食べる,Ăn cơm,1\n';
+      filename = 'vocab_template_lesson.csv';
     }
 
     // Add UTF-8 Byte Order Mark (BOM) so Excel can read Vietnamese & Japanese characters perfectly

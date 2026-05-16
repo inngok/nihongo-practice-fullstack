@@ -10,4 +10,5 @@ import java.util.List;
 public interface VocabFolderRepository extends JpaRepository<VocabFolder, Long> {
     List<VocabFolder> findByUserId(Long userId);
     List<VocabFolder> findByUserIdAndParentIsNull(Long userId);
+    List<VocabFolder> findByParentId(Long parentId);
 }

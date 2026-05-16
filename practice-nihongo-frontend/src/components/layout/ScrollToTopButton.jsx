@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronUp } from 'lucide-react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 export default function ScrollToTopButton() {
   const [isVisible, setIsVisible] = useState(false);
   const { pathname } = useLocation();
 
-  // 1. Auto scroll to top on route change (Legacy ScrollToTop functionality)
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  // 2. Toggle visibility of floating button when scrolling
   useEffect(() => {
     const toggleVisibility = () => {
-      if (window.pageYOffset > 300) {
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = document.documentElement.clientHeight;
+      // Only show if user has scrolled down AND the page is at least 1.5x the screen height
+      if (window.pageYOffset > 300 && scrollHeight > clientHeight * 1.2) {
         setIsVisible(true);
       } else {
         setIsVisible(false);
@@ -22,27 +23,31 @@ export default function ScrollToTopButton() {
     };
 
     window.addEventListener('scroll', toggleVisibility);
+    toggleVisibility(); // Initial check
     return () => window.removeEventListener('scroll', toggleVisibility);
-  }, []);
+  }, [pathname]);
 
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  const scrollToBottom = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+
+  if (!isVisible) return null;
 
   return (
-    <>
-      {isVisible && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-10 right-10 z-[1500] w-14 h-14 bg-black text-white rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all animate-in slide-in-from-bottom duration-500 border-2 border-white/20"
-          aria-label="Scroll to top"
-        >
-          <ChevronUp className="w-6 h-6" />
-        </button>
-      )}
-    </>
+    <div className="fixed bottom-10 right-10 z-[1500] flex flex-col gap-3 animate-in fade-in duration-500">
+      <button
+        onClick={scrollToTop}
+        className="w-11 h-11 bg-black dark:bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-white/10"
+        aria-label="Scroll to top"
+      >
+        <ChevronUp className="w-5 h-5" />
+      </button>
+      <button
+        onClick={scrollToBottom}
+        className="w-11 h-11 bg-black dark:bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-white/10"
+        aria-label="Scroll to bottom"
+      >
+        <ChevronDown className="w-5 h-5" />
+      </button>
+    </div>
   );
 }
