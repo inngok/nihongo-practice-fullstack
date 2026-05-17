@@ -14,7 +14,7 @@ const examModules = [
 
 export default function ExamJLPT() {
   return (
-    <div className="w-full h-full flex-grow bg-white flex flex-col items-center pt-24 pb-12 px-6 md:px-12 relative overflow-hidden font-sans">
+    <div className="w-full h-full flex-grow bg-white flex flex-col items-center pt-36 md:pt-24 pb-12 px-6 md:px-12 relative overflow-hidden font-sans">
 
 
       <div className="w-full max-w-7xl relative z-10 border-b border-slate-50 pb-12">

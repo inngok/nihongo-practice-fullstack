@@ -66,7 +66,7 @@ export default function JlptPastVocab() {
   });
 
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-slate-950 pt-24 pb-16 px-6 md:px-12 font-sans selection:bg-slate-200 text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div className="min-h-screen w-full bg-white dark:bg-slate-950 pt-36 md:pt-24 pb-16 px-6 md:px-12 font-sans selection:bg-slate-200 text-slate-900 dark:text-slate-100 transition-colors duration-300">
       <div className="w-full max-w-7xl mx-auto">
         
         {/* Back Link */}

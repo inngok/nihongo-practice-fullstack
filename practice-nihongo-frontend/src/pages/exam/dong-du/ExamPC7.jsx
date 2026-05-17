@@ -41,7 +41,7 @@ export default function ExamPC7() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header Area */}
-      <div className="pt-24 pb-12 px-6 md:px-12 max-w-7xl mx-auto border-b border-slate-50 relative overflow-hidden">
+      <div className="pt-36 md:pt-24 pb-12 px-6 md:px-12 max-w-7xl mx-auto border-b border-slate-50 relative overflow-hidden">
 
 
         <Link

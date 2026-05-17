@@ -15,7 +15,7 @@ export default function KanjiPC8Selector() {
   return (
     <div className="min-h-screen bg-white pb-20">
       {/* Header Area */}
-      <div className="pt-24 pb-12 px-6 md:px-12 max-w-7xl mx-auto border-b border-slate-50 relative">
+      <div className="pt-36 md:pt-24 pb-12 px-6 md:px-12 max-w-7xl mx-auto border-b border-slate-50 relative">
         <Link
           to="/exam-pc8"
           className="inline-flex items-center gap-2 text-[10px] font-black tracking-[0.2em] text-slate-400 hover:text-slate-900 transition-colors uppercase mb-8"
