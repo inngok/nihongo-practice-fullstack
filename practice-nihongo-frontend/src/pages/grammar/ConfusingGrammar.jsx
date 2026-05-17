@@ -62,7 +62,7 @@ export default function ConfusingGrammar() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen w-full bg-white flex flex-col items-center pt-20 md:pt-24 pb-16 px-4 md:px-6 font-sans relative selection:bg-slate-900 selection:text-white">
+    <div className="min-h-screen w-full bg-white flex flex-col items-center pt-36 md:pt-24 pb-16 px-4 md:px-6 font-sans relative selection:bg-slate-900 selection:text-white">
       
       <div className="w-full max-w-5xl relative z-10">
         

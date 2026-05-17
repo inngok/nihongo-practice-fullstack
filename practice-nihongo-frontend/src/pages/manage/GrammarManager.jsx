@@ -203,6 +203,35 @@ export default function GrammarManager() {
     setIsModalOpen(true);
   };
 
+  const handleAiAutoFill = async () => {
+    if (!formData.structure.trim()) return message.warning('Vui lòng nhập cấu trúc ngữ pháp trước!');
+    
+    setIsAiProcessing(true);
+    const hide = message.loading('AI đang phân tích ngữ pháp...', 0);
+    
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/ai/generate-grammar?structure=${encodeURIComponent(formData.structure)}`);
+      if (!response.ok) throw new Error('API Error');
+      const data = await response.json();
+      
+      setFormData(prev => ({
+        ...prev,
+        meaning: data.meaning || prev.meaning,
+        explanation: data.explanation || prev.explanation,
+        exampleSentence: data.exampleSentence || prev.exampleSentence,
+        exampleMeaning: data.exampleMeaning || prev.exampleMeaning
+      }));
+      
+      message.success('AI đã điền xong!');
+    } catch (err) {
+      console.error(err);
+      message.error('Lỗi khi gọi AI: ' + err.message);
+    } finally {
+      hide();
+      setIsAiProcessing(false);
+    }
+  };
+
   const handleBulkAiProcess = async () => {
     if (!bulkInput.trim()) return message.warning('Vui lòng dán nội dung cần xử lý');
     if (!selectedBookId) return message.warning('Vui lòng chọn giáo trình trước khi nhập hàng loạt');
@@ -615,7 +644,7 @@ export default function GrammarManager() {
                    <div className="space-y-2">
                      <div className="flex justify-between items-center px-1">
                         <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">Cấu trúc</label>
-                        <button type="button" onClick={() => setModalTab('bulk')} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-black dark:text-white text-[9px] font-black rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter flex items-center gap-1">
+                        <button type="button" onClick={handleAiAutoFill} disabled={isAiProcessing} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-black dark:text-white text-[9px] font-black rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter flex items-center gap-1 disabled:opacity-50">
                           <ThunderboltOutlined className="text-[10px]" /> AI ĐIỀN
                         </button>
                       </div>
@@ -786,11 +815,37 @@ export default function GrammarManager() {
                  </div>
 
                  <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <div className="flex gap-4">
-                      <select value={selectedBookId} onChange={(e) => setSelectedBookId(e.target.value)} className="px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none">
+                    <div className="flex items-center gap-4">
+                      <select 
+                        value={selectedBookId} 
+                        onChange={(e) => setSelectedBookId(e.target.value)} 
+                        className="px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none text-slate-700 dark:text-slate-300 cursor-pointer"
+                      >
                         <option value="">-- Chọn giáo trình --</option>
                         {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
                       </select>
+
+                      <div className="flex items-center gap-2 border border-slate-100 dark:border-slate-800 rounded-xl px-3 py-2 bg-slate-50 dark:bg-slate-950">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Bài (Week):</span>
+                        <input 
+                          type="number" 
+                          min="1" 
+                          value={formData.week} 
+                          onChange={(e) => setFormData(prev => ({ ...prev, week: e.target.value }))}
+                          className="w-12 bg-transparent outline-none text-xs font-bold text-center text-slate-700 dark:text-slate-300"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2 border border-slate-100 dark:border-slate-800 rounded-xl px-3 py-2 bg-slate-50 dark:bg-slate-950">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ngày (Day):</span>
+                        <input 
+                          type="number" 
+                          min="1" 
+                          value={formData.day} 
+                          onChange={(e) => setFormData(prev => ({ ...prev, day: e.target.value }))}
+                          className="w-12 bg-transparent outline-none text-xs font-bold text-center text-slate-700 dark:text-slate-300"
+                        />
+                      </div>
                     </div>
                     <div className="flex gap-4">
                       <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 font-black text-[11px] uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">HỦY</button>

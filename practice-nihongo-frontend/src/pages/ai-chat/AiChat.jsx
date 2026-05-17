@@ -129,6 +129,9 @@ export default function AiChat() {
   // Reset window scroll position to 0 on mount and state change to prevent cutoff under fixed header
   useEffect(() => {
     window.scrollTo(0, 0);
+    if (window.innerWidth < 1024) {
+      setShowFeedbackPane(false);
+    }
   }, [activeScenario]);
 
   // Start a new scenario with dynamic initial texts
@@ -152,6 +155,10 @@ export default function AiChat() {
     setMessages([]);
     setLatestFeedback(null);
     setSuggestions([]);
+  };
+
+  const handleSelectSuggestion = (text) => {
+    handleSendMessage(text);
   };
 
   // Send message to AI
@@ -196,7 +203,7 @@ export default function AiChat() {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-white flex flex-col font-sans select-none pt-20 md:pt-24 pb-4">
+    <div className="h-[100dvh] overflow-hidden bg-white flex flex-col font-sans select-none pt-36 lg:pt-24 pb-4">
       
       {/* 1. SCENARIO SELECTOR VIEW */}
       {!activeScenario ? (
@@ -292,7 +299,7 @@ export default function AiChat() {
             </div>
 
             {/* Conversation list */}
-            <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-8 py-6 space-y-5 bg-slate-50/20">
+            <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 py-4 md:px-8 md:py-6 space-y-5 bg-slate-50/20">
               {messages.map((msg, index) => (
                 <div
                   key={index}
@@ -339,7 +346,7 @@ export default function AiChat() {
 
             {/* SUGGESTED PILLS */}
             {suggestions.length > 0 && !loading && (
-              <div className="px-8 py-4 bg-white border-t border-slate-50 flex flex-col gap-2">
+              <div className="px-4 py-3 md:px-8 md:py-4 bg-white border-t border-slate-50 flex flex-col gap-2">
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1.5">
                   <BulbOutlined /> Ý kiến phản hồi nhanh đề xuất (Click để gửi):
                 </span>
@@ -359,7 +366,7 @@ export default function AiChat() {
             )}
 
             {/* Input Footer */}
-            <div className="p-5 bg-white border-t border-slate-50 flex gap-3 items-center">
+            <div className="p-3 md:p-5 bg-white border-t border-slate-50 flex gap-3 items-center">
               <input
                 type="text"
                 value={inputValue}
@@ -381,12 +388,20 @@ export default function AiChat() {
 
           {/* RIGHT: DETAILED TUTOR COMMENTARY PANEL */}
           {showFeedbackPane && (
-            <div className="w-full lg:w-80 bg-white border border-slate-100 rounded-[2.5rem] flex flex-col overflow-hidden h-full shadow-sm">
-              <div className="px-6 py-5 border-b border-slate-50 flex items-center gap-2 bg-slate-50/30">
-                <MessageOutlined className="text-sm" />
-                <h3 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">
-                  Phân tích của Trợ lý
-                </h3>
+            <div className="fixed inset-0 z-50 lg:relative lg:inset-auto lg:w-80 bg-white border border-slate-100 rounded-none lg:rounded-[2.5rem] flex flex-col overflow-hidden h-full shadow-sm animate-in slide-in-from-bottom duration-300">
+              <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between bg-slate-50/30">
+                <div className="flex items-center gap-2">
+                  <MessageOutlined className="text-sm" />
+                  <h3 className="text-[10px] font-black text-slate-800 uppercase tracking-widest">
+                    Phân tích của Trợ lý
+                  </h3>
+                </div>
+                <button 
+                  onClick={() => setShowFeedbackPane(false)}
+                  className="lg:hidden w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 active:scale-95 text-xs font-bold"
+                >
+                  ✕
+                </button>
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-4">
                 {latestFeedback ? (

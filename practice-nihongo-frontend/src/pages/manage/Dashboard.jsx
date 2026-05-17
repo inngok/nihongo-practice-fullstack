@@ -64,7 +64,7 @@ export default function Dashboard() {
   const usedPercent = Math.min(100, Math.round((aiUsage.used / aiUsage.limit) * 100)) || 0;
 
   return (
-    <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 bg-transparent">
+    <div className="flex-grow w-full py-6 sm:py-8 px-4 sm:px-10 animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 bg-transparent">
       <div className="max-w-7xl mx-auto space-y-10">
         
         {/* Minimalist Monochrome Header */}

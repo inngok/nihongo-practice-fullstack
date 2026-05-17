@@ -688,7 +688,7 @@ export default function KanjiCanvas({ kanjiList, addedKanjiIds, onAddFlashcard, 
               <span className="font-black text-[9px] text-slate-400 uppercase tracking-widest block">Từ vựng & Ví dụ ghép</span>
               {currentKanji.examples ? (
                 <div className="bg-white border border-slate-100 rounded-2xl p-4 max-h-[140px] overflow-y-auto space-y-2.5 scrollbar-thin">
-                  {currentKanji.examples.split('\n').filter(l => l.trim() !== '').map((line, idx) => (
+                  {currentKanji.examples.split(/[;\n]+/).map(l => l.trim()).filter(Boolean).map((line, idx) => (
                     <div key={idx} className="flex gap-2.5 items-start text-xs">
                       <span className="w-1.5 h-1.5 bg-slate-300 rounded-full mt-1.5 flex-shrink-0" />
                       <p className="text-slate-600 font-semibold leading-relaxed">{line}</p>

@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ onClose }) {
   const { pathname } = useLocation();
   const { logout } = useAuth();
 
@@ -24,16 +24,25 @@ export default function AdminSidebar() {
     { path: '/kanji/manage', label: 'Hán tự' },
     { path: '/grammar/books', label: 'Bộ sách' },
     { path: '/manage/import', label: 'Import dữ liệu' },
+    { path: '/manage/jlpt-vocab', label: 'JLPT Từ vựng' },
     { path: '/manage/ai', label: 'Quản lý AI' },
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 flex flex-col z-[1100]">
+    <aside className="h-screen w-64 bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 flex flex-col z-[1100]">
       {/* Brand */}
-      <div className="h-20 flex items-center px-8">
+      <div className="h-20 flex items-center px-8 justify-between">
         <Link to="/" className="text-lg font-black tracking-tighter flex items-center gap-2.5 text-slate-900 dark:text-white uppercase">
           NIHONGO
         </Link>
+        {onClose && (
+          <button 
+            onClick={onClose}
+            className="lg:hidden text-slate-400 hover:text-slate-900 dark:hover:text-white text-xs font-bold uppercase tracking-widest"
+          >
+            Đóng
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -48,6 +57,7 @@ export default function AdminSidebar() {
             <Link
               key={item.path}
               to={item.path}
+              onClick={onClose}
               className={`flex items-center px-4 py-2.5 rounded-lg transition-all duration-200 group ${
                 isActive 
                   ? 'bg-slate-900 text-white dark:bg-white dark:text-black font-bold shadow-md shadow-slate-200 dark:shadow-none' 
@@ -63,7 +73,10 @@ export default function AdminSidebar() {
       {/* Footer */}
       <div className="p-4 border-t border-slate-50 dark:border-slate-800">
         <button
-          onClick={logout}
+          onClick={() => {
+            if (onClose) onClose();
+            logout();
+          }}
           className="w-full flex items-center px-4 py-2.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all font-medium text-xs tracking-tight"
         >
           Đăng xuất

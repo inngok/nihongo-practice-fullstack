@@ -4,17 +4,17 @@ import { ChevronLeft } from 'lucide-react';
 
 const examModules = [
   {
-    id: 'sentence-sort',
-    title: "Sắp xếp câu",
-    description: "Luyện tập kỹ năng sắp xếp các mảnh ghép thành một câu hoàn chỉnh (bài tập dấu sao).",
-    path: "/exam-jlpt/sentence-sort",
+    id: 'past-vocab',
+    title: "Từ Vựng Đã Thi",
+    description: "Khám phá danh sách các từ vựng và Hán tự thường xuyên xuất hiện trong các kỳ thi JLPT thật.",
+    path: "/exam-jlpt/past-vocab",
     status: "ready"
   }
 ];
 
 export default function ExamJLPT() {
   return (
-    <div className="w-full h-full flex-grow bg-white flex flex-col items-center pt-24 pb-12 px-6 md:px-12 relative overflow-hidden font-sans">
+    <div className="w-full h-full flex-grow bg-white flex flex-col items-center pt-36 md:pt-24 pb-12 px-6 md:px-12 relative overflow-hidden font-sans">
 
 
       <div className="w-full max-w-7xl relative z-10 border-b border-slate-50 pb-12">

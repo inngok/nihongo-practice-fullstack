@@ -15,10 +15,13 @@ public class AIController {
         this.aiService = aiService;
     }
 
-    @PostMapping("/format-import")
+    @PostMapping({"/format-import", "/generate-bulk"})
     public ResponseEntity<String> formatImport(@RequestBody Map<String, String> request) {
         try {
             String rawData = request.get("rawData");
+            if (rawData == null) {
+                rawData = request.get("text");
+            }
             String type = request.get("type");
             String result = aiService.formatDataForImport(rawData, type);
             return ResponseEntity.ok(result);
@@ -31,6 +34,26 @@ public class AIController {
     public ResponseEntity<String> generateVocab(@RequestParam String word) {
         try {
             String result = aiService.generateVocabDetails(word);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/generate-grammar")
+    public ResponseEntity<String> generateGrammar(@RequestParam String structure) {
+        try {
+            String result = aiService.generateGrammarDetails(structure);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/generate-kanji")
+    public ResponseEntity<String> generateKanji(@RequestParam String character) {
+        try {
+            String result = aiService.generateKanjiDetails(character);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());

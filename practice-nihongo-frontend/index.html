@@ -9,6 +9,28 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
   <title>Luyện tập N3</title>
+  <script>
+    // Tự động tải lại trang khi gặp lỗi import chunk động (do có deploy phiên bản mới làm thay đổi hash file assets)
+    window.addEventListener('error', function (e) {
+      var isChunkError = e.message && (
+        e.message.indexOf('Failed to fetch dynamically imported module') !== -1 ||
+        e.message.indexOf('error loading dynamically imported module') !== -1
+      );
+      if (isChunkError) {
+        window.location.reload();
+      }
+    }, true);
+
+    window.addEventListener('unhandledrejection', function (e) {
+      var isChunkError = e.reason && e.reason.message && (
+        e.reason.message.indexOf('Failed to fetch dynamically imported module') !== -1 ||
+        e.reason.message.indexOf('error loading dynamically imported module') !== -1
+      );
+      if (isChunkError) {
+        window.location.reload();
+      }
+    });
+  </script>
 </head>
 
 <body>

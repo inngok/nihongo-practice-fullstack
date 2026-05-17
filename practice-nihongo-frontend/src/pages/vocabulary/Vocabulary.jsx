@@ -43,7 +43,7 @@ export default function Vocabulary() {
   }, [books, currentUser]);
 
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-transparent flex flex-col items-center pt-24 md:pt-28 pb-16 px-6 font-sans relative overflow-hidden">
+    <div className="min-h-screen w-full bg-white dark:bg-transparent flex flex-col items-center pt-36 md:pt-28 pb-16 px-6 font-sans relative overflow-hidden">
 
       <div className="w-full max-w-5xl relative z-10">
 

@@ -274,7 +274,7 @@ export default function Flashcards() {
                         <div className="pt-4 border-t border-slate-100 max-w-md mx-auto text-center">
                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Ví dụ câu</p>
                           <div className="bg-slate-50/70 border border-slate-100 rounded-2xl p-4 text-left space-y-2">
-                            {itemData.examples.split('\n').filter(line => line.trim() !== '').map((line, idx) => (
+                            {itemData.examples.split(/[;\n]+/).map(line => line.trim()).filter(Boolean).map((line, idx) => (
                               <div key={idx} className="flex gap-2 items-start text-xs font-semibold text-slate-700">
                                 <span className="w-1.5 h-1.5 bg-slate-300 rounded-full mt-1.5 flex-shrink-0"></span>
                                 <p>{line}</p>
