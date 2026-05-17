@@ -43,6 +43,7 @@ const Translator = lazy(() => import("../pages/translator/Translator"));
 const Tips = lazy(() => import("../pages/tips/Tips"));
 const AiChat = lazy(() => import("../pages/ai-chat/AiChat"));
 const Profile = lazy(() => import("../pages/profile/Profile"));
+const JlptPastVocab = lazy(() => import("../pages/exam/jlpt/JlptPastVocab"));
 
 // Admin Management
 const Dashboard = lazy(() => import("../pages/manage/Dashboard"));
@@ -53,6 +54,7 @@ const KanjiManager = lazy(() => import("../pages/manage/KanjiManager"));
 const DataImporter = lazy(() => import("../pages/manage/DataImporter"));
 const UserManager = lazy(() => import("../pages/manage/UserManager"));
 const AiManager = lazy(() => import("../pages/manage/AiManager"));
+const JlptPastVocabManager = lazy(() => import("../pages/manage/JlptPastVocabManager"));
 
 // --- Layout & Route Wrappers ---
 
@@ -189,6 +191,7 @@ export default function RouteMap() {
         <Route path="exam-jlpt">
           <Route index element={<ExamJLPT />} />
           <Route path="sentence-sort" element={<SentenceSort />} />
+          <Route path="past-vocab" element={<JlptPastVocab />} />
         </Route>
 
         <Route path="translator" element={<Translator />} />
@@ -211,6 +214,7 @@ export default function RouteMap() {
           <Route path="vocabulary" element={<VocabManager />} />
           <Route path="kanji" element={<KanjiManager />} />
           <Route path="ai" element={<AiManager />} />
+          <Route path="jlpt-vocab" element={<JlptPastVocabManager />} />
         </Route>
       </Route>
 

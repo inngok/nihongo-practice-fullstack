@@ -24,6 +24,7 @@ export default function AdminSidebar() {
     { path: '/kanji/manage', label: 'Hán tự' },
     { path: '/grammar/books', label: 'Bộ sách' },
     { path: '/manage/import', label: 'Import dữ liệu' },
+    { path: '/manage/jlpt-vocab', label: 'JLPT Từ vựng' },
     { path: '/manage/ai', label: 'Quản lý AI' },
   ];
 

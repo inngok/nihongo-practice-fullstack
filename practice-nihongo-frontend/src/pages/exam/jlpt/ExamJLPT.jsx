@@ -4,10 +4,10 @@ import { ChevronLeft } from 'lucide-react';
 
 const examModules = [
   {
-    id: 'sentence-sort',
-    title: "Sắp xếp câu",
-    description: "Luyện tập kỹ năng sắp xếp các mảnh ghép thành một câu hoàn chỉnh (bài tập dấu sao).",
-    path: "/exam-jlpt/sentence-sort",
+    id: 'past-vocab',
+    title: "Từ Vựng Đã Thi",
+    description: "Khám phá danh sách các từ vựng và Hán tự thường xuyên xuất hiện trong các kỳ thi JLPT thật.",
+    path: "/exam-jlpt/past-vocab",
     status: "ready"
   }
 ];
