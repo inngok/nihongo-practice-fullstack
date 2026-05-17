@@ -3,7 +3,7 @@ import personalVocabService from '../../api/personalVocabService';
 import flashcardService from '../../api/flashcardService';
 import vocabFolderService from '../../api/vocabFolderService';
 import { Modal, message } from 'antd';
-import { ThunderboltOutlined } from '@ant-design/icons';
+import { ThunderboltOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
@@ -157,15 +157,16 @@ export default function PersonalVocab() {
   });
 
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center pt-20 pb-16 px-6 transition-colors duration-300">
+    <div className="min-h-screen w-full bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col items-center pt-36 md:pt-24 pb-16 px-6 transition-colors duration-300">
       <div className="w-full max-w-5xl">
         
         {/* Back Button */}
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-black dark:hover:text-white transition-colors mb-8"
+          className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 mb-8"
         >
-          ← QUAY LẠI
+          <ArrowLeftOutlined className="text-xs group-hover:-translate-x-1 transition-transform duration-300" />
+          QUAY LẠI
         </button>
 
         {/* Title Section */}
@@ -209,7 +210,13 @@ export default function PersonalVocab() {
             {activeTab === 'personal' && currentFolder && (
               <div className="flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <div className="flex flex-col gap-1">
-                  <button onClick={() => setCurrentFolder(currentFolder.parent)} className="text-[9px] font-bold text-slate-400 hover:text-black dark:hover:text-white transition-colors uppercase tracking-widest mb-1">← QUAY LẠI</button>
+                  <button 
+                    onClick={() => setCurrentFolder(currentFolder.parent)} 
+                    className="group flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 uppercase tracking-widest mb-1"
+                  >
+                    <ArrowLeftOutlined className="text-[10px] group-hover:-translate-x-0.5 transition-transform duration-300" />
+                    QUAY LẠI
+                  </button>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">{currentFolder.name}</h2>
                 </div>
                 <button onClick={() => openEditFolderModal(currentFolder)} className="text-[10px] font-bold text-slate-400 hover:text-black dark:hover:text-white uppercase tracking-widest border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-lg">Sửa mục</button>

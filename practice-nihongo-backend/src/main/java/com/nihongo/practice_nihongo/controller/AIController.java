@@ -15,10 +15,13 @@ public class AIController {
         this.aiService = aiService;
     }
 
-    @PostMapping("/format-import")
+    @PostMapping({"/format-import", "/generate-bulk"})
     public ResponseEntity<String> formatImport(@RequestBody Map<String, String> request) {
         try {
             String rawData = request.get("rawData");
+            if (rawData == null) {
+                rawData = request.get("text");
+            }
             String type = request.get("type");
             String result = aiService.formatDataForImport(rawData, type);
             return ResponseEntity.ok(result);

@@ -871,11 +871,37 @@ export default function KanjiManager() {
                  </div>
 
                  <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <div className="flex gap-4">
-                      <select value={selectedBookId} onChange={(e) => setSelectedBookId(e.target.value)} className="px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none">
+                    <div className="flex items-center gap-4">
+                      <select 
+                        value={selectedBookId} 
+                        onChange={(e) => setSelectedBookId(e.target.value)} 
+                        className="px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none text-slate-700 dark:text-slate-300 cursor-pointer"
+                      >
                         <option value="">-- Chọn giáo trình --</option>
                         {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
                       </select>
+
+                      <div className="flex items-center gap-2 border border-slate-100 dark:border-slate-800 rounded-xl px-3 py-2 bg-slate-50 dark:bg-slate-950">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Bài (Week):</span>
+                        <input 
+                          type="number" 
+                          min="1" 
+                          value={formData.week} 
+                          onChange={(e) => setFormData(prev => ({ ...prev, week: e.target.value }))}
+                          className="w-12 bg-transparent outline-none text-xs font-bold text-center text-slate-700 dark:text-slate-300"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2 border border-slate-100 dark:border-slate-800 rounded-xl px-3 py-2 bg-slate-50 dark:bg-slate-950">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ngày (Day):</span>
+                        <input 
+                          type="number" 
+                          min="1" 
+                          value={formData.day} 
+                          onChange={(e) => setFormData(prev => ({ ...prev, day: e.target.value }))}
+                          className="w-12 bg-transparent outline-none text-xs font-bold text-center text-slate-700 dark:text-slate-300"
+                        />
+                      </div>
                     </div>
                     <div className="flex gap-4">
                       <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 font-black text-[11px] uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">HỦY</button>

@@ -33,10 +33,6 @@ export default function Footer() {
             </>
           )}
         </button>
-
-        <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-300 dark:text-slate-600">
-          ngocng
-        </div>
       </div>
     </footer>
   );

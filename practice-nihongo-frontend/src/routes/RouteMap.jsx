@@ -1,10 +1,11 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import { Routes, Route, Outlet, useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import ScrollToTopButton from "../components/layout/ScrollToTopButton";
 import AdminSidebar from "../components/layout/AdminSidebar";
+import { MenuOutlined } from "@ant-design/icons";
 
 // --- Lazy Loading Components ---
 
@@ -33,7 +34,6 @@ const Flashcards = lazy(() => import("../pages/flashcard/Flashcards"));
 
 // Exams & Specialized
 const ExamJLPT = lazy(() => import("../pages/exam/jlpt/ExamJLPT"));
-const SentenceSort = lazy(() => import("../pages/exam/jlpt/SentenceSort"));
 const DongDu = lazy(() => import("../pages/exam/dong-du/DongDu"));
 const ExamPC7 = lazy(() => import("../pages/exam/dong-du/ExamPC7"));
 const ExamPC8 = lazy(() => import("../pages/exam/dong-du/ExamPC8"));
@@ -99,16 +99,48 @@ const UserLayout = () => (
   </div>
 );
 
-const AdminLayout = () => (
-  <div className="flex min-h-screen bg-white relative">
-    <AdminSidebar />
-    <main className="flex-grow flex flex-col ml-64 min-w-0">
-      <Suspense fallback={<PageLoader />}>
-        <Outlet />
-      </Suspense>
-    </main>
-  </div>
-);
+const AdminLayout = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 relative flex flex-col lg:flex-row">
+      {/* Mobile Top Navbar */}
+      <header className="lg:hidden h-16 w-full bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between px-6 fixed top-0 left-0 z-[1200] shadow-sm">
+        <span className="text-sm font-black tracking-tighter text-slate-900 dark:text-white uppercase">
+          NIHONGO ADMIN
+        </span>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="p-2 border border-slate-200 dark:border-slate-800 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center text-slate-700 dark:text-slate-300"
+        >
+          <MenuOutlined className="text-base" />
+        </button>
+      </header>
+
+      {/* Sidebar Backdrop Overlay on Mobile */}
+      {isOpen && (
+        <div 
+          onClick={() => setIsOpen(false)}
+          className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[1150] transition-opacity"
+        />
+      )}
+
+      {/* Admin Sidebar Container */}
+      <div className={`fixed inset-y-0 left-0 z-[1180] w-64 transform lg:transform-none lg:static lg:block transition-transform duration-300 ease-in-out ${
+        isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}>
+        <AdminSidebar onClose={() => setIsOpen(false)} />
+      </div>
+
+      {/* Main Content Area */}
+      <main className="flex-grow flex flex-col min-w-0 pt-16 lg:pt-0">
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
+      </main>
+    </div>
+  );
+};
 
 const AdminRoute = ({ children }) => {
   const { currentUser } = useAuth();
@@ -190,7 +222,6 @@ export default function RouteMap() {
         </Route>
         <Route path="exam-jlpt">
           <Route index element={<ExamJLPT />} />
-          <Route path="sentence-sort" element={<SentenceSort />} />
           <Route path="past-vocab" element={<JlptPastVocab />} />
         </Route>
 
