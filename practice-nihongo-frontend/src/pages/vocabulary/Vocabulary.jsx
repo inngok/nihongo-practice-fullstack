@@ -50,7 +50,7 @@ export default function Vocabulary() {
         {/* Back Button */}
         <button
           onClick={() => navigate('/')}
-          className="group flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-6 md:mb-8"
+          className="group flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-6 md:mb-8"
         >
           <span className="transition-transform group-hover:-translate-x-1">←</span>
           QUAY LẠI

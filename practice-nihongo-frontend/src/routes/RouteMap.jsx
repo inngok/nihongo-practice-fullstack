@@ -85,19 +85,25 @@ const PageLoader = () => (
   </div>
 );
 
-const UserLayout = () => (
-  <div className="flex flex-col min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300 relative">
-    <ScrollToTopButton />
-    <Header />
+const UserLayout = () => {
+  const { pathname } = useLocation();
+  const hideFooterRoutes = ['/ai-chat'];
+  const shouldHideFooter = hideFooterRoutes.includes(pathname);
 
-    <main className="flex-grow flex flex-col">
-      <Suspense fallback={<PageLoader />}>
-        <Outlet />
-      </Suspense>
-    </main>
-    <Footer />
-  </div>
-);
+  return (
+    <div className="flex flex-col min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300 relative">
+      {!shouldHideFooter && <ScrollToTopButton />}
+      <Header />
+
+      <main className="flex-grow flex flex-col">
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
+      </main>
+      {!shouldHideFooter && <Footer />}
+    </div>
+  );
+};
 
 const AdminLayout = () => {
   const [isOpen, setIsOpen] = useState(false);

@@ -73,9 +73,10 @@ export default function JlptPastVocab() {
         <div className="mb-8">
           <Link
             to="/exam-jlpt"
-            className="inline-flex items-center gap-2 text-[10px] font-black tracking-[0.2em] text-slate-400 hover:text-slate-955 dark:hover:text-white transition-colors uppercase"
+            className="group inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
-            <ChevronLeft className="w-3.5 h-3.5" /> Quay lại
+            <span className="transition-transform group-hover:-translate-x-1">←</span>
+            QUAY LẠI
           </Link>
         </div>
 
@@ -83,7 +84,7 @@ export default function JlptPastVocab() {
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-slate-100 dark:border-slate-800 mb-8">
           <div className="space-y-1.5">
             <span className="text-[9px] tracking-[0.3em] font-bold text-slate-350 dark:text-slate-500 uppercase block">Đề thi thực tế</span>
-            <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tighter leading-tight italic uppercase">
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tighter leading-tight italic uppercase">
               Từ Vựng JLPT Đã Thi
             </h1>
             <p className="text-slate-400 dark:text-slate-500 font-medium text-xs md:text-sm max-w-xl italic leading-relaxed">
@@ -185,7 +186,7 @@ export default function JlptPastVocab() {
                   
                   {/* Badge Tần Suất */}
                   {vocab.appearanceCount > 1 && (
-                    <div className={`absolute -top-3 -right-3 px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider shadow-md transform rotate-2 group-hover:rotate-4 transition-all duration-300 ${
+                    <div className={`absolute -top-3 -right-3 px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider shadow-md transform rotate-2 group-hover:rotate-4 transition-all duration-300 ${
                       isHot 
                         ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950' 
                         : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-350 border border-slate-200/50 dark:border-slate-750'
@@ -203,16 +204,16 @@ export default function JlptPastVocab() {
                   {/* Content block */}
                   <div className="flex flex-col items-center text-center my-2 flex-grow justify-center">
                     {/* Hán tự / Chữ phụ */}
-                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 block min-h-[16px]">
+                    <span className="text-xs font-kanji font-bold text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-1.5 block min-h-[16px]">
                       {vocab.kanji || ' '}
                     </span>
                     {/* Từ vựng chính */}
-                    <h2 className="text-3xl md:text-4.5xl font-black text-slate-900 dark:text-white tracking-tighter mb-4 group-hover:scale-[1.03] transition-transform duration-300">
+                    <h2 className="text-3xl md:text-4.5xl font-kanji font-bold text-slate-900 dark:text-white tracking-tighter mb-4 group-hover:scale-[1.03] transition-transform duration-300">
                       {vocab.word}
                     </h2>
                     {/* Nghĩa */}
                     <div className="inline-flex items-center justify-center px-4 py-1.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-xl">
-                      <span className="text-xs font-extrabold text-slate-650 dark:text-slate-300 uppercase tracking-wider">
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                         {vocab.meaning}
                       </span>
                     </div>

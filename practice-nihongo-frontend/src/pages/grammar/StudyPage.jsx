@@ -317,15 +317,13 @@ export default function StudyPage() {
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Top Bar */}
         {activeMode === 'menu' && (
-          <div className="mb-6">
-            <button 
-              onClick={() => navigate('/grammar')}
-              className="group flex items-center gap-3 px-5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-full text-[10px] font-black text-slate-500 hover:text-black dark:hover:text-white uppercase tracking-widest transition-all shadow-sm active:scale-95"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-              QUAY LẠI NGỮ PHÁP
-            </button>
-          </div>
+          <button
+            onClick={() => navigate('/grammar')}
+            className="group flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-6 md:mb-8"
+          >
+            <span className="transition-transform group-hover:-translate-x-1">←</span>
+            QUAY LẠI
+          </button>
         )}
 
         {loading ? (

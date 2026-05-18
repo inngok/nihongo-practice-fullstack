@@ -7,7 +7,7 @@ services:
     environment:
       - POSTGRES_DB=practice_nihongo_db
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=12345
+      - POSTGRES_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - LANG=en_US.utf8
     ports:
       - "5432:5432"
@@ -24,7 +24,7 @@ services:
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/practice_nihongo_db?characterEncoding=UTF-8
       - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=12345
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - SPRING_SQL_INIT_MODE=never
       - GEMINI_API_KEY=${GEMINI_API_KEY}

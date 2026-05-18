@@ -219,7 +219,7 @@ export default function VocabStudy() {
     } else if (dragOffsetX < -120) {
       handleSwipe('left');
     } else {
-      if (Math.abs(dragOffsetX) < 5) {
+      if (Math.abs(dragOffsetX) < 20) {
         setIsFlipped(prev => !prev);
       }
       setDragOffsetX(0);
@@ -252,7 +252,7 @@ export default function VocabStudy() {
     } else if (dragOffsetX < -120) {
       handleSwipe('left');
     } else {
-      if (Math.abs(dragOffsetX) < 5) {
+      if (Math.abs(dragOffsetX) < 20) {
         setIsFlipped(prev => !prev);
       }
       setDragOffsetX(0);
@@ -314,7 +314,7 @@ export default function VocabStudy() {
 
   const rotateDeg = dragOffsetX * 0.04;
   const cardStyle = {
-    transform: `translateX(${dragOffsetX}px) rotate(${rotateDeg}deg)`,
+    transform: `translateX(${dragOffsetX}px) rotate(${rotateDeg}deg) ${isFlipped ? 'rotateY(180deg)' : ''}`,
     transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
   };
 
@@ -573,15 +573,13 @@ export default function VocabStudy() {
     <div className="min-h-screen bg-white dark:bg-slate-950 px-4 sm:px-6 md:px-20 pt-32 pb-10 transition-colors">
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Top Bar */}
-        <div className="mb-6">
-          <button 
-            onClick={() => navigate('/vocabulary')}
-            className="group flex items-center gap-3 px-5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-full text-[10px] font-black text-slate-500 hover:text-black dark:hover:text-white uppercase tracking-widest transition-all shadow-sm active:scale-95"
-          >
-            <span className="group-hover:-translate-x-1 transition-transform">←</span> 
-            QUAY LẠI TỪ VỰNG
-          </button>
-        </div>
+        <button
+          onClick={() => navigate('/vocabulary')}
+          className="group flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-6 md:mb-8"
+        >
+          <span className="transition-transform group-hover:-translate-x-1">←</span>
+          QUAY LẠI
+        </button>
 
         {loading ? (
           <div className="flex justify-center py-40">
