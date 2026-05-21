@@ -44,6 +44,8 @@ const Tips = lazy(() => import("../pages/tips/Tips"));
 const AiChat = lazy(() => import("../pages/ai-chat/AiChat"));
 const Profile = lazy(() => import("../pages/profile/Profile"));
 const JlptPastVocab = lazy(() => import("../pages/exam/jlpt/JlptPastVocab"));
+const NewsList = lazy(() => import("../pages/news/NewsList"));
+const NewsDetail = lazy(() => import("../pages/news/NewsDetail"));
 
 // Admin Management
 const Dashboard = lazy(() => import("../pages/manage/Dashboard"));
@@ -234,6 +236,10 @@ export default function RouteMap() {
         <Route path="translator" element={<Translator />} />
         <Route path="tips" element={<Tips />} />
         <Route path="flashcards" element={<Flashcards />} />
+        <Route path="news">
+          <Route index element={<NewsList />} />
+          <Route path=":id" element={<NewsDetail />} />
+        </Route>
         <Route path="ai-chat" element={<AiChat />} />
         <Route path="profile" element={<Profile />} />
         <Route path="*" element={<Fallback />} />
