@@ -25,6 +25,9 @@ public class NewsArticle {
     @Column(columnDefinition = "TEXT")
     private String translation; // AI translated text
 
+    @Column(columnDefinition = "TEXT")
+    private String extractedVocab; // AI extracted vocabulary
+
     private String imageUrl;
     
     private String audioUrl;
@@ -56,6 +59,8 @@ public class NewsArticle {
     public void setContentRaw(String contentRaw) { this.contentRaw = contentRaw; }
     public String getTranslation() { return translation; }
     public void setTranslation(String translation) { this.translation = translation; }
+    public String getExtractedVocab() { return extractedVocab; }
+    public void setExtractedVocab(String extractedVocab) { this.extractedVocab = extractedVocab; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public String getAudioUrl() { return audioUrl; }

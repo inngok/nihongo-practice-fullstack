@@ -21,6 +21,9 @@ public class NewsController {
     @Autowired
     private NhkNewsCrawlerService nhkNewsCrawlerService;
 
+    @Autowired
+    private com.nihongo.practice_nihongo.service.AiService aiService;
+
     // Lấy danh sách toàn bộ bài báo, sắp xếp mới nhất lên đầu
     @GetMapping
     public ResponseEntity<List<NewsArticle>> getAllNews() {
@@ -36,10 +39,39 @@ public class NewsController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Endpoint để trigger việc crawl báo thủ công
     @PostMapping("/crawl")
     public ResponseEntity<String> triggerCrawlManually() {
         nhkNewsCrawlerService.crawlDailyNhkNews();
         return ResponseEntity.ok("Đã chạy tiến trình crawl báo thủ công. Kiểm tra log của backend để xem chi tiết.");
+    }
+
+    // Endpoint để trích xuất từ vựng từ bài báo bằng AI
+    @PostMapping("/{id}/extract-vocab")
+    public ResponseEntity<NewsArticle> extractVocab(@PathVariable Long id) {
+        try {
+            NewsArticle article = newsArticleRepository.findById(id).orElse(null);
+            if (article == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // Nếu đã extract rồi thì không gọi AI nữa để tiết kiệm
+            if (article.getExtractedVocab() != null && !article.getExtractedVocab().trim().isEmpty() && !article.getExtractedVocab().equals("[]")) {
+                return ResponseEntity.ok(article);
+            }
+
+            String text = article.getContentRaw();
+            if (text == null || text.trim().isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            String extractedJson = aiService.extractVocabularyFromNews(text);
+            article.setExtractedVocab(extractedJson);
+
+            newsArticleRepository.save(article);
+
+            return ResponseEntity.ok(article);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

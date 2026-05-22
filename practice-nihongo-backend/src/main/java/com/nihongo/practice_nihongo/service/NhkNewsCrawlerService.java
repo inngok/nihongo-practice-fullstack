@@ -1,7 +1,5 @@
 package com.nihongo.practice_nihongo.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nihongo.practice_nihongo.model.NewsArticle;
 import com.nihongo.practice_nihongo.repository.NewsArticleRepository;
 import org.jsoup.Jsoup;
@@ -24,6 +22,9 @@ public class NhkNewsCrawlerService {
     
     @Autowired
     private NewsArticleRepository newsArticleRepository;
+
+    @Autowired
+    private AiService aiService;
 
     @Scheduled(cron = "0 0 0 * * ?")
     public void crawlDailyNhkNews() {
@@ -125,6 +126,15 @@ public class NhkNewsCrawlerService {
             article.setAudioUrl(audioUrl);
             article.setPublishedAt(LocalDateTime.now());
             
+            // Tự động phân tích từ vựng bằng AI ngay khi cào về
+            try {
+                log.info("Đang dùng AI trích xuất từ vựng cho bài: " + newsId);
+                String extractedVocab = aiService.extractVocabularyFromNews(contentRaw.toString());
+                article.setExtractedVocab(extractedVocab);
+            } catch (Exception aiError) {
+                log.error("Lỗi khi AI trích xuất từ vựng bài: " + newsId, aiError);
+            }
+
             newsArticleRepository.save(article);
             log.info("Lưu thành công bài báo: " + newsId);
 

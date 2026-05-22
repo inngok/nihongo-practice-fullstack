@@ -159,6 +159,35 @@ public class AiService {
         }
     }
 
+    public String extractVocabularyFromNews(String text) throws Exception {
+        try {
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
+                recordAiUsage(true);
+                return "[{\"word\": \"[Lỗi]\", \"reading\": \"\", \"meaning\": \"Chưa cấu hình API Key cho tính năng AI\"}]";
+            }
+            String prompt = "You are a Japanese teacher. Read the following Japanese news article and extract 5 to 10 important vocabulary words (especially JLPT N4, N3, N2 level words). " +
+                    "For each word, provide its reading in Hiragana/Katakana and its meaning in Vietnamese. " +
+                    "Return the response strictly as a JSON array of objects with the following keys:\n" +
+                    "[\n" +
+                    "  {\n" +
+                    "    \"word\": \"(the word in Kanji or Kana as it appears in the text)\",\n" +
+                    "    \"reading\": \"(reading in Hiragana/Katakana)\",\n" +
+                    "    \"meaning\": \"(Vietnamese meaning)\"\n" +
+                    "  }\n" +
+                    "]\n" +
+                    "Do not include any formatting, markdown, or other text except the clean JSON array.\n" +
+                    "Article Text:\n" + text;
+            String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res;
+        } catch (Exception e) {
+            recordAiUsage(false);
+            System.err.println("Gemini Error: " + e.getMessage());
+            return "[]";
+        }
+    }
+
     public String generateKanjiDetails(String character) throws Exception {
         try {
             List<String> keys = getApiKeys();
@@ -273,8 +302,21 @@ public class AiService {
                 Map firstPart = (Map) parts.get(0);
                 String text = (String) firstPart.get("text");
                 
-                // Clean markdown code blocks if present
-                return text.replaceAll("```json", "").replaceAll("```", "").trim();
+                // Clean markdown code blocks and extract only the JSON part
+                text = text.replaceAll("```json", "").replaceAll("```", "").trim();
+                int startObj = text.indexOf("{");
+                int endObj = text.lastIndexOf("}");
+                int startArr = text.indexOf("[");
+                int endArr = text.lastIndexOf("]");
+                
+                // Check if it's an object or an array
+                if (startObj != -1 && endObj != -1 && (startArr == -1 || startObj < startArr)) {
+                    return text.substring(startObj, endObj + 1);
+                } else if (startArr != -1 && endArr != -1) {
+                    return text.substring(startArr, endArr + 1);
+                }
+                
+                return text;
             }
         }
         throw new Exception("HTTP Error: " + response.getStatusCode());

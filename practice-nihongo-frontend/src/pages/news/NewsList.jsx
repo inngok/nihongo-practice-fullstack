@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Spin, Typography, Tag, Space, Alert } from 'antd';
-import { CalendarOutlined, ReadOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { Card, Spin, Typography, Tag, Space, Alert, Button, message } from 'antd';
+import { CalendarOutlined, ReadOutlined, ArrowRightOutlined, SyncOutlined } from '@ant-design/icons';
+import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
 
 const { Title, Paragraph, Text } = Typography;
@@ -10,8 +11,12 @@ export default function NewsList() {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [crawling, setCrawling] = useState(false);
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
 
-  useEffect(() => {
+  const fetchNews = () => {
+    setLoading(true);
     fetch(`${API_BASE_URL}/news`)
       .then(res => res.json())
       .then(data => {
@@ -22,7 +27,33 @@ export default function NewsList() {
         setError('Không thể tải danh sách bài báo');
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchNews();
   }, []);
+
+  const handleCrawl = async () => {
+    setCrawling(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/news/crawl`, { method: 'POST' });
+      if (response.ok) {
+        message.success('Đang lấy tin mới, hệ thống sẽ tự tải lại...');
+        // Refresh list after a delay
+        setTimeout(() => {
+          fetchNews();
+        }, 3000);
+      } else {
+        message.error('Lỗi khi yêu cầu crawl tin tức!');
+      }
+    } catch (error) {
+      message.error('Không thể kết nối đến máy chủ.');
+    } finally {
+      setCrawling(false);
+    }
+  };
+
+
 
   if (loading) return (
     <div className="flex justify-center items-center h-screen bg-slate-50 dark:bg-slate-950 pt-24">
@@ -45,8 +76,21 @@ export default function NewsList() {
               Báo Nhật Mỗi Ngày
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base max-w-xl font-medium">
-              Tin tức cập nhật tự động từ NHK News. Có kèm Furigana và phân tích từ vựng bằng AI.
+              Tin tức cập nhật tự động từ NHK News mỗi ngày. Bạn cũng có thể lấy bài mới bằng nút cập nhật thủ công.
             </p>
+          </div>
+          <div className="mt-4 md:mt-0">
+            {isAdmin && (
+              <Button 
+                type="primary" 
+                icon={<SyncOutlined spin={crawling} />} 
+                onClick={handleCrawl} 
+                loading={crawling}
+                className="bg-slate-900 hover:bg-slate-800 text-white border-none rounded-full px-6 h-10 font-bold shadow-md flex items-center gap-2 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+              >
+                Cập nhật tin mới
+              </Button>
+            )}
           </div>
         </div>
 

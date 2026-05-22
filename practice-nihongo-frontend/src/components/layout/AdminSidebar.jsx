@@ -23,6 +23,7 @@ export default function AdminSidebar({ onClose }) {
     { path: '/vocabulary/manage', label: 'Từ vựng' },
     { path: '/kanji/manage', label: 'Hán tự' },
     { path: '/grammar/books', label: 'Bộ sách' },
+    { path: '/manage/users', label: 'Quản lý người dùng' },
     { path: '/manage/import', label: 'Import dữ liệu' },
     { path: '/manage/jlpt-vocab', label: 'JLPT Từ vựng' },
     { path: '/manage/ai', label: 'Quản lý AI' },
