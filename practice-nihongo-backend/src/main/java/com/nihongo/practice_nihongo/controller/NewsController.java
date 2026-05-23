@@ -29,18 +29,15 @@ public class NewsController {
     // Lấy danh sách toàn bộ bài báo, sắp xếp mới nhất lên đầu
     @GetMapping
     @Cacheable(value = "newsListCache")
-    public ResponseEntity<List<NewsArticle>> getAllNews() {
-        List<NewsArticle> news = newsArticleRepository.findAll(Sort.by(Sort.Direction.DESC, "publishedAt"));
-        return ResponseEntity.ok(news);
+    public List<NewsArticle> getAllNews() {
+        return newsArticleRepository.findAll(Sort.by(Sort.Direction.DESC, "publishedAt"));
     }
 
     // Lấy chi tiết 1 bài báo bằng ID
     @GetMapping("/{id}")
     @Cacheable(value = "newsDetailCache", key = "#id")
-    public ResponseEntity<NewsArticle> getNewsById(@PathVariable Long id) {
-        return newsArticleRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public NewsArticle getNewsById(@PathVariable Long id) {
+        return newsArticleRepository.findById(id).orElse(null);
     }
 
     @PostMapping("/crawl")

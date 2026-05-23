@@ -12,8 +12,7 @@ import {
   DeleteOutlined, 
   FilterOutlined, 
   ThunderboltOutlined,
-  SearchOutlined,
-  CloseOutlined
+  SearchOutlined
 } from '@ant-design/icons';
 
 const customStyles = `

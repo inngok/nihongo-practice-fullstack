@@ -158,6 +158,12 @@ const AdminRoute = ({ children }) => {
   return children ? children : <Outlet />;
 };
 
+const PrivateRoute = ({ children }) => {
+  const { currentUser } = useAuth();
+  if (!currentUser) return <Navigate to="/login" replace />;
+  return children ? children : <Outlet />;
+};
+
 const Fallback = () => (
   <div className="min-h-[calc(100vh-80px)] mt-20 flex-grow flex items-center justify-center bg-white dark:bg-transparent text-slate-500 dark:text-slate-400 font-bold text-lg">
     <div className="text-center space-y-4">
@@ -207,7 +213,10 @@ export default function RouteMap() {
           <Route index element={<Vocabulary />} />
           <Route path="study" element={<VocabStudyWrapper />} />
         </Route>
-        <Route path="my-vocab" element={<PersonalVocab />} />
+        {/* Private Routes */}
+        <Route element={<PrivateRoute />}>
+          <Route path="my-vocab" element={<PersonalVocab />} />
+        </Route>
 
         {/* Kanji Section */}
         <Route path="kanji">
