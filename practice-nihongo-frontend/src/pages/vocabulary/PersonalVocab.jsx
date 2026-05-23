@@ -3,7 +3,7 @@ import personalVocabService from '../../api/personalVocabService';
 import flashcardService from '../../api/flashcardService';
 import vocabFolderService from '../../api/vocabFolderService';
 import { Modal, message } from 'antd';
-import { ThunderboltOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { ThunderboltOutlined, ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
@@ -163,9 +163,9 @@ export default function PersonalVocab() {
         {/* Back Button */}
         <button
           onClick={() => navigate('/')}
-          className="group flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 mb-8"
+          className="group flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white transition-all duration-300 mb-8"
         >
-          <ArrowLeftOutlined className="text-xs group-hover:-translate-x-1 transition-transform duration-300" />
+          <span className="transition-transform group-hover:-translate-x-1">←</span>
           QUAY LẠI
         </button>
 
@@ -214,7 +214,7 @@ export default function PersonalVocab() {
                     onClick={() => setCurrentFolder(currentFolder.parent)} 
                     className="group flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-black dark:hover:text-white transition-all duration-300 uppercase tracking-widest mb-1"
                   >
-                    <ArrowLeftOutlined className="text-[10px] group-hover:-translate-x-0.5 transition-transform duration-300" />
+                    <span className="group-hover:-translate-x-0.5 transition-transform">←</span>
                     QUAY LẠI
                   </button>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">{currentFolder.name}</h2>
@@ -290,10 +290,10 @@ export default function PersonalVocab() {
             </div>
             <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Cách đọc</label><input type="text" name="reading" value={formData.reading} onChange={handleInputChange} required className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 font-bold text-lg" /></div>
           </div>
-          <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Ý nghĩa</label><input type="text" name="meaning" value={formData.meaning} onChange={handleInputChange} required className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 font-bold" /></div>
+          <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Ý nghĩa</label><input type="text" name="meaning" value={formData.meaning} onChange={handleInputChange} required className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 font-bold text-base" /></div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Ví dụ</label><input type="text" name="example" value={formData.example} onChange={handleInputChange} className="w-full bg-transparent border-b border-slate-100 outline-none py-1 text-sm" /></div>
-            <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Dịch</label><input type="text" name="exampleMeaning" value={formData.exampleMeaning} onChange={handleInputChange} className="w-full bg-transparent border-b border-slate-100 outline-none py-1 text-sm italic text-slate-400" /></div>
+            <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Ví dụ</label><input type="text" name="example" value={formData.example} onChange={handleInputChange} className="w-full bg-transparent border-b border-slate-100 outline-none py-1 text-base md:text-sm" /></div>
+            <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Dịch</label><input type="text" name="exampleMeaning" value={formData.exampleMeaning} onChange={handleInputChange} className="w-full bg-transparent border-b border-slate-100 outline-none py-1 text-base md:text-sm italic text-slate-400" /></div>
           </div>
           <button type="submit" className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-lg">LƯU VÀO SỔ TAY</button>
         </form>
@@ -308,12 +308,24 @@ export default function PersonalVocab() {
         styles={{ content: { borderRadius: '24px', padding: '32px' } }}
       >
         <form onSubmit={handleFolderSubmit} className="space-y-6">
-          <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Tên thư mục</label><input type="text" name="name" value={folderFormData.name} onChange={handleFolderInputChange} required className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 font-bold" /></div>
-          <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Mô tả</label><input type="text" name="description" value={folderFormData.description} onChange={handleFolderInputChange} className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5" /></div>
-          <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Nguồn (URL)</label><input type="url" name="sourceUrl" value={folderFormData.sourceUrl} onChange={handleFolderInputChange} className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 text-xs text-slate-400" /></div>
+          <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Tên thư mục</label><input type="text" name="name" value={folderFormData.name} onChange={handleFolderInputChange} required className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 font-bold text-base" /></div>
+          <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Mô tả</label><input type="text" name="description" value={folderFormData.description} onChange={handleFolderInputChange} className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 text-base" /></div>
+          <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Nguồn (URL)</label><input type="url" name="sourceUrl" value={folderFormData.sourceUrl} onChange={handleFolderInputChange} className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 text-base md:text-xs text-slate-400" /></div>
           <button type="submit" className="w-full py-4 bg-black text-white rounded-xl font-bold text-[10px] uppercase tracking-widest">XÁC NHẬN TẠO</button>
         </form>
       </Modal>
+
+      {/* Floating Action Button for Mobile only */}
+      <button
+        onClick={() => {
+          if (activeTab !== 'personal') setActiveTab('personal');
+          openAddModal();
+        }}
+        className="md:hidden fixed bottom-8 left-6 z-[999] w-14 h-14 bg-black dark:bg-white text-white dark:text-black rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.25)] active:scale-95 transition-all duration-200 border border-slate-200/10"
+        aria-label="Thêm từ vựng nhanh"
+      >
+        <PlusOutlined className="text-xl" />
+      </button>
     </div>
   );
 }

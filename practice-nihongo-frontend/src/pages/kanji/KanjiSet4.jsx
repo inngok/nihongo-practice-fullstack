@@ -313,7 +313,7 @@ export default function KanjiSet4() {
               onClick={() => handleOpenDetail(kanji)}
               className="w-24 h-24 sm:w-32 sm:h-32 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl flex items-center justify-center shrink-0 cursor-pointer hover:border-slate-400 transition-colors"
             >
-              <span className="text-5xl sm:text-7xl font-black text-slate-900 dark:text-white select-none">{kanji.character}</span>
+              <span className="text-5xl sm:text-7xl font-kanji font-bold text-slate-900 dark:text-white select-none">{kanji.character}</span>
             </div>
 
             {/* Core Info */}
@@ -326,11 +326,11 @@ export default function KanjiSet4() {
                <div className="flex gap-8 sm:gap-16">
                   <div>
                     <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest block mb-0.5 sm:mb-1">ÂM ON</span>
-                    <p className="text-sm sm:text-lg font-bold text-slate-800 dark:text-slate-200">{kanji.onyomi || '—'}</p>
+                    <p className="text-sm sm:text-lg font-kanji font-bold text-slate-800 dark:text-slate-200">{kanji.onyomi || '—'}</p>
                   </div>
                   <div>
                     <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest block mb-0.5 sm:mb-1">ÂM KUN</span>
-                    <p className="text-sm sm:text-lg font-bold text-slate-800 dark:text-slate-200">{kanji.kunyomi || '—'}</p>
+                    <p className="text-sm sm:text-lg font-kanji font-bold text-slate-800 dark:text-slate-200">{kanji.kunyomi || '—'}</p>
                   </div>
                </div>
             </div>
@@ -393,7 +393,7 @@ export default function KanjiSet4() {
         <div className="flex justify-between items-center mb-6">
           <button
             onClick={() => navigate('/kanji')}
-            className="group flex items-center gap-1.5 text-slate-500 hover:text-slate-950 dark:hover:text-white text-xs font-black uppercase tracking-widest transition-colors bg-transparent border-none p-0 outline-none focus:outline-none"
+            className="group flex items-center gap-1.5 text-slate-500 hover:text-slate-950 dark:hover:text-white text-xs font-bold uppercase tracking-widest transition-colors bg-transparent border-none p-0 outline-none focus:outline-none"
           >
             <span className="transition-transform group-hover:-translate-x-1">←</span> QUAY LẠI
           </button>
@@ -503,7 +503,7 @@ export default function KanjiSet4() {
 
                     {/* Big Character block */}
                     <div className="my-3 text-center">
-                      <h2 className="text-5xl font-black text-slate-900 dark:text-white group-hover:scale-105 transition-transform duration-300 select-none">
+                      <h2 className="text-5xl font-kanji font-bold text-slate-900 dark:text-white group-hover:scale-105 transition-transform duration-300 select-none">
                         {kanji.character}
                       </h2>
                     </div>
@@ -559,7 +559,7 @@ export default function KanjiSet4() {
                       <span className="absolute top-6 left-6 text-xs font-black text-slate-200 dark:text-slate-800 uppercase tracking-wider">
                         KANJI
                       </span>
-                      <span className="text-8xl font-black text-slate-900 dark:text-white tracking-tight">{filteredKanjis[flashcardIndex].character}</span>
+                      <span className="text-8xl font-kanji font-bold text-slate-900 dark:text-white tracking-tight">{filteredKanjis[flashcardIndex].character}</span>
                       <p className="text-[9px] text-slate-300 dark:text-slate-700 font-bold uppercase tracking-[0.2em] mt-10">
                         Chạm để lật thẻ
                       </p>
@@ -590,11 +590,11 @@ export default function KanjiSet4() {
                       <div className="grid grid-cols-2 gap-4 w-full bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 text-left text-xs">
                         <div>
                           <span className="font-black text-[9px] text-slate-400 dark:text-slate-600 uppercase tracking-widest block mb-0.5">Onyomi</span>
-                          <span className="font-bold text-slate-800 dark:text-slate-200">{filteredKanjis[flashcardIndex].onyomi || '—'}</span>
+                          <span className="font-kanji font-bold text-slate-800 dark:text-slate-200">{filteredKanjis[flashcardIndex].onyomi || '—'}</span>
                         </div>
                         <div>
                           <span className="font-black text-[9px] text-slate-400 dark:text-slate-600 uppercase tracking-widest block mb-0.5">Kunyomi</span>
-                          <span className="font-bold text-slate-800 dark:text-slate-200">{filteredKanjis[flashcardIndex].kunyomi || '—'}</span>
+                          <span className="font-kanji font-bold text-slate-800 dark:text-slate-200">{filteredKanjis[flashcardIndex].kunyomi || '—'}</span>
                         </div>
                       </div>
                     </div>
@@ -636,7 +636,7 @@ export default function KanjiSet4() {
 
                 <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-[2.5rem] p-8 text-center shadow-lg shadow-slate-100 dark:shadow-none">
                   <span className="text-[10px] font-black text-slate-200 dark:text-slate-800 uppercase tracking-wider block mb-2">Hỏi chữ Hán</span>
-                  <span className="text-7xl font-black text-slate-950 dark:text-white block">{quizQuestions[quizIndex]?.kanji.character}</span>
+                  <span className="text-7xl font-kanji font-bold text-slate-950 dark:text-white block">{quizQuestions[quizIndex]?.kanji.character}</span>
                   <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest mt-6">Chữ Hán trên có âm Hán Việt là gì?</p>
                 </div>
 
@@ -689,7 +689,7 @@ export default function KanjiSet4() {
                 </div>
 
                 <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-[2.5rem] p-8 text-center shadow-lg shadow-slate-100 dark:shadow-none flex flex-col items-center">
-                  <span className="text-8xl font-black text-slate-950 dark:text-white block mb-4 select-none">{filteredKanjis[typingIndex]?.character}</span>
+                  <span className="text-8xl font-kanji font-bold text-slate-950 dark:text-white block mb-4 select-none">{filteredKanjis[typingIndex]?.character}</span>
                   <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block mb-1">Ý nghĩa gợi ý</span>
                   <p className="text-base text-slate-500 dark:text-slate-400 font-bold italic leading-none">{filteredKanjis[typingIndex]?.meaning || '—'}</p>
                 </div>
@@ -755,12 +755,12 @@ export default function KanjiSet4() {
           <div className="p-10 space-y-10 bg-white dark:bg-slate-950 rounded-[2.5rem]">
             {/* Header */}
             <div className="flex justify-between items-start">
-              <span className="text-[10px] font-black tracking-widest text-slate-400 uppercase">
+              <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                 {book ? book.title : ''} {selectedKanji.page ? `• ${selectedKanji.page}` : ''}
               </span>
               <button
                 onClick={() => setIsDetailModalOpen(false)}
-                className="text-[10px] font-black text-slate-400 hover:text-black dark:hover:text-white uppercase tracking-widest transition-colors"
+                className="text-[10px] font-bold text-slate-400 hover:text-black dark:hover:text-white uppercase tracking-widest transition-colors"
               >
                 Đóng
               </button>
@@ -768,7 +768,7 @@ export default function KanjiSet4() {
 
             {/* Core Info */}
             <div className="text-center space-y-4">
-              <div className="text-8xl font-black text-slate-900 dark:text-white select-none leading-none">
+              <div className="text-8xl font-kanji font-bold text-slate-900 dark:text-white select-none leading-none">
                 {selectedKanji.character}
               </div>
               <div>
@@ -784,18 +784,18 @@ export default function KanjiSet4() {
             {/* Readings */}
             <div className="flex justify-center gap-16 border-y border-slate-100 dark:border-slate-800 py-6">
               <div className="text-center">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">ON</span>
-                <p className="text-lg font-bold text-slate-900 dark:text-white">{selectedKanji.onyomi || '—'}</p>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-2">ON</span>
+                <p className="text-lg font-kanji font-bold text-slate-900 dark:text-white">{selectedKanji.onyomi || '—'}</p>
               </div>
               <div className="text-center">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">KUN</span>
-                <p className="text-lg font-bold text-slate-900 dark:text-white">{selectedKanji.kunyomi || '—'}</p>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-2">KUN</span>
+                <p className="text-lg font-kanji font-bold text-slate-900 dark:text-white">{selectedKanji.kunyomi || '—'}</p>
               </div>
             </div>
 
             {/* Examples */}
             <div className="text-center">
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4 block">Ví dụ</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-4 block">Ví dụ</span>
               {selectedKanji.examples ? (
                 <div className="space-y-2 max-h-[160px] overflow-y-auto custom-scrollbar">
                   {selectedKanji.examples.split(/[;\n]+/).map(line => line.trim()).filter(Boolean).map((line, idx) => (

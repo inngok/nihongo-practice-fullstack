@@ -4,6 +4,7 @@ import vocabService from '../../api/vocabService';
 import bookService from '../../api/bookService';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
+import { createPortal } from 'react-dom';
 import { Modal, message, Select, Empty } from 'antd';
 import { 
   PlusOutlined, 
@@ -11,8 +12,7 @@ import {
   DeleteOutlined, 
   FilterOutlined, 
   ThunderboltOutlined,
-  SearchOutlined,
-  CloseOutlined
+  SearchOutlined
 } from '@ant-design/icons';
 
 const customStyles = `
@@ -60,8 +60,10 @@ export default function VocabManager() {
   const [loading, setLoading] = useState(true);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
   
   const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
+  const [selectedLesson, setSelectedLesson] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [modalTab, setModalTab] = useState('single');
@@ -91,12 +93,75 @@ export default function VocabManager() {
     if (selectedBookId) {
       data = data.filter(v => (v.bookId || v.book?.id)?.toString() === selectedBookId.toString());
     }
+    if (selectedLesson) {
+      data = data.filter(v => v.week?.toString() === selectedLesson.toString());
+    }
     if (searchTerm) {
       const s = searchTerm.toLowerCase();
       data = data.filter(v => v.word?.toLowerCase().includes(s) || v.reading?.toLowerCase().includes(s) || v.meaning?.toLowerCase().includes(s));
     }
-    return data;
-  }, [vocabs, selectedBookId, searchTerm]);
+    
+    // Đếm số lần xuất hiện của từ vựng theo từng BÀI (bookId + week) để tìm từ trùng lặp trong cùng 1 bài
+    const wordCounts = {};
+    data.forEach(v => {
+      if (v.word) {
+        const w = v.word.trim();
+        const bookId = v.bookId || v.book?.id || 'none';
+        const week = v.week || 'none';
+        const key = `${bookId}_${week}_${w}`;
+        wordCounts[key] = (wordCounts[key] || 0) + 1;
+      }
+    });
+
+    const wordSeen = {};
+
+    let result = data.map(v => {
+      let isDuplicate = false;
+      let isSecondaryDuplicate = false;
+
+      if (v.word) {
+        const w = v.word.trim();
+        const bookId = v.bookId || v.book?.id || 'none';
+        const week = v.week || 'none';
+        const key = `${bookId}_${week}_${w}`;
+
+        isDuplicate = wordCounts[key] > 1;
+        
+        if (isDuplicate) {
+          if (wordSeen[key]) {
+             isSecondaryDuplicate = true;
+          } else {
+             wordSeen[key] = true;
+          }
+        }
+      }
+      
+      return {
+        ...v,
+        isDuplicate,
+        isSecondaryDuplicate
+      };
+    });
+
+    if (showDuplicatesOnly) {
+      // Chỉ hiện các từ lặp ở vị trí thứ 2 trở đi, giữ lại bản gốc
+      result = result.filter(v => v.isSecondaryDuplicate);
+    }
+
+    return result;
+  }, [vocabs, selectedBookId, selectedLesson, searchTerm, showDuplicatesOnly]);
+
+  const uniqueLessons = React.useMemo(() => {
+    let data = Array.isArray(vocabs) ? vocabs : [];
+    if (selectedBookId) {
+      data = data.filter(v => (v.bookId || v.book?.id)?.toString() === selectedBookId.toString());
+    }
+    const lessons = new Set();
+    data.forEach(v => {
+      if (v.week) lessons.add(v.week);
+    });
+    return Array.from(lessons).sort((a, b) => a - b);
+  }, [vocabs, selectedBookId]);
 
   const fetchData = async () => {
     try {
@@ -277,18 +342,48 @@ export default function VocabManager() {
               className="bg-transparent border-none outline-none w-full text-sm placeholder:text-slate-300"
             />
           </div>
+          
+          <div className="flex items-center">
+            <button
+              onClick={() => setShowDuplicatesOnly(!showDuplicatesOnly)}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors border ${showDuplicatesOnly ? 'bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-900/30 dark:border-rose-800' : 'bg-transparent border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800'}`}
+            >
+              Lọc từ trùng lặp
+            </button>
+          </div>
+
           <div className="flex items-center gap-2 px-4 border-l border-slate-200 dark:border-slate-800 min-w-[240px]">
             <FilterOutlined className="text-slate-400 text-xs" />
             <Select
               value={selectedBookId}
-              onChange={v => setSelectedBookId(v)}
-              className="flex-grow custom-select"
+              onChange={v => { setSelectedBookId(v); setSelectedLesson(''); }}
+              className="flex-grow custom-select text-sm font-semibold"
               variant="borderless"
               classNames={{ popup: 'custom-select-popup' }}
               placeholder="Chọn sách học"
-              options={[{ value: '', label: 'TẤT CẢ SÁCH' }, ...books.map(b => ({ value: b.id.toString(), label: b.title.toUpperCase() }))]}
+              options={[{ value: '', label: 'Tất cả giáo trình' }, ...books.map(b => ({ value: b.id.toString(), label: b.title }))]}
             />
           </div>
+
+          <div className="flex items-center gap-2 px-4 border-l border-slate-200 dark:border-slate-800 min-w-[140px]">
+            <Select
+              value={selectedLesson}
+              onChange={v => setSelectedLesson(v)}
+              className="flex-grow custom-select text-sm font-semibold"
+              variant="borderless"
+              classNames={{ popup: 'custom-select-popup' }}
+              placeholder="Chọn bài"
+              options={[{ value: '', label: 'Tất cả bài' }, ...uniqueLessons.map(l => ({ value: l.toString(), label: `Bài ${l}` }))]}
+            />
+          </div>
+          {(selectedBookId || selectedLesson || showDuplicatesOnly) && (
+            <button 
+              onClick={() => { setSelectedBookId(''); setSelectedLesson(''); setShowDuplicatesOnly(false); }}
+              className="px-3 py-1.5 text-sm font-semibold text-slate-400 hover:text-red-500 transition-colors"
+            >
+              Xóa lọc
+            </button>
+          )}
         </div>
 
         {/* Data Table */}
@@ -329,7 +424,14 @@ export default function VocabManager() {
                           className="w-4 h-4 cursor-pointer"
                         />
                       </td>
-                      <td className="px-4 py-4 font-bold text-slate-900 dark:text-white font-kanji text-lg">{v.word}</td>
+                      <td className="px-4 py-4 font-bold text-slate-900 dark:text-white font-kanji text-lg">
+                        <div className="flex items-center gap-2">
+                          {v.word}
+                          {v.isDuplicate && (
+                            <span className="text-[8px] font-black uppercase bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-md border border-rose-200" title="Từ này xuất hiện nhiều lần">Trùng</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-4 py-4 text-xs font-medium text-slate-500 italic">{v.reading}</td>
                       <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">{v.meaning}</td>
                       <td className="px-4 py-4 text-center text-[10px] font-bold text-slate-400">{v.week ? `BÀI ${v.week}` : '-'}</td>
@@ -392,58 +494,79 @@ export default function VocabManager() {
           </div>
         )}
 
-        {/* Unified Entry Modal */}
-        <Modal
-          open={isModalOpen}
-          onCancel={() => setIsModalOpen(false)}
-          footer={null}
-          closeIcon={false}
-          width={modalTab === 'bulk' ? 1000 : 500}
-          centered
-          styles={{ content: { padding: 0, borderRadius: '24px', overflow: 'hidden' } }}
-        >
-          <div className="flex flex-col">
-            <div className="px-8 pt-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-end bg-slate-50 dark:bg-slate-900/80">
-              <div className="flex gap-8">
+      {/* Unified Add/Bulk Modal */}
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-slate-900/60 dark:bg-black/80 overflow-y-auto">
+          <div className={`bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full ${modalTab === 'bulk' ? 'max-w-6xl' : 'max-w-lg'} rounded-[32px] shadow-2xl flex flex-col max-h-[95vh] animate-in fade-in zoom-in duration-300 transition-all overflow-hidden`}>
+            {/* Header with Tabs */}
+            <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
+              <div className="flex items-center gap-8">
                 <button 
-                  onClick={() => setModalTab('single')} 
-                  className={`pb-4 text-[10px] font-bold uppercase tracking-widest transition-colors relative ${modalTab === 'single' ? 'text-black dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  onClick={() => setModalTab('single')}
+                  className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all pb-1 ${modalTab === 'single' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-slate-300 dark:text-slate-600 hover:text-slate-400'}`}
                 >
-                  {editingId ? 'SỬA TỪ HỆ THỐNG' : 'THÊM THỦ CÔNG'}
-                  {modalTab === 'single' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black dark:bg-white rounded-t-full" />}
+                  {editingId ? 'CHỈNH SỬA' : 'THÊM THỦ CÔNG'}
                 </button>
                 {!editingId && (
                   <button 
-                    onClick={() => setModalTab('bulk')} 
-                    className={`pb-4 text-[10px] font-bold uppercase tracking-widest transition-colors relative ${modalTab === 'bulk' ? 'text-black dark:text-white' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    onClick={() => setModalTab('bulk')}
+                    className={`text-[11px] font-black uppercase tracking-[0.2em] transition-all pb-1 ${modalTab === 'bulk' ? 'text-black dark:text-white border-b-2 border-black dark:border-white' : 'text-slate-300 dark:text-slate-600 hover:text-slate-400'}`}
                   >
-                    AI BULK IMPORT
-                    {modalTab === 'bulk' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-black dark:bg-white rounded-t-full" />}
+                    AI NHẬP HÀNG LOẠT
                   </button>
                 )}
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="pb-4 text-slate-400 hover:text-black dark:hover:text-white transition-colors"><CloseOutlined /></button>
+              <button onClick={() => setIsModalOpen(false)} className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 hover:text-black dark:hover:text-white transition-colors">
+                Đóng
+              </button>
             </div>
 
             {modalTab === 'single' ? (
-              <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                <div className="grid grid-cols-2 gap-6">
+              <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto hide-scrollbar">
+                <div className="grid grid-cols-2 gap-8">
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center px-1"><label className="text-[9px] font-bold uppercase text-slate-400">Hán tự</label><button type="button" onClick={handleAiAutoFill} disabled={isAiLoading} className="text-[9px] font-bold text-black dark:text-white uppercase"><ThunderboltOutlined /> AI TỰ ĐIỀN</button></div>
-                    <input type="text" name="word" value={formData.word} onChange={handleInputChange} required className="w-full bg-transparent border-b border-slate-200 outline-none py-1.5 text-xl font-bold" />
+                    <div className="flex justify-between items-center px-1">
+                      <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">Từ vựng</label>
+                      <button type="button" onClick={handleAiAutoFill} disabled={isAiLoading} className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-black dark:text-white text-[9px] font-black rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter flex items-center gap-1 disabled:opacity-50">
+                        <ThunderboltOutlined className="text-[10px]" /> AI ĐIỀN
+                      </button>
+                    </div>
+                    <input type="text" name="word" value={formData.word} onChange={handleInputChange} required className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" />
                   </div>
-                  <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Cách đọc</label><input type="text" name="reading" value={formData.reading} onChange={handleInputChange} required className="w-full bg-transparent border-b border-slate-200 outline-none py-1.5 text-xl font-bold" /></div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Cách đọc</label>
+                    <input type="text" name="reading" value={formData.reading} onChange={handleInputChange} required className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" />
+                  </div>
                 </div>
-                <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Ý nghĩa</label><input type="text" name="meaning" value={formData.meaning} onChange={handleInputChange} required className="w-full bg-transparent border-b border-slate-200 outline-none py-1.5 text-lg font-bold" /></div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Ví dụ (JP)</label><input type="text" name="example" value={formData.example} onChange={handleInputChange} className="w-full bg-transparent border-b border-slate-200 outline-none py-1.5 text-sm" /></div>
-                  <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Dịch ví dụ</label><input type="text" name="exampleMeaning" value={formData.exampleMeaning} onChange={handleInputChange} className="w-full bg-transparent border-b border-slate-200 outline-none py-1.5 text-sm italic text-slate-400" /></div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Ý nghĩa</label>
+                  <input type="text" name="meaning" value={formData.meaning} onChange={handleInputChange} required className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" />
                 </div>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Giáo trình</label><Select value={formData.bookId} onChange={v => setFormData(p => ({...p, bookId: v}))} className="w-full custom-select" variant="borderless" options={books.map(b => ({ value: b.id.toString(), label: b.title.toUpperCase() }))} /></div>
-                  <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Bài số (Week)</label><input type="number" name="week" value={formData.week} onChange={handleInputChange} className="w-full bg-transparent border-b border-slate-200 outline-none py-1.5 text-sm font-bold text-center" /></div>
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Ví dụ (JP)</label>
+                    <input type="text" name="example" value={formData.example} onChange={handleInputChange} className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Dịch ví dụ</label>
+                    <input type="text" name="exampleMeaning" value={formData.exampleMeaning} onChange={handleInputChange} className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm italic outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" />
+                  </div>
                 </div>
-                <button type="submit" className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl text-[10px] font-bold uppercase tracking-widest mt-4 hover:-translate-y-0.5 transition-transform shadow-md">LƯU VÀO GIÁO TRÌNH</button>
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-slate-400 px-1 block">Giáo trình</label>
+                    <Select value={formData.bookId} onChange={v => setFormData(p => ({...p, bookId: v}))} className="w-full custom-select-form" variant="borderless" classNames={{ popup: 'custom-select-popup' }} style={{ borderBottom: '1px solid #f1f5f9' }} options={books.map(b => ({ value: b.id.toString(), label: b.title }))} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-medium uppercase tracking-widest text-slate-400 px-1">Bài số (Week)</label>
+                    <input type="number" name="week" value={formData.week} onChange={handleInputChange} placeholder="VD: 1, 2..." className="w-full px-1 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-xs outline-none transition-all" />
+                  </div>
+                </div>
+                <div className="pt-4">
+                  <button type="submit" className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:opacity-80 transition-all shadow-xl">
+                    {editingId ? 'CẬP NHẬT' : 'LƯU DỮ LIỆU'}
+                  </button>
+                </div>
               </form>
             ) : (
               <div className="p-8 space-y-8 bg-white dark:bg-slate-950">
@@ -515,13 +638,39 @@ export default function VocabManager() {
                         className="w-full custom-select" 
                         variant="borderless" 
                         placeholder="Chọn giáo trình..." 
-                        options={books.map(b => ({ value: b.id.toString(), label: b.title.toUpperCase() }))} 
+                        options={books.map(b => ({ value: b.id.toString(), label: b.title }))} 
+                      />
+                    </div>
+                    <div className="w-20 border-l border-slate-200/60 dark:border-slate-800 pl-3">
+                      <input 
+                        type="number" 
+                        name="week"
+                        value={formData.week}
+                        onChange={handleInputChange}
+                        placeholder="Bài..."
+                        className="w-full bg-transparent outline-none text-xs font-semibold text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
                       />
                     </div>
                     <button 
                       onClick={async () => {
                         const items = previewData.filter(i => i.selected); if (!items.length || !selectedBookId) return messageApi.warning('Vui lòng chọn giáo trình và ít nhất 1 từ vựng');
-                        try { for (const itm of items) await vocabService.create({ ...itm, book: { id: parseInt(selectedBookId) } }); messageApi.success('Đã lưu hệ thống!'); setIsModalOpen(false); fetchData(); setPreviewData([]); setBulkInput(''); } catch (e) { messageApi.error('Lỗi lưu dữ liệu!'); }
+                        try { 
+                          for (const itm of items) {
+                            await vocabService.create({ 
+                              ...itm, 
+                              week: formData.week ? parseInt(formData.week) : null,
+                              book: { id: parseInt(selectedBookId) } 
+                            }); 
+                          }
+                          messageApi.success('Đã lưu hệ thống!'); 
+                          setIsModalOpen(false); 
+                          fetchData(); 
+                          setPreviewData([]); 
+                          setBulkInput(''); 
+                          setFormData(prev => ({...prev, week: ''}));
+                        } catch (e) { 
+                          messageApi.error('Lỗi lưu dữ liệu!'); 
+                        }
                       }} 
                       className="px-8 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-md hover:-translate-y-0.5 transition-transform"
                     >
@@ -532,9 +681,10 @@ export default function VocabManager() {
               </div>
             )}
           </div>
-        </Modal>
+        </div>
+      , document.body)}
 
-        {/* Bulk Update Modal */}
+      {/* Bulk Update Modal */}
         <Modal
           title={<span className="text-[10px] font-bold uppercase text-slate-400">Cập nhật giáo trình</span>}
           open={isBulkUpdateOpen}

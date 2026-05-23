@@ -215,12 +215,13 @@ export default function Flashcards() {
             <div 
               onClick={() => setIsFlipped(!isFlipped)}
               className="w-full min-h-[380px] cursor-pointer mb-10"
-              style={{ perspective: '1200px' }}
+              style={{ perspective: '1200px', WebkitPerspective: '1200px' }}
             >
               <div 
                 className="relative w-full h-full min-h-[380px] duration-500 transform ease-in-out"
                 style={{ 
                   transformStyle: 'preserve-3d',
+                  WebkitTransformStyle: 'preserve-3d',
                   transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
                 }}
               >
@@ -228,7 +229,7 @@ export default function Flashcards() {
                 {/* FRONT SIDE */}
                 <div 
                   className="absolute inset-0 w-full h-full min-h-[380px] bg-white border border-slate-150 rounded-[2.5rem] p-8 flex flex-col items-center justify-center shadow-lg shadow-slate-100 hover:border-slate-300 transition-all"
-                  style={{ backfaceVisibility: 'hidden' }}
+                  style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
                 >
                   <div className="text-center space-y-6">
                     <h2 className="text-6xl md:text-7xl font-black text-slate-900 tracking-tight leading-normal select-none">
@@ -246,7 +247,9 @@ export default function Flashcards() {
                   className="absolute inset-0 w-full h-full min-h-[380px] bg-white border border-slate-150 rounded-[2.5rem] p-8 flex flex-col items-center justify-center shadow-lg shadow-slate-100 overflow-y-auto"
                   style={{ 
                     backfaceVisibility: 'hidden',
-                    transform: 'rotateY(180deg)'
+                    WebkitBackfaceVisibility: 'hidden',
+                    transform: 'rotateY(180deg)',
+                    WebkitTransform: 'rotateY(180deg)'
                   }}
                 >
                   

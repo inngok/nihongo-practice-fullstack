@@ -139,12 +139,14 @@ public class AiService {
             }
             String prompt = "You are a professional Japanese teacher. For the Japanese grammar structure provided, " +
                     "generate its Vietnamese meaning, a brief explanation of how to use it in Vietnamese, a natural Japanese example sentence, and the Vietnamese translation of that example sentence. " +
+                    "IMPORTANT: If the grammar structure has multiple usage patterns (e.g., it can attach to both Verbs and Nouns), you MUST provide one example sentence for EACH usage pattern. Separate the multiple Japanese sentences in 'exampleSentence' using a newline character (\\n), and separate their corresponding Vietnamese translations in 'exampleMeaning' using a newline character (\\n).\n" +
                     "Return the response strictly as a JSON object with the following keys:\n" +
                     "{\n" +
                     "  \"meaning\": \"(Vietnamese meaning)\",\n" +
                     "  \"explanation\": \"(Vietnamese explanation of usage)\",\n" +
-                    "  \"exampleSentence\": \"(natural Japanese example sentence)\",\n" +
-                    "  \"exampleMeaning\": \"(Vietnamese translation of the example sentence)\"\n" +
+                    "  \"exampleSentence\": \"(natural Japanese example sentence(s), separated by \\n if multiple)\",\n" +
+                    "  \"exampleMeaning\": \"(Vietnamese translation(s) of the example sentence(s), separated by \\n if multiple)\",\n" +
+                    "  \"quizSentence\": \"(You MUST copy the exampleSentence exactly, but replace the exact conjugated grammar word/phrase with '_____'. Even if the grammar changes form in the sentence, find it and replace it with '_____'. Example: if grammar is 'に囲まれる' and sentence is '山々に囲まれていて', output '山々に_____いて'. There MUST be exactly one '_____' per sentence. Separate multiple sentences by \\n.)\"\n" +
                     "}\n" +
                     "Do not include any formatting, markdown, or other text except the clean JSON object.\n" +
                     "Structure: " + structure;
@@ -155,7 +157,36 @@ public class AiService {
             recordAiUsage(false);
             System.err.println("Gemini Error: " + e.getMessage());
             String safeError = e.getMessage() != null ? e.getMessage().replace("\"", "'").replace("\n", " ") : "Unknown Error";
-            return String.format("{\"meaning\": \"[Lỗi AI]\", \"explanation\": \"Server AI từ chối: %s\", \"exampleSentence\": \"\", \"exampleMeaning\": \"\"}", safeError);
+            return String.format("{\"meaning\": \"[Lỗi AI]\", \"explanation\": \"Server AI từ chối: %s\", \"exampleSentence\": \"\", \"exampleMeaning\": \"\", \"quizSentence\": \"\"}", safeError);
+        }
+    }
+
+    public String extractVocabularyFromNews(String text) throws Exception {
+        try {
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
+                recordAiUsage(true);
+                return "[{\"word\": \"[Lỗi]\", \"reading\": \"\", \"meaning\": \"Chưa cấu hình API Key cho tính năng AI\"}]";
+            }
+            String prompt = "You are a Japanese teacher. Read the following Japanese news article and extract 5 to 10 important vocabulary words (especially JLPT N4, N3, N2 level words). " +
+                    "For each word, provide its reading in Hiragana/Katakana and its meaning in Vietnamese. " +
+                    "Return the response strictly as a JSON array of objects with the following keys:\n" +
+                    "[\n" +
+                    "  {\n" +
+                    "    \"word\": \"(the word in Kanji or Kana as it appears in the text)\",\n" +
+                    "    \"reading\": \"(reading in Hiragana/Katakana)\",\n" +
+                    "    \"meaning\": \"(Vietnamese meaning)\"\n" +
+                    "  }\n" +
+                    "]\n" +
+                    "Do not include any formatting, markdown, or other text except the clean JSON array.\n" +
+                    "Article Text:\n" + text;
+            String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res;
+        } catch (Exception e) {
+            recordAiUsage(false);
+            System.err.println("Gemini Error: " + e.getMessage());
+            return "[]";
         }
     }
 
@@ -195,7 +226,7 @@ public class AiService {
         if (typeUpper.contains("KANJI")) {
             schema = "[{\"character\": \"...\", \"kunyomi\": \"...\", \"onyomi\": \"...\", \"hanviet\": \"...\", \"meaning\": \"...\", \"examples\": \"...\", \"week\": null, \"day\": null, \"page\": null}]";
         } else if (typeUpper.contains("GRAMMAR")) {
-            schema = "[{\"structure\": \"...\", \"meaning\": \"...\", \"explanation\": \"...\", \"exampleSentence\": \"...\", \"exampleMeaning\": \"...\", \"level\": \"N3\", \"week\": null, \"day\": null}]";
+            schema = "[{\"structure\": \"...\", \"meaning\": \"...\", \"explanation\": \"...\", \"exampleSentence\": \"...\", \"exampleMeaning\": \"...\", \"quizSentence\": \"...\", \"level\": \"N3\", \"week\": null, \"day\": null}]";
         } else {
             schema = "[{\"word\": \"...\", \"reading\": \"...\", \"meaning\": \"...\", \"example\": \"...\", \"exampleMeaning\": \"...\", \"week\": null, \"day\": null, \"page\": null}]";
         }
@@ -207,9 +238,10 @@ public class AiService {
                "2. Ensure all fields are present. Use null for numeric fields (week, day, page) and empty strings for text fields if information is missing.\n" +
                "3. For Kanji, separate kunyomi and onyomi correctly if possible. If only one reading is provided, try to identify if it is Kun or On. If the Vietnamese meaning (\"meaning\") is missing, translate the Kanji's meaning into Vietnamese.\n" +
                "4. For Vocabulary, if the Vietnamese meaning (\"meaning\") of the word/phrase is missing or empty, you MUST translate and populate the meaning in Vietnamese.\n" +
-               "5. For Vocabulary/Grammar, if the Japanese example sentence (\"example\" or \"exampleSentence\") or its Vietnamese translation (\"exampleMeaning\") is missing, you MUST generate a natural, beginner-friendly Japanese example sentence containing that word/structure and translate it correctly into Vietnamese for \"exampleMeaning\".\n" +
-               "6. For Grammar, if explanation is missing, provide a short, clear explanation in Vietnamese about how to use the structure.\n" +
-               "7. For Kanji, the \"examples\" field MUST contain 3-5 high-quality vocabulary entries. Each entry MUST follow this exact format: \"Word (Reading): Vietnamese meaning\". Separate each entry with a semicolon (;). Example: \"地形 (ちけい): địa hình; 形成 (けいせい): hình thành;\".\n" +
+               "5. For Vocabulary/Grammar, if the Japanese example sentence (\"example\" or \"exampleSentence\") or its Vietnamese translation (\"exampleMeaning\") is missing, you MUST generate a natural, beginner-friendly Japanese example sentence containing that word/structure and translate it correctly into Vietnamese for \"exampleMeaning\". For Grammar specifically, if the structure has multiple usage forms (e.g., Verb vs Noun), provide one example for each form, joined by \\n.\n" +
+               "6. For Grammar, the \"quizSentence\" MUST be exactly the \"exampleSentence\", but you MUST replace the conjugated grammar point with '_____'. Even if the grammar changes form (e.g., に囲まれて instead of に囲まれる), you MUST find that part in the sentence and replace it with '_____'. For example, if the sentence is '山々に囲まれていて' and grammar is 'に囲まれる', output '山々に_____いて'. There MUST be exactly one '_____' in the string.\n" +
+               "7. For Grammar, if explanation is missing, provide a short, clear explanation in Vietnamese about how to use the structure.\n" +
+               "8. For Kanji, the \"examples\" field MUST contain 3-5 high-quality vocabulary entries. Each entry MUST follow this exact format: \"Word (Reading): Vietnamese meaning\". Separate each entry with a semicolon (;). Example: \"地形 (ちけい): địa hình; 形成 (けいせい): hình thành;\".\n" +
                "8. Ensure the JSON is valid, properly escaped, and encoded in UTF-8.";
     }
 
@@ -273,8 +305,21 @@ public class AiService {
                 Map firstPart = (Map) parts.get(0);
                 String text = (String) firstPart.get("text");
                 
-                // Clean markdown code blocks if present
-                return text.replaceAll("```json", "").replaceAll("```", "").trim();
+                // Clean markdown code blocks and extract only the JSON part
+                text = text.replaceAll("```json", "").replaceAll("```", "").trim();
+                int startObj = text.indexOf("{");
+                int endObj = text.lastIndexOf("}");
+                int startArr = text.indexOf("[");
+                int endArr = text.lastIndexOf("]");
+                
+                // Check if it's an object or an array
+                if (startObj != -1 && endObj != -1 && (startArr == -1 || startObj < startArr)) {
+                    return text.substring(startObj, endObj + 1);
+                } else if (startArr != -1 && endArr != -1) {
+                    return text.substring(startArr, endArr + 1);
+                }
+                
+                return text;
             }
         }
         throw new Exception("HTTP Error: " + response.getStatusCode());

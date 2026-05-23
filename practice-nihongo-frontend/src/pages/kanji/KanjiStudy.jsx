@@ -1,27 +1,22 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, ChevronLeft, Volume2, Check } from 'lucide-react';
+import { Search } from 'lucide-react';
 import kanjiService from '../../api/kanjiService';
+import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 export default function KanjiStudy() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const bookId = searchParams.get('bookId');
+  const { fetchWithAuth, currentUser } = useAuth();
 
   const [kanjiData, setKanjiData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeMode, setActiveMode] = useState('list');
   const [selectedWeek, setSelectedWeek] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [userInput, setUserInput] = useState('');
-  const [feedback, setFeedback] = useState(null);
-  const [score, setScore] = useState(0);
-  const [showResults, setShowResults] = useState(false);
-  const [completedIds, setCompletedIds] = useState([]);
   const [isShuffle, setIsShuffle] = useState(false);
-  const [studyData, setStudyData] = useState([]);
 
   useEffect(() => {
     if (bookId) {
@@ -60,13 +55,39 @@ export default function KanjiStudy() {
   }, [kanjiData, selectedWeek, isShuffle]);
 
   useEffect(() => {
-    if (activeMode !== 'list') {
-      setStudyData(activeData);
-      setCurrentIndex(0);
-      setFeedback(null);
-      setUserInput('');
-    }
+    // Reset states when changing modes if needed
   }, [activeData, activeMode]);
+
+  // Sync Progress to Backend
+  const progressKey = `kanji_${bookId}_${selectedWeek}`;
+
+  useEffect(() => {
+    if (currentUser && activeData.length > 0 && bookId) {
+       fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`)
+         .then(res => res.json())
+         .then(resData => {
+            if (resData.data) {
+               try {
+                  const state = JSON.parse(resData.data);
+                  if (state.currentIndex !== undefined && state.currentIndex < activeData.length) {
+                     setCurrentIndex(state.currentIndex);
+                  }
+               } catch(e) {}
+            }
+         }).catch(() => {});
+    }
+  }, [bookId, selectedWeek, activeData.length, currentUser]);
+
+  useEffect(() => {
+    if (currentUser && bookId && activeMode !== 'list') {
+        const state = { activeMode };
+        fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ data: JSON.stringify(state) })
+        }).catch(() => {});
+    }
+  }, [activeMode, bookId, selectedWeek, currentUser]);
 
   const ListScreen = (
     <div className="flex flex-col gap-10 animate-in fade-in duration-500">

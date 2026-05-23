@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, ChevronLeft, ChevronRight, Check, Volume2, X } from 'lucide-react';
+import { Search, Check, X } from 'lucide-react';
 import vocabService from '../../api/vocabService';
+import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 export default function VocabStudy() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const bookId = searchParams.get('bookId');
+  const { fetchWithAuth, currentUser } = useAuth();
 
   const [vocabData, setVocabData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -131,12 +134,42 @@ export default function VocabStudy() {
   useEffect(() => {
     if (activeMode !== 'list') {
       setStudyData(activeData);
-      setCurrentIndex(0);
       setFeedback(null);
       setUserInput('');
       setIsFlipped(false);
     }
   }, [activeData, activeMode]);
+
+  // Sync Progress to Backend
+  const progressKey = `vocab_${bookId}_${selectedUnit}`;
+
+  useEffect(() => {
+    if (currentUser && activeData.length > 0 && bookId) {
+       fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`)
+         .then(res => res.json())
+         .then(resData => {
+            if (resData.data) {
+               try {
+                  const state = JSON.parse(resData.data);
+                  if (state.currentIndex !== undefined && state.currentIndex < activeData.length) {
+                     setCurrentIndex(state.currentIndex);
+                  }
+               } catch(e) {}
+            }
+         }).catch(() => {});
+    }
+  }, [bookId, selectedUnit, activeData.length, currentUser]);
+
+  useEffect(() => {
+    if (currentUser && bookId && activeMode !== 'list') {
+        const state = { currentIndex, activeMode };
+        fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ data: JSON.stringify(state) })
+        }).catch(() => {});
+    }
+  }, [currentIndex, activeMode, bookId, selectedUnit, currentUser]);
 
   const handleSubmit = () => {
     if (feedback || activeMode === 'flashcard') {
@@ -193,6 +226,15 @@ export default function VocabStudy() {
     }, 200);
   };
 
+  const handleResetProgress = () => {
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setScore(0);
+    setFeedback(null);
+    setUserInput('');
+    setCompletedIds([]);
+  };
+
   const handleTouchStart = (e) => {
     if (activeMode !== 'flashcard') return;
     setIsDragging(true);
@@ -219,7 +261,7 @@ export default function VocabStudy() {
     } else if (dragOffsetX < -120) {
       handleSwipe('left');
     } else {
-      if (Math.abs(dragOffsetX) < 5) {
+      if (Math.abs(dragOffsetX) < 20) {
         setIsFlipped(prev => !prev);
       }
       setDragOffsetX(0);
@@ -252,7 +294,7 @@ export default function VocabStudy() {
     } else if (dragOffsetX < -120) {
       handleSwipe('left');
     } else {
-      if (Math.abs(dragOffsetX) < 5) {
+      if (Math.abs(dragOffsetX) < 20) {
         setIsFlipped(prev => !prev);
       }
       setDragOffsetX(0);
@@ -314,7 +356,7 @@ export default function VocabStudy() {
 
   const rotateDeg = dragOffsetX * 0.04;
   const cardStyle = {
-    transform: `translateX(${dragOffsetX}px) rotate(${rotateDeg}deg)`,
+    transform: `translateX(${dragOffsetX}px) rotate(${rotateDeg}deg) ${isFlipped ? 'rotateY(180deg)' : ''}`,
     transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
   };
 
@@ -356,20 +398,34 @@ export default function VocabStudy() {
                 style={{ width: `${((currentIndex + 1) / (studyData.length || 1)) * 100}%` }}
               />
             </div>
+            <button
+              onClick={handleResetProgress}
+              className="px-3 py-1 bg-rose-50 dark:bg-rose-950/30 text-rose-500 border border-rose-100 dark:border-rose-900 hover:bg-rose-500 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+            >
+              HỌC LẠI
+            </button>
           </div>
         </div>
       )}
 
       {activeMode !== 'flashcard' && (
         <div className="flex justify-between items-center px-4">
-          <span className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
-            Tiến trình: {currentIndex + 1} / {studyData.length}
-          </span>
-          <div className="h-1 bg-slate-100 dark:bg-slate-800 w-48 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-black dark:bg-white transition-all duration-500" 
-              style={{ width: `${((currentIndex + 1) / (studyData.length || 1)) * 100}%` }}
-            />
+          <div className="flex items-center gap-4">
+            <span className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+              Tiến trình: {currentIndex + 1} / {studyData.length}
+            </span>
+            <div className="h-1 bg-slate-100 dark:bg-slate-800 w-32 sm:w-48 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-black dark:bg-white transition-all duration-500" 
+                style={{ width: `${((currentIndex + 1) / (studyData.length || 1)) * 100}%` }}
+              />
+            </div>
+            <button
+              onClick={handleResetProgress}
+              className="px-3 py-1 bg-rose-50 dark:bg-rose-950/30 text-rose-500 border border-rose-100 dark:border-rose-900 hover:bg-rose-500 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+            >
+              HỌC LẠI
+            </button>
           </div>
         </div>
       )}
@@ -389,6 +445,7 @@ export default function VocabStudy() {
             style={{ touchAction: 'none' }}
           >
             <div 
+              key={currentIndex}
               style={cardStyle}
               className={`relative w-full h-full duration-700 preserve-3d shadow-2xl rounded-[3rem] transition-shadow ${
                 swipeDirection === 'right' ? 'shadow-emerald-200/50 dark:shadow-emerald-950/20' :
@@ -449,7 +506,7 @@ export default function VocabStudy() {
             onClick={() => setIsFlipped(!isFlipped)}
             className="perspective h-[380px] sm:h-[450px] cursor-pointer group"
           >
-            <div className={`relative w-full h-full transition-all duration-700 preserve-3d shadow-2xl rounded-[3rem] ${isFlipped ? 'rotate-y-180' : 'hover:scale-[1.01]'}`}>
+            <div key={currentIndex} className={`relative w-full h-full transition-all duration-700 preserve-3d shadow-2xl rounded-[3rem] ${isFlipped ? 'rotate-y-180' : 'hover:scale-[1.01]'}`}>
               {/* Front Face */}
               <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] flex flex-col items-center justify-center p-6 sm:p-12 text-center">
                 <h2 className="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 dark:text-white font-kanji mb-8 select-all break-all whitespace-pre-wrap leading-tight">
@@ -573,15 +630,13 @@ export default function VocabStudy() {
     <div className="min-h-screen bg-white dark:bg-slate-950 px-4 sm:px-6 md:px-20 pt-32 pb-10 transition-colors">
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Top Bar */}
-        <div className="mb-6">
-          <button 
-            onClick={() => navigate('/vocabulary')}
-            className="group flex items-center gap-3 px-5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-full text-[10px] font-black text-slate-500 hover:text-black dark:hover:text-white uppercase tracking-widest transition-all shadow-sm active:scale-95"
-          >
-            <span className="group-hover:-translate-x-1 transition-transform">←</span> 
-            QUAY LẠI TỪ VỰNG
-          </button>
-        </div>
+        <button
+          onClick={() => navigate('/vocabulary')}
+          className="group flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors mb-6 md:mb-8"
+        >
+          <span className="transition-transform group-hover:-translate-x-1">←</span>
+          QUAY LẠI
+        </button>
 
         {loading ? (
           <div className="flex justify-center py-40">
@@ -691,7 +746,16 @@ export default function VocabStudy() {
         .animate-in { animation: fade-in 0.5s ease-out forwards; }
         .perspective { perspective: 2000px; }
         .preserve-3d { transform-style: preserve-3d; }
-        .backface-hidden { backface-visibility: hidden; }
+        .backface-hidden { 
+          backface-visibility: hidden; 
+          -webkit-backface-visibility: hidden;
+          transform: translate3d(0, 0, 0);
+          -webkit-transform: translate3d(0, 0, 0);
+        }
+        .perspective *, .preserve-3d * {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
         .rotate-y-180 { transform: rotateY(180deg); }
       `}} />
     </div>

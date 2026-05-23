@@ -2,10 +2,50 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import grammarService from '../../api/grammarService';
 import bookService from '../../api/bookService';
-import { Modal, message } from 'antd';
+import { Modal, message, Select } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
+import { createPortal } from 'react-dom';
+
+const customSelectStyles = `
+  .custom-select .ant-select-selector {
+    padding: 0 !important;
+  }
+  .custom-select-popup {
+    padding: 8px !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1) !important;
+    border: 1px solid #f1f5f9 !important;
+  }
+  .dark .custom-select-popup {
+    background-color: #020617 !important;
+    border-color: #1e293b !important;
+  }
+  .custom-select-popup .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+    background-color: #f8fafc !important;
+    color: #000 !important;
+    font-weight: 600 !important;
+    border-radius: 10px !important;
+  }
+  .dark .custom-select-popup .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+    background-color: #1e293b !important;
+    color: #fff !important;
+  }
+  .custom-select-popup .ant-select-item-option-active:not(.ant-select-item-option-selected) {
+    background-color: #f1f5f9 !important;
+    border-radius: 10px !important;
+  }
+  .dark .custom-select-popup .ant-select-item-option-active:not(.ant-select-item-option-selected) {
+    background-color: #0f172a !important;
+    border-radius: 10px !important;
+  }
+  .custom-select-popup .ant-select-item {
+    transition: all 0.2s ease !important;
+    padding: 8px 12px !important;
+    margin-bottom: 2px !important;
+  }
+`;
 
 export default function GrammarManager() {
   const navigate = useNavigate();
@@ -22,10 +62,13 @@ export default function GrammarManager() {
   const [bulkInput, setBulkInput] = useState('');
   const [previewData, setPreviewData] = useState([]);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
   const { fetchWithAuth } = useAuth();
 
   // Filter State
   const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
+  const [selectedLesson, setSelectedLesson] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
   const [bulkUpdateData, setBulkUpdateData] = useState({ week: '', day: '', bookId: '' });
@@ -91,11 +134,77 @@ export default function GrammarManager() {
 
   // Filtered List
   const filteredGrammars = React.useMemo(() => {
-    if (!selectedBookId || selectedBookId === "") return grammars || [];
-    return (grammars || []).filter(g => {
-      const gBookId = g.bookId || g.book?.id;
-      return gBookId?.toString() === selectedBookId.toString();
+    let data = grammars || [];
+    if (selectedBookId && selectedBookId !== "") {
+      data = data.filter(g => {
+        const gBookId = g.bookId || g.book?.id;
+        return gBookId?.toString() === selectedBookId.toString();
+      });
+    }
+    if (selectedLesson && selectedLesson !== "") {
+      data = data.filter(g => g.week?.toString() === selectedLesson.toString());
+    }
+
+    // Duplicate detection
+    const structureCounts = {};
+    data.forEach(g => {
+      if (g.structure) {
+        const s = g.structure.trim();
+        const bookId = g.bookId || g.book?.id || 'none';
+        const key = `${bookId}_${s}`;
+        structureCounts[key] = (structureCounts[key] || 0) + 1;
+      }
     });
+
+    const structureSeen = {};
+
+    let result = data.map(g => {
+      let isDuplicate = false;
+      let isSecondaryDuplicate = false;
+
+      if (g.structure) {
+        const s = g.structure.trim();
+        const bookId = g.bookId || g.book?.id || 'none';
+        const key = `${bookId}_${s}`;
+
+        isDuplicate = structureCounts[key] > 1;
+        
+        if (isDuplicate) {
+          if (structureSeen[key]) {
+             isSecondaryDuplicate = true;
+          } else {
+             structureSeen[key] = true;
+          }
+        }
+      }
+      
+      return {
+        ...g,
+        isDuplicate,
+        isSecondaryDuplicate
+      };
+    });
+
+    if (showDuplicatesOnly) {
+      result = result.filter(g => g.isSecondaryDuplicate);
+    }
+
+    return result;
+  }, [grammars, selectedBookId, selectedLesson, showDuplicatesOnly]);
+
+  const uniqueLessons = React.useMemo(() => {
+    let data = grammars || [];
+    if (selectedBookId && selectedBookId !== "") {
+      data = data.filter(g => {
+        const gBookId = g.bookId || g.book?.id;
+        return gBookId?.toString() === selectedBookId.toString();
+      });
+    }
+    const lessons = new Set();
+    data.forEach(g => {
+      if (g.week) lessons.add(g.week);
+    });
+    return Array.from(lessons).sort((a, b) => a - b);
   }, [grammars, selectedBookId]);
 
   const fetchData = async () => {
@@ -263,6 +372,7 @@ export default function GrammarManager() {
     const itemsToSave = previewData.filter(item => item.selected);
     if (itemsToSave.length === 0) return message.warning('Không có cấu trúc nào được chọn');
 
+    setIsSaving(true);
     const hide = message.loading(`Đang lưu ${itemsToSave.length} cấu trúc ngữ pháp...`, 0);
     try {
       const payload = itemsToSave.map(item => ({
@@ -289,6 +399,7 @@ export default function GrammarManager() {
     } catch (err) {
       message.error('Lỗi khi lưu dữ liệu: ' + err.message);
     } finally {
+      setIsSaving(false);
       hide();
     }
   };
@@ -318,6 +429,7 @@ export default function GrammarManager() {
     };
     delete payload.bookId;
 
+    setIsSaving(true);
     try {
       if (editingId) {
         await grammarService.update(editingId, payload);
@@ -331,6 +443,8 @@ export default function GrammarManager() {
     } catch (err) {
       message.error('Đã có lỗi xảy ra!');
       console.error(err);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -380,6 +494,7 @@ export default function GrammarManager() {
 
   return (
     <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 bg-transparent">
+      <style>{customSelectStyles}</style>
       <div className="max-w-7xl mx-auto">
         
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-6 border-b border-slate-100 dark:border-slate-800">
@@ -416,25 +531,53 @@ export default function GrammarManager() {
           </div>
         </div>
 
-        <div className="flex gap-4 mb-8 p-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl items-center">
-          <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
-            <FilterOutlined className="text-xs" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Bộ lọc nhanh:</span>
+        <div className="flex flex-col md:flex-row items-center gap-4 mb-8 p-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl">
+          <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 min-w-[120px]">
+            <FilterOutlined className="text-sm" />
+            <span className="text-sm font-semibold">Bộ lọc nhanh:</span>
           </div>
-          <select
+          
+          <div className="flex items-center">
+            <button
+              onClick={() => setShowDuplicatesOnly(!showDuplicatesOnly)}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors border ${showDuplicatesOnly ? 'bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-900/30 dark:border-rose-800' : 'bg-transparent border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800'}`}
+            >
+              Lọc trùng lặp
+            </button>
+          </div>
+
+          <Select
             value={selectedBookId}
-            onChange={(e) => setSelectedBookId(e.target.value)}
-            className="px-4 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 focus:ring-2 focus:ring-black/5 outline-none transition-all"
-          >
-            <option value="" className="dark:bg-slate-950">-- Tất cả giáo trình --</option>
-            {books.map(b => (
-              <option key={b.id} value={b.id} className="dark:bg-slate-950">{b.title}</option>
-            ))}
-          </select>
-          {selectedBookId && (
+            onChange={(value) => { setSelectedBookId(value); setSelectedLesson(''); }}
+            placeholder="Tất cả giáo trình"
+            className="w-72 custom-select text-sm font-semibold"
+            variant="borderless"
+            classNames={{
+              popup: 'custom-select-popup'
+            }}
+            options={[
+              { value: '', label: 'Tất cả giáo trình' },
+              ...books.map(b => ({ value: b.id.toString(), label: b.title }))
+            ]}
+          />
+          <Select
+            value={selectedLesson}
+            onChange={(value) => setSelectedLesson(value)}
+            placeholder="Tất cả bài"
+            className="w-40 custom-select text-sm font-semibold"
+            variant="borderless"
+            classNames={{
+              popup: 'custom-select-popup'
+            }}
+            options={[
+              { value: '', label: 'Tất cả bài' },
+              ...uniqueLessons.map(l => ({ value: l.toString(), label: `Bài ${l}` }))
+            ]}
+          />
+          {(selectedBookId || selectedLesson || showDuplicatesOnly) && (
             <button 
-              onClick={() => setSelectedBookId('')}
-              className="text-[10px] font-bold text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 uppercase tracking-tighter transition-colors"
+              onClick={() => { setSelectedBookId(''); setSelectedLesson(''); setShowDuplicatesOnly(false); }}
+              className="px-3 py-1.5 text-sm font-semibold text-slate-400 hover:text-red-500 transition-colors"
             >
               Xóa lọc
             </button>
@@ -477,7 +620,14 @@ export default function GrammarManager() {
                           className="w-4 h-4 rounded border-slate-200 dark:border-slate-800 text-black dark:text-white focus:ring-0 cursor-pointer"
                         />
                       </td>
-                      <td className="px-6 py-5 font-bold text-slate-900 dark:text-white">{item.structure}</td>
+                      <td className="px-6 py-5 font-bold text-slate-900 dark:text-white">
+                        <div className="flex items-center gap-2">
+                          {item.structure}
+                          {item.isDuplicate && (
+                            <span className="text-[8px] font-black uppercase bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-md border border-rose-200" title="Cấu trúc này xuất hiện nhiều lần trong giáo trình">Trùng</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-6 py-5 text-slate-500 dark:text-slate-400 text-[13px] italic">{item.meaning}</td>
                       <td className="px-6 py-5">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${levelStyles[item.level] || levelStyles.N5}`}>
@@ -612,8 +762,8 @@ export default function GrammarManager() {
       </Modal>
 
       {/* Unified Add/Bulk Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md overflow-y-auto">
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-slate-900/60 dark:bg-black/80 overflow-y-auto">
           <div className={`bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full ${modalTab === 'bulk' ? 'max-w-6xl' : 'max-w-lg'} rounded-[32px] shadow-2xl flex flex-col max-h-[95vh] animate-in fade-in zoom-in duration-300 transition-all overflow-hidden`}>
             {/* Header with Tabs */}
             <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
@@ -723,12 +873,13 @@ export default function GrammarManager() {
                    </select>
                  </div>
 
-                 <div className="pt-4">
+                  <div className="pt-4">
                    <button 
                      type="submit" 
-                     className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:opacity-80 transition-all shadow-xl"
+                     disabled={isSaving}
+                     className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:opacity-80 transition-all shadow-xl disabled:opacity-50"
                    >
-                     {editingId ? 'CẬP NHẬT' : 'LƯU DỮ LIỆU'}
+                     {isSaving ? 'ĐANG LƯU...' : (editingId ? 'CẬP NHẬT' : 'LƯU DỮ LIỆU')}
                    </button>
                  </div>
               </form>
@@ -849,8 +1000,8 @@ export default function GrammarManager() {
                     </div>
                     <div className="flex gap-4">
                       <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 font-black text-[11px] uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">HỦY</button>
-                      <button onClick={handleSaveBulk} disabled={previewData.length === 0 || !selectedBookId} className="px-10 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-xl disabled:opacity-30">
-                        LƯU ({previewData.filter(i => i.selected).length} cấu trúc)
+                      <button onClick={handleSaveBulk} disabled={previewData.length === 0 || !selectedBookId || isSaving} className="px-10 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-xl disabled:opacity-30">
+                        {isSaving ? 'ĐANG LƯU...' : `LƯU (${previewData.filter(i => i.selected).length} cấu trúc)`}
                       </button>
                     </div>
                  </div>
@@ -858,7 +1009,7 @@ export default function GrammarManager() {
             )}
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 }

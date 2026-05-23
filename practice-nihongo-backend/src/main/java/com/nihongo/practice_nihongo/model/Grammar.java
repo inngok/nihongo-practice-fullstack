@@ -25,6 +25,9 @@ public class Grammar {
     @Column(columnDefinition = "TEXT")
     private String exampleMeaning; 
 
+    @Column(columnDefinition = "TEXT")
+    private String quizSentence;
+
     private String level; 
 
     private Integer week;
@@ -36,13 +39,14 @@ public class Grammar {
 
     public Grammar() {}
 
-    public Grammar(Long id, String structure, String meaning, String explanation, String exampleSentence, String exampleMeaning, String level, Integer week, Integer day, Book book) {
+    public Grammar(Long id, String structure, String meaning, String explanation, String exampleSentence, String exampleMeaning, String quizSentence, String level, Integer week, Integer day, Book book) {
         this.id = id;
         this.structure = structure;
         this.meaning = meaning;
         this.explanation = explanation;
         this.exampleSentence = exampleSentence;
         this.exampleMeaning = exampleMeaning;
+        this.quizSentence = quizSentence;
         this.level = level;
         this.week = week;
         this.day = day;
@@ -62,6 +66,8 @@ public class Grammar {
     public void setExampleSentence(String exampleSentence) { this.exampleSentence = exampleSentence; }
     public String getExampleMeaning() { return exampleMeaning; }
     public void setExampleMeaning(String exampleMeaning) { this.exampleMeaning = exampleMeaning; }
+    public String getQuizSentence() { return quizSentence; }
+    public void setQuizSentence(String quizSentence) { this.quizSentence = quizSentence; }
     public String getLevel() { return level; }
     public void setLevel(String level) { this.level = level; }
     public Integer getWeek() { return week; }
@@ -78,6 +84,7 @@ public class Grammar {
         private String explanation;
         private String exampleSentence;
         private String exampleMeaning;
+        private String quizSentence;
         private String level;
         private Integer week;
         private Integer day;
@@ -89,13 +96,14 @@ public class Grammar {
         public GrammarBuilder explanation(String explanation) { this.explanation = explanation; return this; }
         public GrammarBuilder exampleSentence(String exampleSentence) { this.exampleSentence = exampleSentence; return this; }
         public GrammarBuilder exampleMeaning(String exampleMeaning) { this.exampleMeaning = exampleMeaning; return this; }
+        public GrammarBuilder quizSentence(String quizSentence) { this.quizSentence = quizSentence; return this; }
         public GrammarBuilder level(String level) { this.level = level; return this; }
         public GrammarBuilder week(Integer week) { this.week = week; return this; }
         public GrammarBuilder day(Integer day) { this.day = day; return this; }
         public GrammarBuilder book(Book book) { this.book = book; return this; }
 
         public Grammar build() {
-            return new Grammar(id, structure, meaning, explanation, exampleSentence, exampleMeaning, level, week, day, book);
+            return new Grammar(id, structure, meaning, explanation, exampleSentence, exampleMeaning, quizSentence, level, week, day, book);
         }
     }
 

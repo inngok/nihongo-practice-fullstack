@@ -44,6 +44,8 @@ const Tips = lazy(() => import("../pages/tips/Tips"));
 const AiChat = lazy(() => import("../pages/ai-chat/AiChat"));
 const Profile = lazy(() => import("../pages/profile/Profile"));
 const JlptPastVocab = lazy(() => import("../pages/exam/jlpt/JlptPastVocab"));
+const NewsList = lazy(() => import("../pages/news/NewsList"));
+const NewsDetail = lazy(() => import("../pages/news/NewsDetail"));
 
 // Admin Management
 const Dashboard = lazy(() => import("../pages/manage/Dashboard"));
@@ -85,19 +87,25 @@ const PageLoader = () => (
   </div>
 );
 
-const UserLayout = () => (
-  <div className="flex flex-col min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300 relative">
-    <ScrollToTopButton />
-    <Header />
+const UserLayout = () => {
+  const { pathname } = useLocation();
+  const hideFooterRoutes = ['/ai-chat'];
+  const shouldHideFooter = hideFooterRoutes.includes(pathname);
 
-    <main className="flex-grow flex flex-col">
-      <Suspense fallback={<PageLoader />}>
-        <Outlet />
-      </Suspense>
-    </main>
-    <Footer />
-  </div>
-);
+  return (
+    <div className="flex flex-col min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300 relative">
+      {!shouldHideFooter && <ScrollToTopButton />}
+      <Header />
+
+      <main className="flex-grow flex flex-col">
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
+      </main>
+      {!shouldHideFooter && <Footer />}
+    </div>
+  );
+};
 
 const AdminLayout = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -126,7 +134,7 @@ const AdminLayout = () => {
       )}
 
       {/* Admin Sidebar Container */}
-      <div className={`fixed inset-y-0 left-0 z-[1180] w-64 transform lg:transform-none lg:static lg:block transition-transform duration-300 ease-in-out ${
+      <div className={`fixed inset-y-0 left-0 z-[1180] w-64 transform lg:transform-none lg:sticky lg:top-0 lg:h-screen lg:block transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         <AdminSidebar onClose={() => setIsOpen(false)} />
@@ -147,6 +155,12 @@ const AdminRoute = ({ children }) => {
   const isAdmin = currentUser?.role?.toUpperCase() === 'ADMIN';
   if (!currentUser) return <Navigate to="/login" replace />;
   if (!isAdmin) return <Navigate to="/" replace />;
+  return children ? children : <Outlet />;
+};
+
+const PrivateRoute = ({ children }) => {
+  const { currentUser } = useAuth();
+  if (!currentUser) return <Navigate to="/login" replace />;
   return children ? children : <Outlet />;
 };
 
@@ -199,7 +213,10 @@ export default function RouteMap() {
           <Route index element={<Vocabulary />} />
           <Route path="study" element={<VocabStudyWrapper />} />
         </Route>
-        <Route path="my-vocab" element={<PersonalVocab />} />
+        {/* Private Routes */}
+        <Route element={<PrivateRoute />}>
+          <Route path="my-vocab" element={<PersonalVocab />} />
+        </Route>
 
         {/* Kanji Section */}
         <Route path="kanji">
@@ -228,6 +245,10 @@ export default function RouteMap() {
         <Route path="translator" element={<Translator />} />
         <Route path="tips" element={<Tips />} />
         <Route path="flashcards" element={<Flashcards />} />
+        <Route path="news">
+          <Route index element={<NewsList />} />
+          <Route path=":id" element={<NewsDetail />} />
+        </Route>
         <Route path="ai-chat" element={<AiChat />} />
         <Route path="profile" element={<Profile />} />
         <Route path="*" element={<Fallback />} />
