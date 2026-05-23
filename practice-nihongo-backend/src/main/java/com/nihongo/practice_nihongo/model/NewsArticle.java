@@ -1,11 +1,14 @@
 package com.nihongo.practice_nihongo.model;
 
 import jakarta.persistence.*;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "news_articles")
-public class NewsArticle {
+public class NewsArticle implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

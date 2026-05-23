@@ -6,6 +6,7 @@ import { Modal, message, Select } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
+import { createPortal } from 'react-dom';
 
 const customSelectStyles = `
   .custom-select .ant-select-selector {
@@ -67,6 +68,7 @@ export default function KanjiManager() {
 
   // Filter State
   const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
+  const [selectedLesson, setSelectedLesson] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
   const [bulkUpdateData, setBulkUpdateData] = useState({ week: '', page: '', bookId: '' });
@@ -112,11 +114,32 @@ export default function KanjiManager() {
 
   // Filtered List
   const filteredKanjis = React.useMemo(() => {
-    if (!selectedBookId || selectedBookId === "") return kanjis || [];
-    return (kanjis || []).filter(k => {
-      const kBookId = k.bookId || k.book?.id;
-      return kBookId?.toString() === selectedBookId.toString();
+    let data = kanjis || [];
+    if (selectedBookId && selectedBookId !== "") {
+      data = data.filter(k => {
+        const kBookId = k.bookId || k.book?.id;
+        return kBookId?.toString() === selectedBookId.toString();
+      });
+    }
+    if (selectedLesson && selectedLesson !== "") {
+      data = data.filter(k => k.week?.toString() === selectedLesson.toString());
+    }
+    return data;
+  }, [kanjis, selectedBookId, selectedLesson]);
+
+  const uniqueLessons = React.useMemo(() => {
+    let data = kanjis || [];
+    if (selectedBookId && selectedBookId !== "") {
+      data = data.filter(k => {
+        const kBookId = k.bookId || k.book?.id;
+        return kBookId?.toString() === selectedBookId.toString();
+      });
+    }
+    const lessons = new Set();
+    data.forEach(k => {
+      if (k.week) lessons.add(k.week);
     });
+    return Array.from(lessons).sort((a, b) => a - b);
   }, [kanjis, selectedBookId]);
 
   const fetchData = async () => {
@@ -444,28 +467,41 @@ export default function KanjiManager() {
         {/* Filter Bar */}
         <div className="flex gap-4 mb-8 p-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl items-center">
           <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
-            <FilterOutlined className="text-xs" />
-            <span className="text-[10px] font-bold uppercase tracking-widest">Bộ lọc nhanh:</span>
+            <FilterOutlined className="text-sm" />
+            <span className="text-sm font-semibold">Bộ lọc nhanh:</span>
           </div>
           <Select
             value={selectedBookId}
-            onChange={(value) => setSelectedBookId(value)}
+            onChange={(value) => { setSelectedBookId(value); setSelectedLesson(''); }}
             placeholder="Tất cả giáo trình"
-            className="w-72 custom-select"
+            className="w-72 custom-select text-sm font-semibold"
             variant="borderless"
             classNames={{
               popup: 'custom-select-popup'
             }}
-            style={{ fontWeight: '500', fontSize: '13px' }}
             options={[
-              { value: '', label: '-- Tất cả giáo trình --' },
+              { value: '', label: 'Tất cả giáo trình' },
               ...books.map(b => ({ value: b.id.toString(), label: b.title }))
             ]}
           />
-          {selectedBookId && (
+          <Select
+            value={selectedLesson}
+            onChange={(value) => setSelectedLesson(value)}
+            placeholder="Tất cả bài"
+            className="w-40 custom-select text-sm font-semibold"
+            variant="borderless"
+            classNames={{
+              popup: 'custom-select-popup'
+            }}
+            options={[
+              { value: '', label: 'Tất cả bài' },
+              ...uniqueLessons.map(l => ({ value: l.toString(), label: `Bài ${l}` }))
+            ]}
+          />
+          {(selectedBookId || selectedLesson) && (
             <button 
-              onClick={() => setSelectedBookId('')}
-              className="text-[10px] font-bold text-slate-300 hover:text-red-500 dark:text-slate-600 dark:hover:text-red-400 uppercase tracking-tighter transition-colors"
+              onClick={() => { setSelectedBookId(''); setSelectedLesson(''); }}
+              className="px-3 py-1.5 text-sm font-semibold text-slate-400 hover:text-red-500 transition-colors"
             >
               Xóa lọc
             </button>
@@ -655,8 +691,8 @@ export default function KanjiManager() {
       </Modal>
 
       {/* Unified Add/Bulk Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 bg-slate-900/40 dark:bg-black/60 backdrop-blur-md overflow-y-auto">
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-slate-900/60 dark:bg-black/80 overflow-y-auto">
           <div className={`bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full ${modalTab === 'bulk' ? 'max-w-6xl' : 'max-w-lg'} rounded-[32px] shadow-2xl flex flex-col max-h-[95vh] animate-in fade-in zoom-in duration-300 transition-all overflow-hidden`}>
             {/* Header with Tabs */}
             <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
@@ -914,7 +950,7 @@ export default function KanjiManager() {
             )}
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 }

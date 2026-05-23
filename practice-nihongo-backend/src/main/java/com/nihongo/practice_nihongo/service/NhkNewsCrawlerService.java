@@ -12,6 +12,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import org.springframework.cache.annotation.CacheEvict;
+
 import java.time.LocalDateTime;
 
 @Service
@@ -27,6 +29,7 @@ public class NhkNewsCrawlerService {
     private AiService aiService;
 
     @Scheduled(cron = "0 0 0 * * ?")
+    @CacheEvict(value = "newsListCache", allEntries = true)
     public void crawlDailyNhkNews() {
         log.info("Bắt đầu crawl tin tức từ nhkeasier.com...");
         try {

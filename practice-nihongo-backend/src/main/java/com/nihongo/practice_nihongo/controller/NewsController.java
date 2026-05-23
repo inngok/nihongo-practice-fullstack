@@ -6,6 +6,8 @@ import com.nihongo.practice_nihongo.service.NhkNewsCrawlerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +28,7 @@ public class NewsController {
 
     // Lấy danh sách toàn bộ bài báo, sắp xếp mới nhất lên đầu
     @GetMapping
+    @Cacheable(value = "newsListCache")
     public ResponseEntity<List<NewsArticle>> getAllNews() {
         List<NewsArticle> news = newsArticleRepository.findAll(Sort.by(Sort.Direction.DESC, "publishedAt"));
         return ResponseEntity.ok(news);
@@ -33,6 +36,7 @@ public class NewsController {
 
     // Lấy chi tiết 1 bài báo bằng ID
     @GetMapping("/{id}")
+    @Cacheable(value = "newsDetailCache", key = "#id")
     public ResponseEntity<NewsArticle> getNewsById(@PathVariable Long id) {
         return newsArticleRepository.findById(id)
                 .map(ResponseEntity::ok)
@@ -40,6 +44,7 @@ public class NewsController {
     }
 
     @PostMapping("/crawl")
+    @CacheEvict(value = {"newsListCache", "newsDetailCache"}, allEntries = true)
     public ResponseEntity<String> triggerCrawlManually() {
         nhkNewsCrawlerService.crawlDailyNhkNews();
         return ResponseEntity.ok("Đã chạy tiến trình crawl báo thủ công. Kiểm tra log của backend để xem chi tiết.");
@@ -47,6 +52,7 @@ public class NewsController {
 
     // Endpoint để trích xuất từ vựng từ bài báo bằng AI
     @PostMapping("/{id}/extract-vocab")
+    @CacheEvict(value = {"newsListCache", "newsDetailCache"}, allEntries = true)
     public ResponseEntity<NewsArticle> extractVocab(@PathVariable Long id) {
         try {
             NewsArticle article = newsArticleRepository.findById(id).orElse(null);

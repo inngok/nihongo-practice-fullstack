@@ -19,14 +19,15 @@ export default function AdminSidebar({ onClose }) {
     { path: '/', label: 'Về trang chủ' },
     { type: 'divider' },
     { path: '/manage', label: 'Tổng quan' },
-    { path: '/grammar/manage', label: 'Ngữ pháp' },
-    { path: '/vocabulary/manage', label: 'Từ vựng' },
-    { path: '/kanji/manage', label: 'Hán tự' },
     { path: '/grammar/books', label: 'Bộ sách' },
+    { path: '/vocabulary/manage', label: 'Từ vựng' },
+    { path: '/grammar/manage', label: 'Ngữ pháp' },
+    { path: '/kanji/manage', label: 'Hán tự' },
+    { type: 'divider' },
     { path: '/manage/users', label: 'Quản lý người dùng' },
-    { path: '/manage/import', label: 'Import dữ liệu' },
-    { path: '/manage/jlpt-vocab', label: 'JLPT Từ vựng' },
     { path: '/manage/ai', label: 'Quản lý AI' },
+    { path: '/manage/import', label: 'Nhập dữ liệu' },
+    { path: '/manage/jlpt-vocab', label: 'JLPT Từ vựng' },
   ];
 
   return (
@@ -47,10 +48,10 @@ export default function AdminSidebar({ onClose }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-grow py-4 px-3 space-y-0.5 overflow-y-auto no-scrollbar">
+      <nav className="flex-grow py-4 px-3 space-y-1 overflow-y-auto no-scrollbar">
         {menuItems.map((item, index) => {
           if (item.type === 'divider') {
-            return <div key={index} className="h-px bg-slate-50 dark:bg-slate-850 my-4 mx-4" />;
+            return <div key={index} className="h-px bg-slate-100 dark:bg-slate-850 my-3 mx-2" />;
           }
 
           const isActive = pathname === item.path;

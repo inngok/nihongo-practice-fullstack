@@ -134,7 +134,7 @@ const AdminLayout = () => {
       )}
 
       {/* Admin Sidebar Container */}
-      <div className={`fixed inset-y-0 left-0 z-[1180] w-64 transform lg:transform-none lg:static lg:block transition-transform duration-300 ease-in-out ${
+      <div className={`fixed inset-y-0 left-0 z-[1180] w-64 transform lg:transform-none lg:sticky lg:top-0 lg:h-screen lg:block transition-transform duration-300 ease-in-out ${
         isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         <AdminSidebar onClose={() => setIsOpen(false)} />
