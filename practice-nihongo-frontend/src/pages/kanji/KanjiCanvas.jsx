@@ -717,13 +717,11 @@ export default function KanjiCanvas({ kanjiList, addedKanjiIds, onAddFlashcard, 
             >
               {addedKanjiIds.has(currentKanji.id) ? (
                 <>
-                  <HeartFilled className="text-rose-500 text-xs animate-pulse" />
-                  Đã lưu Sổ tay ôn tập ❤️
+                  Đã lưu Sổ tay ôn tập
                 </>
               ) : (
                 <>
-                  <HeartOutlined className="text-rose-400 text-xs" />
-                  Lưu vào Sổ tay ôn tập ❤️
+                  Lưu vào Sổ tay ôn tập
                 </>
               )}
             </button>

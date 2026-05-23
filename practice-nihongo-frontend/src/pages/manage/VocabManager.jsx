@@ -60,6 +60,7 @@ export default function VocabManager() {
   const [loading, setLoading] = useState(true);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
   
   const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -95,8 +96,45 @@ export default function VocabManager() {
       const s = searchTerm.toLowerCase();
       data = data.filter(v => v.word?.toLowerCase().includes(s) || v.reading?.toLowerCase().includes(s) || v.meaning?.toLowerCase().includes(s));
     }
-    return data;
-  }, [vocabs, selectedBookId, searchTerm]);
+    
+    // Đếm số lần xuất hiện của từ vựng để tìm từ trùng lặp
+    const wordCounts = {};
+    data.forEach(v => {
+      if (v.word) {
+        const w = v.word.trim();
+        wordCounts[w] = (wordCounts[w] || 0) + 1;
+      }
+    });
+
+    const wordSeen = {};
+
+    let result = data.map(v => {
+      const w = v.word?.trim();
+      const isDuplicate = w && wordCounts[w] > 1;
+      let isSecondaryDuplicate = false;
+      
+      if (isDuplicate) {
+        if (wordSeen[w]) {
+           isSecondaryDuplicate = true;
+        } else {
+           wordSeen[w] = true;
+        }
+      }
+      
+      return {
+        ...v,
+        isDuplicate,
+        isSecondaryDuplicate
+      };
+    });
+
+    if (showDuplicatesOnly) {
+      // Chỉ hiện các từ lặp ở vị trí thứ 2 trở đi, giữ lại bản gốc
+      result = result.filter(v => v.isSecondaryDuplicate);
+    }
+
+    return result;
+  }, [vocabs, selectedBookId, searchTerm, showDuplicatesOnly]);
 
   const fetchData = async () => {
     try {
@@ -277,6 +315,16 @@ export default function VocabManager() {
               className="bg-transparent border-none outline-none w-full text-sm placeholder:text-slate-300"
             />
           </div>
+          
+          <div className="flex items-center">
+            <button
+              onClick={() => setShowDuplicatesOnly(!showDuplicatesOnly)}
+              className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-colors border ${showDuplicatesOnly ? 'bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-900/30 dark:border-rose-800' : 'bg-transparent border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800'}`}
+            >
+              Lọc từ trùng lặp
+            </button>
+          </div>
+
           <div className="flex items-center gap-2 px-4 border-l border-slate-200 dark:border-slate-800 min-w-[240px]">
             <FilterOutlined className="text-slate-400 text-xs" />
             <Select
@@ -329,7 +377,14 @@ export default function VocabManager() {
                           className="w-4 h-4 cursor-pointer"
                         />
                       </td>
-                      <td className="px-4 py-4 font-bold text-slate-900 dark:text-white font-kanji text-lg">{v.word}</td>
+                      <td className="px-4 py-4 font-bold text-slate-900 dark:text-white font-kanji text-lg">
+                        <div className="flex items-center gap-2">
+                          {v.word}
+                          {v.isDuplicate && (
+                            <span className="text-[8px] font-black uppercase bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-md border border-rose-200" title="Từ này xuất hiện nhiều lần">Trùng</span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-4 py-4 text-xs font-medium text-slate-500 italic">{v.reading}</td>
                       <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">{v.meaning}</td>
                       <td className="px-4 py-4 text-center text-[10px] font-bold text-slate-400">{v.week ? `BÀI ${v.week}` : '-'}</td>

@@ -29,7 +29,11 @@ export default function NewsDetail() {
         setArticle(data);
         if (data.extractedVocab) {
             try {
-                setVocabList(JSON.parse(data.extractedVocab));
+                const parsedList = JSON.parse(data.extractedVocab);
+                const uniqueList = Array.isArray(parsedList) 
+                    ? parsedList.filter((v, i, a) => a.findIndex(t => t.word === v.word) === i) 
+                    : [];
+                setVocabList(uniqueList);
             } catch (e) {
                 console.error("Lỗi parse vocab:", e);
             }
@@ -78,7 +82,11 @@ export default function NewsDetail() {
         setArticle(data);
         if (data.extractedVocab) {
             try {
-                setVocabList(JSON.parse(data.extractedVocab));
+                const parsedList = JSON.parse(data.extractedVocab);
+                const uniqueList = Array.isArray(parsedList) 
+                    ? parsedList.filter((v, i, a) => a.findIndex(t => t.word === v.word) === i) 
+                    : [];
+                setVocabList(uniqueList);
                 message.success('Đã trích xuất từ vựng thành công!');
             } catch (e) {
                 message.error('Lỗi khi đọc dữ liệu từ AI.');

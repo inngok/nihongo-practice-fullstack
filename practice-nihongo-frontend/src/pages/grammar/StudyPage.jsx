@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Check, Volume2, Search, X, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, ArrowLeft } from 'lucide-react';
 import grammarService from '../../api/grammarService';
+import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 export default function StudyPage() {
   const { bookId } = useParams();
   const [searchParams] = useSearchParams();
   const targetBookId = bookId || searchParams.get('bookId');
   const navigate = useNavigate();
+  const { fetchWithAuth, currentUser } = useAuth();
 
   const [grammarData, setGrammarData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,10 +18,8 @@ export default function StudyPage() {
   const [expandedId, setExpandedId] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [selectedUnit, setSelectedUnit] = useState(1);
   const [isShuffle, setIsShuffle] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [completedIds, setCompletedIds] = useState([]);
 
   const activeData = useMemo(() => {
     let data = grammarData;
@@ -29,6 +30,37 @@ export default function StudyPage() {
   useEffect(() => {
     fetchGrammar();
   }, [targetBookId]);
+
+  // Sync Progress to Backend
+  const progressKey = `grammar_${targetBookId}`;
+
+  useEffect(() => {
+    if (currentUser && activeData.length > 0 && targetBookId) {
+       fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`)
+         .then(res => res.json())
+         .then(resData => {
+            if (resData.data) {
+               try {
+                  const state = JSON.parse(resData.data);
+                  if (state.currentIndex !== undefined && state.currentIndex < activeData.length) {
+                     setCurrentIndex(state.currentIndex);
+                  }
+               } catch(e) {}
+            }
+         }).catch(() => {});
+    }
+  }, [targetBookId, activeData.length, currentUser]);
+
+  useEffect(() => {
+    if (currentUser && targetBookId && activeMode !== 'menu' && activeMode !== 'list') {
+        const state = { currentIndex, activeMode };
+        fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ data: JSON.stringify(state) })
+        }).catch(() => {});
+    }
+  }, [currentIndex, activeMode, targetBookId, currentUser]);
 
   // Keyboard navigation for Grammar Flashcards
   useEffect(() => {
@@ -72,10 +104,6 @@ export default function StudyPage() {
         quiz: { sentence: item.exampleSentence, translation: item.exampleMeaning, answer: item.structure }
       }));
       setGrammarData(mapped);
-      if (mapped.length > 0) {
-        const units = [...new Set(mapped.map(i => i.unit))].sort((a, b) => a - b);
-        setSelectedUnit(units[0]);
-      }
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -203,7 +231,12 @@ export default function StudyPage() {
     </div>
   );
 
-  const ListScreen = null; // No longer needed as it is integrated directly
+
+
+  const handleResetProgress = () => {
+    setCurrentIndex(0);
+    setIsFlipped(false);
+  };
 
   const handleNext = () => {
     if (currentIndex < activeData.length - 1) {
@@ -230,9 +263,17 @@ export default function StudyPage() {
           <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
           QUAY LẠI MENU
         </button>
-        <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-          TIẾN TRÌNH: {currentIndex + 1} / {activeData.length}
-        </span>
+        <div className="flex items-center gap-4">
+          <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+            TIẾN TRÌNH: {currentIndex + 1} / {activeData.length}
+          </span>
+          <button
+            onClick={handleResetProgress}
+            className="px-3 py-1 bg-rose-50 dark:bg-rose-950/30 text-rose-500 border border-rose-100 dark:border-rose-900 hover:bg-rose-500 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+          >
+            HỌC LẠI
+          </button>
+        </div>
       </div>
 
       {/* Progress Bar */}
@@ -246,6 +287,7 @@ export default function StudyPage() {
       {/* 3D Flashcard */}
       <div className="perspective h-[350px] sm:h-[400px]">
         <div 
+          key={currentIndex}
           onClick={() => setIsFlipped(!isFlipped)}
           className={`relative w-full h-full duration-700 preserve-3d shadow-xl rounded-[2.5rem] cursor-pointer ${isFlipped ? 'rotate-y-180' : 'hover:scale-[1.01]'}`}
         >
