@@ -40,10 +40,12 @@ public class AIController {
         }
     }
 
-    @GetMapping("/generate-grammar")
-    public ResponseEntity<String> generateGrammar(@RequestParam String structure) {
+    @PostMapping("/generate-grammar")
+    public ResponseEntity<String> generateGrammar(@RequestBody Map<String, String> request) {
         try {
-            String result = aiService.generateGrammarDetails(structure);
+            String structure = request.get("structure");
+            String existingSentence = request.get("existingSentence");
+            String result = aiService.generateGrammarDetails(structure, existingSentence);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(e.getMessage());

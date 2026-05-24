@@ -232,7 +232,7 @@ export default function Flashcards() {
                   style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
                 >
                   <div className="text-center space-y-6">
-                    <h2 className="text-6xl md:text-7xl font-black text-slate-900 tracking-tight leading-normal select-none">
+                    <h2 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tight leading-normal select-none">
                       {isKanji ? itemData?.character : itemData?.word}
                     </h2>
                     
@@ -333,7 +333,7 @@ export default function Flashcards() {
                     Bạn hãy tự đánh giá mức độ nhớ của từ này nhé:
                   </p>
                   
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     
                     {/* AGAIN BUTTON (Score 1) */}
                     <button

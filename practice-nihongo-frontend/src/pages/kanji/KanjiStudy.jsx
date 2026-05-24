@@ -190,7 +190,7 @@ export default function KanjiStudy() {
               </div>
             </div>
 
-            <div className="flex items-center bg-slate-50/50 dark:bg-slate-900/50 p-1.5 rounded-2xl shadow-inner border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center bg-slate-50/50 dark:bg-slate-900/50 p-1.5 rounded-2xl shadow-inner border border-slate-100 dark:border-slate-800 w-full sm:w-auto justify-between sm:justify-start">
               {[
                 { id: 'list', label: 'DANH SÁCH' },
                 { id: 'flashcard', label: 'FLASHCARD' },
@@ -199,7 +199,7 @@ export default function KanjiStudy() {
                 <button
                   key={m.id}
                   onClick={() => setActiveMode(m.id)}
-                  className={`px-8 py-3 rounded-xl text-[10px] font-black tracking-widest transition-all ${
+                  className={`flex-1 sm:flex-none px-2 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[9px] sm:text-[10px] font-black tracking-widest transition-all text-center ${
                     activeMode === m.id 
                       ? 'bg-black text-white dark:bg-white dark:text-black shadow-xl' 
                       : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'

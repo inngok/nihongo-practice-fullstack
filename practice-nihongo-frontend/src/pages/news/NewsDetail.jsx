@@ -4,7 +4,6 @@ import { Spin, Typography, Breadcrumb, Alert, Card, Switch, Button, message } fr
 import { HomeOutlined, ReadOutlined, SoundOutlined, PauseCircleOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
-// Tùy chỉnh CSS để hiển thị ruby/furigana đẹp hơn
 import './news.css';
 
 const { Title, Paragraph } = Typography;
@@ -38,6 +37,7 @@ export default function NewsDetail() {
                 console.error("Lỗi parse vocab:", e);
             }
         }
+
         setLoading(false);
       })
       .catch(err => {
@@ -102,6 +102,27 @@ export default function NewsDetail() {
     }
   };
 
+  const handleGenerateQuiz = async () => {
+    setGeneratingQuiz(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/news/${id}/generate-quiz`, { method: 'POST' });
+      if (response.ok) {
+        const data = await response.json();
+        setArticle(data);
+        if (data.quizData) {
+            setQuizList(JSON.parse(data.quizData));
+            message.success('Đã tạo câu hỏi trắc nghiệm thành công!');
+        }
+      } else {
+        message.error('Lỗi khi tạo trắc nghiệm!');
+      }
+    } catch (error) {
+      message.error('Không thể kết nối đến máy chủ.');
+    } finally {
+      setGeneratingQuiz(false);
+    }
+  };
+
   if (loading) return <div className="text-center pt-32"><Spin size="large" /></div>;
   if (!article) return <div className="p-10 pt-32 max-w-3xl mx-auto"><Alert type="error" message="Không tìm thấy bài báo" /></div>;
 
@@ -132,14 +153,16 @@ export default function NewsDetail() {
         />
       )}
 
-      <Title level={2} className="dark:text-white mb-4">{article.title}</Title>
+      <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-8 leading-tight tracking-tight">
+        {article.title}
+      </h1>
       
-      <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-slate-800 px-4 py-3 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 w-fit mb-6 max-w-full">
+      <div className="flex flex-wrap items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-[1.25rem] border border-slate-200/60 dark:border-slate-800 w-fit mb-10 max-w-full backdrop-blur-sm">
         {article.audioUrl ? (
           <audio 
             controls 
             src={article.audioUrl} 
-            className="h-10 w-full sm:w-64 max-w-full mr-2 rounded-lg"
+            className="h-11 w-full sm:w-72 max-w-full rounded-xl"
           >
             Trình duyệt của bạn không hỗ trợ thẻ audio.
           </audio>
@@ -148,25 +171,26 @@ export default function NewsDetail() {
             type={isPlaying ? "primary" : "default"}
             danger={isPlaying}
             shape="round" 
+            size="large"
             icon={isPlaying ? <PauseCircleOutlined /> : <SoundOutlined />}
             onClick={handlePlayAudio}
-            className="font-bold mr-2"
+            className={`font-bold px-6 shadow-sm border-none ${isPlaying ? '' : 'bg-white text-slate-700 hover:text-indigo-600'}`}
           >
-            {isPlaying ? "Dừng" : "Đọc tự động"}
+            {isPlaying ? "Đang đọc..." : "Nghe tự động"}
           </Button>
         )}
-        <span className="text-sm font-bold text-slate-600 dark:text-slate-300 border-l border-slate-200 dark:border-slate-600 pl-3">Furigana</span>
-        <Switch 
-          checked={showFurigana} 
-          onChange={setShowFurigana} 
-          checkedChildren="Bật" 
-          unCheckedChildren="Tắt"
-          className={showFurigana ? "bg-indigo-500" : "bg-slate-300"}
-        />
+        
+        <div className="flex items-center gap-3 pl-4 pr-3 py-1 border-l-2 border-slate-200/80 dark:border-slate-700">
+          <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Furigana</span>
+          <Switch 
+            checked={showFurigana} 
+            onChange={setShowFurigana} 
+            className={showFurigana ? "bg-indigo-500" : "bg-slate-300"}
+          />
+        </div>
       </div>
       
-      {/* Hiển thị HTML nội dung đã cào về có chứa các thẻ <ruby> (Furigana) */}
-      <Card className="shadow-sm dark:bg-slate-800 dark:border-slate-700 leading-relaxed nhk-article-content text-lg">
+      <Card className="shadow-xl shadow-slate-200/40 dark:shadow-none dark:bg-slate-800/80 dark:border-slate-700/80 rounded-[2rem] border-0 leading-loose nhk-article-content text-xl md:text-2xl font-medium text-slate-800 dark:text-slate-200 mb-12">
         <style>
           {`
             ${!showFurigana ? '.nhk-article-content rt { display: none; }' : ''}
@@ -175,13 +199,12 @@ export default function NewsDetail() {
         <div dangerouslySetInnerHTML={{ __html: article.contentWithFurigana }} />
       </Card>
 
-      {/* Phần Từ vựng AI */}
       {(vocabList.length > 0 || isAdmin) && (
-        <div className="mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <Title level={3} className="m-0 dark:text-white flex items-center gap-2">
-              Gợi ý từ vựng từ AI
-            </Title>
+        <div className="mt-10">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-black m-0 text-slate-900 dark:text-white flex items-center gap-3 tracking-tight">
+              Từ vựng
+            </h2>
             {vocabList.length === 0 && isAdmin && (
               <Button 
                 type="primary" 
@@ -201,7 +224,6 @@ export default function NewsDetail() {
                   key={index}
                   className="group relative flex flex-col p-6 bg-white dark:bg-slate-900 rounded-[1.5rem] border border-slate-200 dark:border-slate-800 hover:border-slate-900 dark:hover:border-slate-400 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgb(255,255,255,0.05)] hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                 >
-                  {/* Decorative background element */}
                   <div className="absolute -right-4 -top-4 w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"></div>
                   
                   <div className="relative z-10">
@@ -232,6 +254,8 @@ export default function NewsDetail() {
           )}
         </div>
       )}
+
+
       
       <div className="mt-8 text-center text-slate-500">
         <a href={article.sourceUrl} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">

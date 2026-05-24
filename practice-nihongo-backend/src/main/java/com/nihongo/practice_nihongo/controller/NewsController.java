@@ -3,6 +3,7 @@ package com.nihongo.practice_nihongo.controller;
 import com.nihongo.practice_nihongo.model.NewsArticle;
 import com.nihongo.practice_nihongo.repository.NewsArticleRepository;
 import com.nihongo.practice_nihongo.service.NhkNewsCrawlerService;
+import com.nihongo.practice_nihongo.service.AiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/news")
-@CrossOrigin(origins = "*") // Đảm bảo frontend có thể gọi API
+@CrossOrigin(origins = "*")
 public class NewsController {
 
     @Autowired
@@ -24,16 +25,14 @@ public class NewsController {
     private NhkNewsCrawlerService nhkNewsCrawlerService;
 
     @Autowired
-    private com.nihongo.practice_nihongo.service.AiService aiService;
+    private AiService aiService;
 
-    // Lấy danh sách toàn bộ bài báo, sắp xếp mới nhất lên đầu
     @GetMapping
     @Cacheable(value = "newsListCache")
     public List<NewsArticle> getAllNews() {
         return newsArticleRepository.findAll(Sort.by(Sort.Direction.DESC, "publishedAt"));
     }
 
-    // Lấy chi tiết 1 bài báo bằng ID
     @GetMapping("/{id}")
     @Cacheable(value = "newsDetailCache", key = "#id")
     public NewsArticle getNewsById(@PathVariable Long id) {
@@ -47,7 +46,13 @@ public class NewsController {
         return ResponseEntity.ok("Đã chạy tiến trình crawl báo thủ công. Kiểm tra log của backend để xem chi tiết.");
     }
 
-    // Endpoint để trích xuất từ vựng từ bài báo bằng AI
+    @PostMapping("/crawl-history")
+    @CacheEvict(value = {"newsListCache", "newsDetailCache"}, allEntries = true)
+    public ResponseEntity<String> triggerCrawlHistory(@RequestParam(defaultValue = "3") int pages) {
+        nhkNewsCrawlerService.crawlHistoricalNews(pages);
+        return ResponseEntity.ok("Đang tiến hành crawl " + pages + " trang báo lịch sử dưới nền. Quá trình này có thể mất vài phút. Hãy kiểm tra log hệ thống để xem tiến độ chi tiết.");
+    }
+
     @PostMapping("/{id}/extract-vocab")
     @CacheEvict(value = {"newsListCache", "newsDetailCache"}, allEntries = true)
     public ResponseEntity<NewsArticle> extractVocab(@PathVariable Long id) {
@@ -57,7 +62,6 @@ public class NewsController {
                 return ResponseEntity.notFound().build();
             }
 
-            // Nếu đã extract rồi thì không gọi AI nữa để tiết kiệm
             if (article.getExtractedVocab() != null && !article.getExtractedVocab().trim().isEmpty() && !article.getExtractedVocab().equals("[]")) {
                 return ResponseEntity.ok(article);
             }

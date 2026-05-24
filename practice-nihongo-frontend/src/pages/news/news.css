@@ -1,14 +1,13 @@
-/* news.css */
 .nhk-article-content ruby {
   ruby-align: center;
   margin: 0 2px;
 }
 .nhk-article-content rt {
   font-size: 0.55em;
-  color: #64748b; /* slate-500 */
+  color: #64748b;
 }
 .dark .nhk-article-content rt {
-  color: #94a3b8; /* slate-400 */
+  color: #94a3b8;
 }
 .nhk-article-content p {
   margin-bottom: 1.5em;

@@ -25,6 +25,7 @@ const customStyles = `
     border-radius: 12px !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
     border: 1px solid #e2e8f0 !important;
+    z-index: 10000 !important;
   }
   .dark .custom-select-popup {
     background-color: #0f172a !important;
@@ -637,6 +638,7 @@ export default function VocabManager() {
                         onChange={v => setSelectedBookId(v)} 
                         className="w-full custom-select" 
                         variant="borderless" 
+                        classNames={{ popup: 'custom-select-popup' }}
                         placeholder="Chọn giáo trình..." 
                         options={books.map(b => ({ value: b.id.toString(), label: b.title }))} 
                       />

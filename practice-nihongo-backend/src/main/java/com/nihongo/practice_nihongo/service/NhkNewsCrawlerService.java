@@ -5,6 +5,7 @@ import com.nihongo.practice_nihongo.repository.NewsArticleRepository;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,7 @@ public class NhkNewsCrawlerService {
         log.info("Bắt đầu crawl tin tức từ nhkeasier.com...");
         try {
             Document homeDoc = Jsoup.connect(NHK_EASIER_URL).userAgent("Mozilla/5.0").get();
-            org.jsoup.select.Elements articles = homeDoc.select("article");
+            Elements articles = homeDoc.select("article");
             
             int count = 0;
             for (Element articleElement : articles) {
@@ -63,7 +64,7 @@ public class NhkNewsCrawlerService {
                 Element titleElement = articleElement.selectFirst("h3");
                 String title = titleElement != null ? titleElement.text().trim() : "Tin tức " + newsId;
                 
-                crawlAndSaveArticle(newsId, title, articleUrl);
+                crawlAndSaveArticle(newsId, title, articleUrl, false);
                 count++;
             }
             log.info("Hoàn tất crawl tin tức NHKEasier.");
@@ -73,7 +74,70 @@ public class NhkNewsCrawlerService {
         }
     }
 
-    private void crawlAndSaveArticle(String newsId, String fallbackTitle, String articleUrl) {
+    @org.springframework.scheduling.annotation.Async
+    public void crawlHistoricalNews(int maxPages) {
+        log.info("Bắt đầu crawl lịch sử tin tức từ nhkeasier.com ({} trang)...", maxPages);
+        try {
+            String currentUrl = NHK_EASIER_URL;
+            for (int i = 1; i <= maxPages; i++) {
+                if (currentUrl == null || currentUrl.isEmpty()) {
+                    log.info("Không tìm thấy link trang tiếp theo. Dừng cào lịch sử.");
+                    break;
+                }
+                
+                log.info("Đang quét trang danh sách ({} / {}): {}", i, maxPages, currentUrl);
+                Document doc = Jsoup.connect(currentUrl).userAgent("Mozilla/5.0").get();
+                Elements articles = doc.select("article");
+                
+                for (Element articleElement : articles) {
+                    Element linkElement = articleElement.selectFirst("h4 a");
+                    if (linkElement == null) continue;
+                    
+                    String articleUrl = linkElement.attr("href");
+                    if (articleUrl.startsWith("/")) {
+                        articleUrl = "https://nhkeasier.com" + articleUrl;
+                    }
+
+                    String newsId = "";
+                    String[] parts = articleUrl.split("/");
+                    if (parts.length > 2) {
+                         newsId = parts[parts.length - 1];
+                         if (newsId.isEmpty()) {
+                             newsId = parts[parts.length - 2];
+                         }
+                    }
+                    
+                    if (newsId.isEmpty() || newsArticleRepository.existsByNewsId(newsId)) {
+                        continue;
+                    }
+                    
+                    Element titleElement = articleElement.selectFirst("h3");
+                    String title = titleElement != null ? titleElement.text().trim() : "Tin tức " + newsId;
+                    
+                    crawlAndSaveArticle(newsId, title, articleUrl, true); // SKIP AI for historical
+                    Thread.sleep(500); // Prevent DDoS ban
+                }
+                
+                // Find next page link
+                Element olderStoriesLink = doc.selectFirst("a:contains(Older stories)");
+                if (olderStoriesLink != null) {
+                    currentUrl = olderStoriesLink.attr("href");
+                    if (currentUrl.startsWith("/")) {
+                        currentUrl = "https://nhkeasier.com" + currentUrl;
+                    }
+                } else {
+                    currentUrl = null;
+                }
+                
+                Thread.sleep(1000); // Sleep between pages
+            }
+            log.info("Hoàn tất crawl {} trang lịch sử.", maxPages);
+        } catch (Exception e) {
+            log.error("Lỗi khi crawl tin tức lịch sử: ", e);
+        }
+    }
+
+    private void crawlAndSaveArticle(String newsId, String fallbackTitle, String articleUrl, boolean skipAi) {
         try {
             log.info("Đang crawl bài báo NHKEasier: " + articleUrl);
             Document doc = Jsoup.connect(articleUrl).userAgent("Mozilla/5.0").get();
@@ -103,12 +167,27 @@ public class NhkNewsCrawlerService {
                  audioUrl = "https://nhkeasier.com" + audioUrl;
             }
 
+            Element dateElement = contentDiv.selectFirst("h4");
+            LocalDateTime publishedAt = LocalDateTime.now();
+            if (dateElement != null) {
+                String dateText = dateElement.text().trim();
+                if (dateText.length() >= 19) {
+                    try {
+                        String dateTimeStr = dateText.substring(0, 19);
+                        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                        publishedAt = LocalDateTime.parse(dateTimeStr, formatter);
+                    } catch (Exception e) {
+                        log.warn("Không thể parse ngày tháng: " + dateText);
+                    }
+                }
+            }
+
             contentDiv.select("h3, h4, img, audio, table, nav").remove();
 
             StringBuilder contentWithFurigana = new StringBuilder();
             StringBuilder contentRaw = new StringBuilder();
 
-            org.jsoup.select.Elements paragraphs = contentDiv.select("p");
+            Elements paragraphs = contentDiv.select("p");
             for (Element p : paragraphs) {
                 if (p.text().trim().isEmpty()) continue;
                 contentWithFurigana.append(p.outerHtml());
@@ -126,15 +205,22 @@ public class NhkNewsCrawlerService {
             article.setSourceUrl(articleUrl);
             article.setImageUrl(imageUrl);
             article.setAudioUrl(audioUrl);
-            article.setPublishedAt(LocalDateTime.now());
+            article.setPublishedAt(publishedAt);
             
-            // Tự động phân tích từ vựng bằng AI ngay khi cào về
-            try {
-                log.info("Đang dùng AI trích xuất từ vựng cho bài: " + newsId);
-                String extractedVocab = aiService.extractVocabularyFromNews(contentRaw.toString());
-                article.setExtractedVocab(extractedVocab);
-            } catch (Exception aiError) {
-                log.error("Lỗi khi AI trích xuất từ vựng bài: " + newsId, aiError);
+            if (!skipAi) {
+                try {
+                    log.info("Đang dùng AI trích xuất từ vựng cho bài: " + newsId);
+                    String extractedVocab = aiService.extractVocabularyFromNews(contentRaw.toString());
+                    article.setExtractedVocab(extractedVocab);
+
+                    if (extractedVocab != null && !extractedVocab.trim().isEmpty() && !extractedVocab.equals("[]")) {
+                        log.info("Đã trích xuất từ vựng thành công cho bài: " + newsId);
+                    }
+                } catch (Exception aiError) {
+                    log.error("Lỗi khi AI xử lý bài: " + newsId, aiError);
+                }
+            } else {
+                article.setExtractedVocab("[]"); // Empty vocab for historical to save time
             }
 
             newsArticleRepository.save(article);

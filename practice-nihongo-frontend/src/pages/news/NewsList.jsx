@@ -12,6 +12,7 @@ export default function NewsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [crawling, setCrawling] = useState(false);
+  const [crawlingHistory, setCrawlingHistory] = useState(false);
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
 
@@ -53,6 +54,22 @@ export default function NewsList() {
     }
   };
 
+  const handleCrawlHistory = async () => {
+    setCrawlingHistory(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/news/crawl-history?pages=5`, { method: 'POST' });
+      if (response.ok) {
+        message.success('Đang lấy 5 trang báo cũ chạy ngầm. Quá trình này có thể tốn vài phút!');
+      } else {
+        message.error('Lỗi khi yêu cầu lấy báo cũ!');
+      }
+    } catch (error) {
+      message.error('Không thể kết nối đến máy chủ.');
+    } finally {
+      setCrawlingHistory(false);
+    }
+  };
+
 
 
   if (loading) return (
@@ -79,17 +96,28 @@ export default function NewsList() {
               Tin tức cập nhật tự động từ NHK News mỗi ngày. Bạn cũng có thể lấy bài mới bằng nút cập nhật thủ công.
             </p>
           </div>
-          <div className="mt-4 md:mt-0">
+          <div className="mt-4 md:mt-0 flex gap-2">
             {isAdmin && (
-              <Button 
-                type="primary" 
-                icon={<SyncOutlined spin={crawling} />} 
-                onClick={handleCrawl} 
-                loading={crawling}
-                className="bg-slate-900 hover:bg-slate-800 text-white border-none rounded-full px-6 h-10 font-bold shadow-md flex items-center gap-2 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
-              >
-                Cập nhật tin mới
-              </Button>
+              <>
+                <Button 
+                  type="default" 
+                  icon={<SyncOutlined spin={crawlingHistory} />} 
+                  onClick={handleCrawlHistory} 
+                  loading={crawlingHistory}
+                  className="rounded-full px-6 h-10 font-bold border-slate-300 text-slate-700 hover:text-indigo-600 hover:border-indigo-600 shadow-sm flex items-center gap-2"
+                >
+                  Lấy báo cũ (5 trang)
+                </Button>
+                <Button 
+                  type="primary" 
+                  icon={<SyncOutlined spin={crawling} />} 
+                  onClick={handleCrawl} 
+                  loading={crawling}
+                  className="bg-slate-900 hover:bg-slate-800 text-white border-none rounded-full px-6 h-10 font-bold shadow-md flex items-center gap-2 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+                >
+                  Cập nhật tin mới
+                </Button>
+              </>
             )}
           </div>
         </div>
