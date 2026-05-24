@@ -496,7 +496,8 @@ export default function KanjiCanvas({ kanjiList, addedKanjiIds, onAddFlashcard, 
               onTouchStart={startDrawing}
               onTouchMove={draw}
               onTouchEnd={stopDrawing}
-              className="absolute inset-0 w-full h-full z-20 bg-transparent cursor-crosshair"
+              className="absolute inset-0 w-full h-full z-20 bg-transparent cursor-crosshair touch-none"
+              style={{ touchAction: 'none' }}
             />
 
             {/* Full Glassmorphism Success Overlay */}

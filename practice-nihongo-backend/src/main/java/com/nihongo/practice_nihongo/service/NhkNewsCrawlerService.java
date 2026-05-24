@@ -73,6 +73,49 @@ public class NhkNewsCrawlerService {
         }
     }
 
+    public void crawlHistoricalNews(int maxPages) {
+        log.info("Bắt đầu crawl lịch sử tin tức từ nhkeasier.com ({} trang)...", maxPages);
+        try {
+            for (int i = 1; i <= maxPages; i++) {
+                String url = i == 1 ? NHK_EASIER_URL : NHK_EASIER_URL + "page/" + i + "/";
+                log.info("Đang quét trang danh sách: {}", url);
+                Document doc = Jsoup.connect(url).userAgent("Mozilla/5.0").get();
+                org.jsoup.select.Elements articles = doc.select("article");
+                
+                for (Element articleElement : articles) {
+                    Element linkElement = articleElement.selectFirst("h4 a");
+                    if (linkElement == null) continue;
+                    
+                    String articleUrl = linkElement.attr("href");
+                    if (articleUrl.startsWith("/")) {
+                        articleUrl = "https://nhkeasier.com" + articleUrl;
+                    }
+
+                    String newsId = "";
+                    String[] parts = articleUrl.split("/");
+                    if (parts.length > 2) {
+                         newsId = parts[parts.length - 1];
+                         if (newsId.isEmpty()) {
+                             newsId = parts[parts.length - 2];
+                         }
+                    }
+                    
+                    if (newsId.isEmpty() || newsArticleRepository.existsByNewsId(newsId)) {
+                        continue;
+                    }
+                    
+                    Element titleElement = articleElement.selectFirst("h3");
+                    String title = titleElement != null ? titleElement.text().trim() : "Tin tức " + newsId;
+                    
+                    crawlAndSaveArticle(newsId, title, articleUrl);
+                }
+            }
+            log.info("Hoàn tất crawl {} trang lịch sử.", maxPages);
+        } catch (Exception e) {
+            log.error("Lỗi khi crawl tin tức lịch sử: ", e);
+        }
+    }
+
     private void crawlAndSaveArticle(String newsId, String fallbackTitle, String articleUrl) {
         try {
             log.info("Đang crawl bài báo NHKEasier: " + articleUrl);

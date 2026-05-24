@@ -47,6 +47,16 @@ public class NewsController {
         return ResponseEntity.ok("Đã chạy tiến trình crawl báo thủ công. Kiểm tra log của backend để xem chi tiết.");
     }
 
+    @PostMapping("/crawl-history")
+    @CacheEvict(value = {"newsListCache", "newsDetailCache"}, allEntries = true)
+    public ResponseEntity<String> triggerCrawlHistory(@RequestParam(defaultValue = "3") int pages) {
+        // Chạy dưới nền (background thread) để không bị timeout (vì AI tốn nhiều thời gian)
+        new Thread(() -> {
+            nhkNewsCrawlerService.crawlHistoricalNews(pages);
+        }).start();
+        return ResponseEntity.ok("Đang tiến hành crawl " + pages + " trang báo lịch sử dưới nền. Quá trình này có thể mất vài phút. Hãy kiểm tra log hệ thống để xem tiến độ chi tiết.");
+    }
+
     // Endpoint để trích xuất từ vựng từ bài báo bằng AI
     @PostMapping("/{id}/extract-vocab")
     @CacheEvict(value = {"newsListCache", "newsDetailCache"}, allEntries = true)

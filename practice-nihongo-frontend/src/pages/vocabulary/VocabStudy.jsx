@@ -13,7 +13,7 @@ export default function VocabStudy() {
 
   const [vocabData, setVocabData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeMode, setActiveMode] = useState('list');
+  const [activeMode, setActiveMode] = useState('flashcard');
   const [selectedUnit, setSelectedUnit] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -470,7 +470,7 @@ export default function VocabStudy() {
                   </div>
                 )}
 
-                <h2 className="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 dark:text-white font-kanji mb-8 select-all break-all whitespace-pre-wrap leading-tight">
+                <h2 className="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 dark:text-white font-kanji mb-6 sm:mb-8 select-all break-all whitespace-pre-wrap leading-tight">
                   {studyData[currentIndex]?.word}
                 </h2>
                 <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.4em]">NHẤN ĐỂ LẬT HOẶC QUẸT</p>
@@ -509,7 +509,7 @@ export default function VocabStudy() {
             <div key={currentIndex} className={`relative w-full h-full transition-all duration-700 preserve-3d shadow-2xl rounded-[3rem] ${isFlipped ? 'rotate-y-180' : 'hover:scale-[1.01]'}`}>
               {/* Front Face */}
               <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] flex flex-col items-center justify-center p-6 sm:p-12 text-center">
-                <h2 className="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 dark:text-white font-kanji mb-8 select-all break-all whitespace-pre-wrap leading-tight">
+                <h2 className="text-4xl sm:text-5xl md:text-7xl font-black text-slate-900 dark:text-white font-kanji mb-6 sm:mb-8 select-all break-all whitespace-pre-wrap leading-tight">
                   {studyData[currentIndex]?.word}
                 </h2>
                 <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.4em] animate-pulse">NHẤN ĐỂ LẬT THẺ</p>
@@ -580,7 +580,7 @@ export default function VocabStudy() {
           </div>
         ) : (
           /* CLASSIC MODE ACTIONS (PREV / NEXT) */
-          <div className="flex gap-4 mt-8">
+          <div className="flex flex-col sm:flex-row gap-4 mt-8">
             <button
               onClick={() => { if (currentIndex > 0) { setCurrentIndex(prev => prev - 1); setIsFlipped(false); }}}
               disabled={currentIndex === 0}
@@ -607,7 +607,7 @@ export default function VocabStudy() {
         )
       ) : (
         /* QUIZ MODE ACTIONS */
-        <div className="flex gap-4 mt-8">
+        <div className="flex flex-col sm:flex-row gap-4 mt-8">
           <button
             onClick={() => { if (currentIndex > 0) { setCurrentIndex(prev => prev - 1); setFeedback(null); setUserInput(''); }}}
             disabled={currentIndex === 0}
@@ -671,7 +671,7 @@ export default function VocabStudy() {
                   {uniqueUnits.map(unit => (
                     <button
                       key={unit}
-                      onClick={() => { setSelectedUnit(unit); setActiveMode('list'); }}
+                      onClick={() => { setSelectedUnit(unit); setActiveMode('flashcard'); }}
                       className={`px-5 py-2 rounded-xl text-[11px] font-black transition-all ${
                         selectedUnit === unit 
                           ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105' 
@@ -696,14 +696,13 @@ export default function VocabStudy() {
                 </div>
                 <div className="flex items-center bg-slate-50/50 dark:bg-slate-900/50 p-1 rounded-2xl shadow-inner border border-slate-100 dark:border-slate-800 w-full sm:w-auto justify-between sm:justify-start">
                   {[
-                    { id: 'list', label: 'DANH SÁCH' },
                     { id: 'flashcard', label: 'FLASHCARD' },
                     { id: 'quiz', label: 'LUYỆN TẬP' }
                   ].map(m => (
                     <button
                       key={m.id}
                       onClick={() => setActiveMode(m.id)}
-                      className={`flex-1 sm:flex-none px-4 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[10px] font-black tracking-widest transition-all text-center ${
+                      className={`flex-1 sm:flex-none px-2 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[9px] sm:text-[10px] font-black tracking-widest transition-all text-center ${
                         activeMode === m.id 
                           ? 'bg-black text-white dark:bg-white dark:text-black shadow-xl' 
                           : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
@@ -718,7 +717,7 @@ export default function VocabStudy() {
 
             {/* Main Content */}
             <div className="pt-4 pb-20">
-              {activeMode === 'list' ? ListScreen : StudyScreen}
+              {StudyScreen}
             </div>
           </>
         )}
@@ -732,10 +731,10 @@ export default function VocabStudy() {
               {score} <span className="text-2xl text-slate-200 dark:text-slate-700">/ {studyData.length}</span>
             </div>
             <button 
-              onClick={() => { setShowResults(false); setActiveMode('list'); }}
+              onClick={() => { setShowResults(false); setActiveMode('flashcard'); }}
               className="w-full py-5 bg-black dark:bg-white text-white dark:text-black rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all"
             >
-              QUAY LẠI DANH SÁCH
+              HỌC LẠI BÀI
             </button>
           </div>
         </div>
