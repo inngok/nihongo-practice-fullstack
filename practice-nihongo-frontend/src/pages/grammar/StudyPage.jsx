@@ -270,10 +270,10 @@ export default function StudyPage() {
   };
 
   const MenuScreen = (
-    <div className="space-y-12 animate-in fade-in duration-700">
+    <div className="space-y-8 animate-in fade-in duration-700">
       {/* Selection grid */}
-      <div className="space-y-6">
-        <div className="flex justify-between items-center border-b border-slate-50 dark:border-slate-900 pb-4">
+      <div className="space-y-4">
+        <div className="flex justify-between items-center border-b border-slate-50 dark:border-slate-900 pb-3">
           <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.2em]">CHỌN CHẾ ĐỘ HỌC</p>
           <div className="flex items-center gap-4">
             <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">XÁO TRỘN</span>
@@ -286,40 +286,30 @@ export default function StudyPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { id: 'cards', label: 'FLASHCARD' },
             { id: 'quiz', label: 'LUYỆN TẬP' },
             { id: 'multiple_choice', label: 'TRẮC NGHIỆM' },
-            { id: 'listening', label: 'NGHE ĐIỀN' },
-            { id: 'list', label: 'DANH SÁCH' }
+            { id: 'listening', label: 'NGHE ĐIỀN' }
           ].map(m => (
             <button
               key={m.id}
-              onClick={() => {
-                if (m.id === 'list') {
-                  const element = document.getElementById('grammar-list-section');
-                  if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
-                  }
-                } else {
-                  setActiveMode(m.id);
-                }
-              }}
-              className="flex items-center justify-center py-4 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-black dark:hover:border-white hover:bg-white dark:hover:bg-slate-950 transition-all duration-300 hover:shadow-md active:scale-95 group"
+              onClick={() => setActiveMode(m.id)}
+              className="flex items-center justify-center py-3 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-black dark:hover:border-white hover:bg-white dark:hover:bg-slate-950 transition-all duration-300 hover:shadow-md active:scale-95 group"
             >
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 group-hover:text-black dark:group-hover:text-white">{m.label}</span>
+              <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 group-hover:text-black dark:group-hover:text-white">{m.label}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Integrated Grammar List Section */}
-      <div id="grammar-list-section" className="space-y-8 pt-8 border-t border-slate-50 dark:border-slate-900">
-        <div className="flex justify-between items-center pb-2">
+      <div id="grammar-list-section" className="space-y-6 pt-6 border-t border-slate-50 dark:border-slate-900">
+        <div className="flex justify-between items-center pb-1">
           <div>
-            <h2 className="text-lg font-black tracking-tight text-slate-950 dark:text-white uppercase italic">DANH SÁCH NGỮ PHÁP</h2>
-            <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">NHẤN VÀO CẤU TRÚC ĐỂ XEM CHI TIẾT VÍ DỤ</p>
+            <h2 className="text-xl font-black tracking-tight text-slate-950 dark:text-white uppercase italic">DANH SÁCH NGỮ PHÁP</h2>
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">NHẤN VÀO CẤU TRÚC ĐỂ XEM CHI TIẾT VÍ DỤ</p>
           </div>
         </div>
 
@@ -330,26 +320,26 @@ export default function StudyPage() {
             placeholder="Tìm kiếm cấu trúc..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 border-b border-slate-100 dark:border-slate-800 bg-transparent outline-none font-medium text-slate-900 dark:text-white text-sm"
+            className="w-full pl-12 pr-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-transparent outline-none font-medium text-slate-900 dark:text-white text-base"
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
           {activeData.filter(i => i.pattern.toLowerCase().includes(searchTerm.toLowerCase())).map((item, idx) => (
             <div
               key={item.id}
               onClick={() => toggleExpand(item.id)}
-              className={`p-6 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] hover:border-black dark:hover:border-white transition-all duration-300 cursor-pointer select-none ${expandedId === item.id ? 'border-black dark:border-white ring-2 ring-black/5 dark:ring-white/5 shadow-lg' : 'hover:shadow-md'
+              className={`p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] hover:border-black dark:hover:border-white transition-all duration-300 cursor-pointer select-none ${expandedId === item.id ? 'border-black dark:border-white ring-2 ring-black/5 dark:ring-white/5 shadow-lg' : 'hover:shadow-md'
                 }`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-6">
-                  <span className="text-[10px] font-black text-slate-200 dark:text-slate-700 w-6">
+                <div className="flex items-center gap-4">
+                  <span className="text-xs font-black text-slate-200 dark:text-slate-700 w-6">
                     {(idx + 1).toString().padStart(2, '0')}
                   </span>
                   <div>
-                    <h3 className="text-lg font-bold italic tracking-tight text-slate-900 dark:text-white">{item.pattern}</h3>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-0.5">{item.meaning}</p>
+                    <h3 className="text-xl font-bold italic tracking-tight text-slate-900 dark:text-white">{item.pattern}</h3>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium mt-0.5">{item.meaning}</p>
                   </div>
                 </div>
                 <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider">
@@ -362,28 +352,41 @@ export default function StudyPage() {
                 <div className="space-y-4">
                   {item.explanation && (
                     <div className="space-y-1">
-                      <h4 className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">Cách dùng & Giải thích</h4>
-                      <p className="text-xs font-medium text-slate-600 dark:text-slate-300 leading-relaxed">{item.explanation}</p>
+                      <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Cách dùng & Giải thích</h4>
+                      <p className="text-sm md:text-[15px] font-medium text-slate-700 dark:text-slate-300 leading-relaxed">{item.explanation}</p>
                     </div>
                   )}
-                  {item.exampleSentence && (
-                    <div className="space-y-1.5 bg-slate-50/50 dark:bg-slate-950/50 p-4 rounded-2xl border border-slate-100/50 dark:border-slate-900">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">Ví dụ thực tế</h4>
-                        <button
-                          onClick={(e) => playAudio(e, item.exampleSentence)}
-                          className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors group/audio"
-                          title="Nghe phát âm"
-                        >
-                          <Volume2 className="w-3.5 h-3.5 text-slate-400 group-hover/audio:text-slate-900 dark:group-hover/audio:text-white" />
-                        </button>
+                  {item.exampleSentence && (() => {
+                    const jpLines = item.exampleSentence.split('\n').map(s => s.trim()).filter(Boolean);
+                    const vnLines = item.exampleMeaning ? item.exampleMeaning.split('\n').map(s => s.trim()).filter(Boolean) : [];
+                    return (
+                      <div className="space-y-2">
+                        <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Ví dụ thực tế</h4>
+                        <div className="space-y-2">
+                          {jpLines.map((jpLine, lineIdx) => {
+                            const vnLine = vnLines[lineIdx] || '';
+                            return (
+                              <div key={lineIdx} className="bg-slate-50/50 dark:bg-slate-950/50 p-4 rounded-2xl border border-slate-100/50 dark:border-slate-900 flex items-start justify-between gap-3 group/ex">
+                                <div className="space-y-1.5 flex-1">
+                                  <p className="text-base font-bold text-slate-900 dark:text-white leading-relaxed">{jpLine}</p>
+                                  {vnLine && (
+                                    <p className="text-xs md:text-sm italic text-slate-500 dark:text-slate-400 leading-relaxed">{vnLine}</p>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={(e) => playAudio(e, jpLine)}
+                                  className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors group/audio shrink-0 mt-0.5"
+                                  title="Nghe phát âm"
+                                >
+                                  <Volume2 className="w-4 h-4 text-slate-400 group-hover/audio:text-slate-900 dark:group-hover/audio:text-white" />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white leading-relaxed whitespace-pre-wrap">{item.exampleSentence}</p>
-                      {item.exampleMeaning && (
-                        <p className="text-xs italic text-slate-500 dark:text-slate-400 leading-relaxed whitespace-pre-wrap">{item.exampleMeaning}</p>
-                      )}
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -448,13 +451,13 @@ export default function StudyPage() {
         />
       </div>
 
-      <div className="perspective h-[350px] sm:h-[400px]">
+      <div className="perspective h-[380px] sm:h-[420px]">
         <div
           key={currentIndex}
           onClick={() => setIsFlipped(!isFlipped)}
           className={`relative w-full h-full duration-700 preserve-3d shadow-xl rounded-[2.5rem] cursor-pointer ${isFlipped ? 'rotate-y-180' : 'hover:scale-[1.01]'}`}
         >
-          <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center shadow-inner">
+          <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center p-5 sm:p-8 text-center shadow-inner">
             <span className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider mb-6 border border-slate-100 dark:border-slate-900">
               {activeData[currentIndex]?.level || 'N3'}
             </span>
@@ -465,7 +468,7 @@ export default function StudyPage() {
           </div>
 
           {/* Back Face */}
-          <div className="absolute inset-0 backface-hidden rotate-y-180 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center shadow-inner">
+          <div className="absolute inset-0 backface-hidden rotate-y-180 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-start sm:justify-center p-5 sm:p-8 text-center shadow-inner overflow-y-auto py-8 sm:py-8">
             <span className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest mb-4">
               CẤU TRÚC: {activeData[currentIndex]?.pattern}
             </span>
@@ -477,20 +480,33 @@ export default function StudyPage() {
             </h3>
 
             {activeData[currentIndex]?.explanation && (
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
                 {activeData[currentIndex]?.explanation}
               </p>
             )}
 
-            {activeData[currentIndex]?.exampleSentence && (
-              <div className="bg-slate-50 dark:bg-slate-950/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-900 text-left w-full max-w-md">
-                <span className="text-[8px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest block mb-1">VÍ DỤ</span>
-                <p className="text-xs font-bold text-slate-900 dark:text-white leading-relaxed whitespace-pre-wrap">{activeData[currentIndex]?.exampleSentence}</p>
-                {activeData[currentIndex]?.exampleMeaning && (
-                  <p className="text-[11px] italic text-slate-400 dark:text-slate-500 leading-relaxed mt-0.5 whitespace-pre-wrap">{activeData[currentIndex]?.exampleMeaning}</p>
-                )}
-              </div>
-            )}
+            {activeData[currentIndex]?.exampleSentence && (() => {
+               const jpLines = activeData[currentIndex].exampleSentence.split('\n').map(s => s.trim()).filter(Boolean);
+               const vnLines = activeData[currentIndex].exampleMeaning ? activeData[currentIndex].exampleMeaning.split('\n').map(s => s.trim()).filter(Boolean) : [];
+               return (
+                 <div className="bg-slate-50 dark:bg-slate-950/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-900 text-left w-full max-w-md space-y-2">
+                   <span className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest block mb-1">VÍ DỤ</span>
+                   <div className="space-y-2">
+                     {jpLines.map((jpLine, lineIdx) => {
+                       const vnLine = vnLines[lineIdx] || '';
+                       return (
+                         <div key={lineIdx} className="space-y-0.5 border-l-2 border-slate-200 dark:border-slate-800 pl-2">
+                           <p className="text-sm font-bold text-slate-900 dark:text-white leading-relaxed">{jpLine}</p>
+                           {vnLine && (
+                             <p className="text-xs italic text-slate-400 dark:text-slate-500 leading-relaxed">{vnLine}</p>
+                           )}
+                         </div>
+                       );
+                     })}
+                   </div>
+                 </div>
+               );
+             })()}
           </div>
         </div>
       </div>
@@ -571,9 +587,6 @@ export default function StudyPage() {
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-relaxed">
             {activeData[currentIndex] && getQuizSentence(activeData[currentIndex].quiz.sentence, activeData[currentIndex].quiz.quizSentence, activeData[currentIndex].quiz.answer)}
           </h2>
-          <p className="text-sm italic text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
-            {activeData[currentIndex]?.quiz.translation}
-          </p>
         </div>
 
         <div className="max-w-sm mx-auto space-y-4">
@@ -608,6 +621,9 @@ export default function StudyPage() {
                   {quizStatus === 'correct' ? 'CHÍNH XÁC!' : quizStatus === 'incorrect' ? 'CHƯA CHÍNH XÁC - ĐÁP ÁN' : 'ĐÁP ÁN'}
                 </p>
                 <p className="text-xl font-bold">{activeData[currentIndex]?.quiz.answer}</p>
+                {activeData[currentIndex]?.quiz.translation && (
+                  <p className="text-xs mt-2 font-medium italic opacity-90 border-t border-slate-100/10 dark:border-slate-800/20 pt-2">Dịch: {activeData[currentIndex].quiz.translation}</p>
+                )}
                 {activeData[currentIndex]?.explanation && (
                   <p className="text-xs mt-2 opacity-80">{activeData[currentIndex].explanation}</p>
                 )}
@@ -700,9 +716,11 @@ export default function StudyPage() {
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-relaxed">
               {activeData[currentIndex] && getQuizSentence(activeData[currentIndex].quiz.sentence, activeData[currentIndex].quiz.quizSentence, activeData[currentIndex].quiz.answer)}
             </h2>
-            <p className="text-sm italic text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
-              {activeData[currentIndex]?.quiz.translation}
-            </p>
+            {mcChecked && (
+              <p className="text-sm italic text-slate-500 dark:text-slate-400 whitespace-pre-wrap animate-in fade-in">
+                {activeData[currentIndex]?.quiz.translation}
+              </p>
+            )}
           </div>
         </div>
 
@@ -778,8 +796,8 @@ export default function StudyPage() {
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 px-4 sm:px-6 md:px-20 pt-32 pb-12 transition-colors">
-      <div className="max-w-7xl mx-auto space-y-12">
+    <div className="min-h-screen bg-white dark:bg-slate-950 px-4 sm:px-6 md:px-20 pt-20 pb-12 transition-colors">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Top Bar */}
         {activeMode === 'menu' && (
           <button

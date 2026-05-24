@@ -34,12 +34,8 @@ const Flashcards = lazy(() => import("../pages/flashcard/Flashcards"));
 
 // Exams & Specialized
 const ExamJLPT = lazy(() => import("../pages/exam/jlpt/ExamJLPT"));
-const DongDu = lazy(() => import("../pages/exam/dong-du/DongDu"));
-const ExamPC7 = lazy(() => import("../pages/exam/dong-du/ExamPC7"));
-const ExamPC8 = lazy(() => import("../pages/exam/dong-du/ExamPC8"));
-const ExamVocab = lazy(() => import("../pages/exam/components/ExamVocab"));
-const KanjiPC8Selector = lazy(() => import("../pages/exam/dong-du/KanjiPC8Selector"));
-const Translator = lazy(() => import("../pages/translator/Translator"));
+
+
 const Tips = lazy(() => import("../pages/tips/Tips"));
 const AiChat = lazy(() => import("../pages/ai-chat/AiChat"));
 const Profile = lazy(() => import("../pages/profile/Profile"));
@@ -226,23 +222,13 @@ export default function RouteMap() {
         </Route>
 
         {/* Exams & Study Tools */}
-        <Route path="dong-du" element={<DongDu />} />
-        <Route path="exam-pc7">
-          <Route index element={<ExamPC7 />} />
-          <Route path="vocab-comprehensive" element={<ExamVocab type="comprehensive" />} />
-          <Route path="kanji-comprehensive" element={<ExamVocab type="kanji-comprehensive" />} />
-        </Route>
-        <Route path="exam-pc8">
-          <Route index element={<ExamPC8 />} />
-          <Route path="kanji" element={<KanjiPC8Selector />} />
-          <Route path="kanji/study" element={<ExamVocab type="kanji-pc8" />} />
-        </Route>
+
         <Route path="exam-jlpt">
           <Route index element={<ExamJLPT />} />
           <Route path="past-vocab" element={<JlptPastVocab />} />
         </Route>
 
-        <Route path="translator" element={<Translator />} />
+
         <Route path="tips" element={<Tips />} />
         <Route path="flashcards" element={<Flashcards />} />
         <Route path="news">

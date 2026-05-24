@@ -37,6 +37,7 @@ export default function NewsDetail() {
                 console.error("Lỗi parse vocab:", e);
             }
         }
+
         setLoading(false);
       })
       .catch(err => {
@@ -98,6 +99,27 @@ export default function NewsDetail() {
       message.error('Không thể kết nối đến máy chủ.');
     } finally {
       setExtracting(false);
+    }
+  };
+
+  const handleGenerateQuiz = async () => {
+    setGeneratingQuiz(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/news/${id}/generate-quiz`, { method: 'POST' });
+      if (response.ok) {
+        const data = await response.json();
+        setArticle(data);
+        if (data.quizData) {
+            setQuizList(JSON.parse(data.quizData));
+            message.success('Đã tạo câu hỏi trắc nghiệm thành công!');
+        }
+      } else {
+        message.error('Lỗi khi tạo trắc nghiệm!');
+      }
+    } catch (error) {
+      message.error('Không thể kết nối đến máy chủ.');
+    } finally {
+      setGeneratingQuiz(false);
     }
   };
 
@@ -232,6 +254,8 @@ export default function NewsDetail() {
           )}
         </div>
       )}
+
+
       
       <div className="mt-8 text-center text-slate-500">
         <a href={article.sourceUrl} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">

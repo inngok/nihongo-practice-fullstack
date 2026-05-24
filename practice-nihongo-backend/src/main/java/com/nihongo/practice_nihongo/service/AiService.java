@@ -9,8 +9,13 @@ import org.springframework.http.*;
 import java.time.LocalDate;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 public class AiService {
+
+    private static final Logger log = LoggerFactory.getLogger(AiService.class);
 
     @Value("${GEMINI_API_KEY:}")
     private String apiKey;
@@ -53,7 +58,7 @@ public class AiService {
             }
             aiUsageRepository.save(usage);
         } catch (Exception e) {
-            System.err.println("Error saving AI usage stats to database: " + e.getMessage());
+            log.error("Error saving AI usage stats to database: " + e.getMessage());
         }
     }
 
@@ -124,26 +129,34 @@ public class AiService {
             return res;
         } catch (Exception e) {
             recordAiUsage(false);
-            System.err.println("Gemini Error: " + e.getMessage());
+            log.error("Gemini Error: " + e.getMessage());
             String safeError = e.getMessage() != null ? e.getMessage().replace("\"", "'").replace("\n", " ") : "Unknown Error";
             return String.format("{\"reading\": \"[Lỗi AI]\", \"meaning\": \"Server AI từ chối: %s\", \"example\": \"\", \"exampleMeaning\": \"\"}", safeError);
         }
     }
 
-    public String generateGrammarDetails(String structure) throws Exception {
+    public String generateGrammarDetails(String structure, String existingSentence) throws Exception {
         try {
             List<String> keys = getApiKeys();
             if (keys.isEmpty()) {
                 recordAiUsage(true);
-                return "{\"meaning\": \"[Không có API Key]\", \"explanation\": \"\", \"exampleSentence\": \"\", \"exampleMeaning\": \"\"}";
+                return "{\"meaning\": \"[Không có API Key]\", \"explanation\": \"\", \"exampleSentence\": \"\", \"exampleMeaning\": \"\", \"quizSentence\": \"\"}";
             }
+            
+            String existingPrompt = "";
+            if (existingSentence != null && !existingSentence.trim().isEmpty()) {
+                existingPrompt = "\nIMPORTANT EXISTING SENTENCES:\nThe user already has the following example sentences:\n" + existingSentence + 
+                                 "\n\nCRITICAL INSTRUCTION: You MUST KEEP these existing sentences exactly as they are in your output 'exampleSentence'. If the grammar has multiple usage patterns (e.g. N vs V), you should only append NEW sentences for the missing usage patterns. Separate multiple sentences using \\n.\n";
+            }
+            
             String prompt = "You are a professional Japanese teacher. For the Japanese grammar structure provided, " +
                     "generate its Vietnamese meaning, a brief explanation of how to use it in Vietnamese, a natural Japanese example sentence, and the Vietnamese translation of that example sentence. " +
-                    "IMPORTANT: If the grammar structure has multiple usage patterns (e.g., it can attach to both Verbs and Nouns), you MUST provide one example sentence for EACH usage pattern. Separate the multiple Japanese sentences in 'exampleSentence' using a newline character (\\n), and separate their corresponding Vietnamese translations in 'exampleMeaning' using a newline character (\\n).\n" +
-                    "Return the response strictly as a JSON object with the following keys:\n" +
+                    "IMPORTANT: If the grammar structure has multiple usage patterns (e.g., it can attach to both Verbs and Nouns), you MUST provide one example sentence for EACH usage pattern. Separate the multiple Japanese sentences in 'exampleSentence' using a newline character (\\n), and separate their corresponding Vietnamese translations in 'exampleMeaning' using a newline character (\\n)." +
+                    existingPrompt +
+                    "\nReturn the response strictly as a JSON object with the following keys:\n" +
                     "{\n" +
                     "  \"meaning\": \"(Vietnamese meaning)\",\n" +
-                    "  \"explanation\": \"(Vietnamese explanation of usage)\",\n" +
+                    "  \"explanation\": \"(CRITICAL: Put the conjugation formula here, e.g. 'Cấu trúc: N + に囲まれている', then write the Vietnamese explanation of usage)\",\n" +
                     "  \"exampleSentence\": \"(natural Japanese example sentence(s), separated by \\n if multiple)\",\n" +
                     "  \"exampleMeaning\": \"(Vietnamese translation(s) of the example sentence(s), separated by \\n if multiple)\",\n" +
                     "  \"quizSentence\": \"(You MUST copy the exampleSentence exactly, but replace the exact conjugated grammar word/phrase with '_____'. Even if the grammar changes form in the sentence, find it and replace it with '_____'. Example: if grammar is 'に囲まれる' and sentence is '山々に囲まれていて', output '山々に_____いて'. There MUST be exactly one '_____' per sentence. Separate multiple sentences by \\n.)\"\n" +
@@ -155,7 +168,7 @@ public class AiService {
             return res;
         } catch (Exception e) {
             recordAiUsage(false);
-            System.err.println("Gemini Error: " + e.getMessage());
+            log.error("Gemini Error: " + e.getMessage());
             String safeError = e.getMessage() != null ? e.getMessage().replace("\"", "'").replace("\n", " ") : "Unknown Error";
             return String.format("{\"meaning\": \"[Lỗi AI]\", \"explanation\": \"Server AI từ chối: %s\", \"exampleSentence\": \"\", \"exampleMeaning\": \"\", \"quizSentence\": \"\"}", safeError);
         }
@@ -185,10 +198,11 @@ public class AiService {
             return res;
         } catch (Exception e) {
             recordAiUsage(false);
-            System.err.println("Gemini Error: " + e.getMessage());
+            log.error("Gemini Error: " + e.getMessage());
             return "[]";
         }
     }
+
 
     public String generateKanjiDetails(String character) throws Exception {
         try {
@@ -242,7 +256,8 @@ public class AiService {
                "6. For Grammar, the \"quizSentence\" MUST be exactly the \"exampleSentence\", but you MUST replace the conjugated grammar point with '_____'. Even if the grammar changes form (e.g., に囲まれて instead of に囲まれる), you MUST find that part in the sentence and replace it with '_____'. For example, if the sentence is '山々に囲まれていて' and grammar is 'に囲まれる', output '山々に_____いて'. There MUST be exactly one '_____' in the string.\n" +
                "7. For Grammar, if explanation is missing, provide a short, clear explanation in Vietnamese about how to use the structure.\n" +
                "8. For Kanji, the \"examples\" field MUST contain 3-5 high-quality vocabulary entries. Each entry MUST follow this exact format: \"Word (Reading): Vietnamese meaning\". Separate each entry with a semicolon (;). Example: \"地形 (ちけい): địa hình; 形成 (けいせい): hình thành;\".\n" +
-               "8. Ensure the JSON is valid, properly escaped, and encoded in UTF-8.";
+               "9. CRITICAL FOR GRAMMAR: The \"structure\" field MUST ONLY contain the Japanese grammar point using a tilde '〜' (e.g. '〜に囲まれている', '〜を占める'). DO NOT include conjugation formulas (like 'N +' or 'V-ru +') in the \"structure\" field. All conjugation formulas MUST be moved to the beginning of the \"explanation\" field (e.g. 'Cấu trúc: N + に囲まれている. ...').\n" +
+               "10. Ensure the JSON is valid, properly escaped, and encoded in UTF-8.";
     }
 
     private String callGemini(String prompt) throws Exception {
@@ -251,9 +266,7 @@ public class AiService {
             throw new Exception("No Gemini API keys configured");
         }
 
-        // Use modern 2026 models based on the user's available quota
-        // Automatically fallback to 2.5 Flash when 3 Flash hits the 20/day limit
-        List<String> modelPriority = List.of("gemini-3-flash", "gemini-2.5-flash", "gemini-2-flash");
+        List<String> modelPriority = List.of("gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-3-flash");
         
         int maxRetries = keys.size();
         Exception lastException = null;
@@ -265,7 +278,7 @@ public class AiService {
                 try {
                     return executeGeminiCall(prompt, activeKey, model);
                 } catch (Exception e) {
-                    System.err.println("AI Error with model " + model + ": " + e.getMessage());
+                    log.error("AI Error with model " + model + ": " + e.getMessage());
                     lastException = e;
                     // Fallback to next model or next key if possible
                     continue; 
@@ -273,7 +286,7 @@ public class AiService {
             }
         }
 
-        System.err.println("CRITICAL: All AI models and keys exhausted. Last error: " + (lastException != null ? lastException.getMessage() : "Unknown"));
+        log.error("CRITICAL: All AI models and keys exhausted. Last error: " + (lastException != null ? lastException.getMessage() : "Unknown"));
         throw new Exception("Dịch vụ AI hiện không khả dụng. Vui lòng kiểm tra API Key hoặc hạn mức. Lỗi: " + (lastException != null ? lastException.getMessage() : "Unknown"));
     }
 

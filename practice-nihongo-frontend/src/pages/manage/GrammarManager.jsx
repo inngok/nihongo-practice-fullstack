@@ -294,6 +294,7 @@ export default function GrammarManager() {
       explanation: '',
       exampleSentence: '',
       exampleMeaning: '',
+      quizSentence: '',
       level: 'N3',
       bookId: '',
       week: 1,
@@ -319,8 +320,14 @@ export default function GrammarManager() {
     const hide = message.loading('AI đang phân tích ngữ pháp...', 0);
     
     try {
-      const response = await fetchWithAuth(`${API_BASE_URL}/ai/generate-grammar?structure=${encodeURIComponent(formData.structure)}`);
-      if (!response.ok) throw new Error('API Error');
+      const response = await fetchWithAuth(`${API_BASE_URL}/ai/generate-grammar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          structure: formData.structure,
+          existingSentence: formData.exampleSentence || ''
+        })
+      });      if (!response.ok) throw new Error('API Error');
       const data = await response.json();
       
       setFormData(prev => ({
@@ -328,7 +335,8 @@ export default function GrammarManager() {
         meaning: data.meaning || prev.meaning,
         explanation: data.explanation || prev.explanation,
         exampleSentence: data.exampleSentence || prev.exampleSentence,
-        exampleMeaning: data.exampleMeaning || prev.exampleMeaning
+        exampleMeaning: data.exampleMeaning || prev.exampleMeaning,
+        quizSentence: data.quizSentence || prev.quizSentence
       }));
       
       message.success('AI đã điền xong!');
@@ -381,6 +389,7 @@ export default function GrammarManager() {
         explanation: item.explanation,
         exampleSentence: item.exampleSentence,
         exampleMeaning: item.exampleMeaning,
+        quizSentence: item.quizSentence,
         level: item.level || 'N3',
         book: { id: parseInt(selectedBookId) },
         week: formData.week ? parseInt(formData.week) : null,
@@ -411,6 +420,7 @@ export default function GrammarManager() {
       explanation: grammar.explanation,
       exampleSentence: grammar.exampleSentence,
       exampleMeaning: grammar.exampleMeaning,
+      quizSentence: grammar.quizSentence || '',
       level: grammar.level,
       bookId: grammar.book?.id || '',
       week: grammar.week || 1,
@@ -506,15 +516,7 @@ export default function GrammarManager() {
             <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">Cập nhật kho ngữ pháp giáo trình hệ thống</p>
           </div>
           <div className="flex gap-3 self-start md:self-auto">
-            {filteredGrammars.length > 0 && (
-              <button
-                onClick={handleDeleteAll}
-                className="bg-red-50 hover:bg-red-100 text-red-600 px-5 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2"
-              >
-                <DeleteOutlined className="text-[10px]" />
-                {selectedBookId ? 'Xóa sách' : 'Xóa hết'}
-              </button>
-            )}
+
             <button
               onClick={() => navigate('/grammar/books')}
               className="px-5 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-900 transition-all shadow-sm"
@@ -857,6 +859,18 @@ export default function GrammarManager() {
                        className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
                      />
                    </div>
+                 </div>
+
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Câu hỏi Trắc nghiệm (Đục lỗ bằng '_____')</label>
+                   <input 
+                     type="text" 
+                     name="quizSentence" 
+                     value={formData.quizSentence} 
+                     onChange={handleInputChange} 
+                     placeholder="Ví dụ: 山々に_____いて (dùng 5 dấu gạch dưới)" 
+                     className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" 
+                   />
                  </div>
 
                  <div className="space-y-2">
