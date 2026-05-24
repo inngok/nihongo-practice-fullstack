@@ -5,9 +5,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import io.github.cdimascio.dotenv.Dotenv;
 
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
 @EnableScheduling
+@EnableAsync
 public class PracticeNihongoApplication {
 
 	public static void main(String[] args) {
@@ -28,7 +30,6 @@ public class PracticeNihongoApplication {
 			System.out.println(">>> Exception loading .env: " + e.getMessage());
 		}
 
-		String apiKey = System.getProperty("GEMINI_API_KEY");
 
 		SpringApplication.run(PracticeNihongoApplication.class, args);
 	}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Search, Check, X } from 'lucide-react';
+import { Search, Check, X, Cpu, Loader2, Bot, ChevronRight, ChevronLeft } from 'lucide-react';
 import vocabService from '../../api/vocabService';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
@@ -13,7 +13,7 @@ export default function VocabStudy() {
 
   const [vocabData, setVocabData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeMode, setActiveMode] = useState('flashcard');
+  const [activeMode, setActiveMode] = useState('list');
   const [selectedUnit, setSelectedUnit] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -32,6 +32,8 @@ export default function VocabStudy() {
   const [isDragging, setIsDragging] = useState(false);
   const [swipeDirection, setSwipeDirection] = useState(null);
   const [flashcardSubMode, setFlashcardSubMode] = useState('classic'); // 'classic' | 'memorize'
+
+  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
 
   // Keyboard navigation for Flashcards
   useEffect(() => {
@@ -70,8 +72,8 @@ export default function VocabStudy() {
 
   const addToLocalReview = (vocabItem) => {
     try {
-      const stored = localStorage.getItem('vocab_review_failed') 
-        ? JSON.parse(localStorage.getItem('vocab_review_failed')) 
+      const stored = localStorage.getItem('vocab_review_failed')
+        ? JSON.parse(localStorage.getItem('vocab_review_failed'))
         : [];
       if (!stored.some(i => i.id === vocabItem.id)) {
         stored.push({
@@ -97,7 +99,7 @@ export default function VocabStudy() {
       const response = await vocabService.getAll({ bookId });
       const data = response.data || [];
       setVocabData(data);
-      
+
       if (data.length > 0) {
         const units = [...new Set(data.map(i => {
           const val = i.week ?? i.unit ?? i.lesson ?? 1;
@@ -140,34 +142,35 @@ export default function VocabStudy() {
     }
   }, [activeData, activeMode]);
 
+
   // Sync Progress to Backend
   const progressKey = `vocab_${bookId}_${selectedUnit}`;
 
   useEffect(() => {
     if (currentUser && activeData.length > 0 && bookId) {
-       fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`)
-         .then(res => res.json())
-         .then(resData => {
-            if (resData.data) {
-               try {
-                  const state = JSON.parse(resData.data);
-                  if (state.currentIndex !== undefined && state.currentIndex < activeData.length) {
-                     setCurrentIndex(state.currentIndex);
-                  }
-               } catch(e) {}
-            }
-         }).catch(() => {});
+      fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`)
+        .then(res => res.json())
+        .then(resData => {
+          if (resData.data) {
+            try {
+              const state = JSON.parse(resData.data);
+              if (state.currentIndex !== undefined && state.currentIndex < activeData.length) {
+                setCurrentIndex(state.currentIndex);
+              }
+            } catch (e) { }
+          }
+        }).catch(() => { });
     }
   }, [bookId, selectedUnit, activeData.length, currentUser]);
 
   useEffect(() => {
     if (currentUser && bookId && activeMode !== 'list') {
-        const state = { currentIndex, activeMode };
-        fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ data: JSON.stringify(state) })
-        }).catch(() => {});
+      const state = { currentIndex, activeMode };
+      fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: JSON.stringify(state) })
+      }).catch(() => { });
     }
   }, [currentIndex, activeMode, bookId, selectedUnit, currentUser]);
 
@@ -185,10 +188,10 @@ export default function VocabStudy() {
     }
 
     const currentItem = studyData[currentIndex];
-    const isCorrect = userInput.trim().toLowerCase() === currentItem.word.toLowerCase() || 
-                     userInput.trim() === currentItem.reading ||
-                     userInput.trim() === currentItem.meaning;
-                     
+    const isCorrect = userInput.trim().toLowerCase() === currentItem.word.toLowerCase() ||
+      userInput.trim() === currentItem.reading ||
+      userInput.trim() === currentItem.meaning;
+
     if (isCorrect) {
       setScore(prev => prev + 1);
       setFeedback('correct');
@@ -235,6 +238,7 @@ export default function VocabStudy() {
     setCompletedIds([]);
   };
 
+
   const handleTouchStart = (e) => {
     if (activeMode !== 'flashcard') return;
     setIsDragging(true);
@@ -255,7 +259,7 @@ export default function VocabStudy() {
   const handleTouchEnd = () => {
     if (!isDragging || activeMode !== 'flashcard') return;
     setIsDragging(false);
-    
+
     if (dragOffsetX > 120) {
       handleSwipe('right');
     } else if (dragOffsetX < -120) {
@@ -288,7 +292,7 @@ export default function VocabStudy() {
   const handleMouseUp = () => {
     if (!isDragging || activeMode !== 'flashcard') return;
     setIsDragging(false);
-    
+
     if (dragOffsetX > 120) {
       handleSwipe('right');
     } else if (dragOffsetX < -120) {
@@ -320,9 +324,9 @@ export default function VocabStudy() {
           .filter(i => {
             const term = searchTerm.toLowerCase().trim();
             if (!term) return true;
-            return i.word.toLowerCase().includes(term) || 
-                   i.meaning.toLowerCase().includes(term) || 
-                   (i.reading && i.reading.toLowerCase().includes(term));
+            return i.word.toLowerCase().includes(term) ||
+              i.meaning.toLowerCase().includes(term) ||
+              (i.reading && i.reading.toLowerCase().includes(term));
           })
           .map((item, idx) => (
             <div
@@ -368,21 +372,19 @@ export default function VocabStudy() {
           <div className="bg-slate-50/80 dark:bg-slate-900/60 p-1 rounded-2xl flex border border-slate-100 dark:border-slate-800 shadow-inner">
             <button
               onClick={() => { setFlashcardSubMode('classic'); setIsFlipped(false); }}
-              className={`px-4 sm:px-6 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all ${
-                flashcardSubMode === 'classic' 
-                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' 
-                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
-              }`}
+              className={`px-4 sm:px-6 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all ${flashcardSubMode === 'classic'
+                ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
+                : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
             >
               CỔ ĐIỂN
             </button>
             <button
               onClick={() => { setFlashcardSubMode('memorize'); setIsFlipped(false); }}
-              className={`px-4 sm:px-6 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all ${
-                flashcardSubMode === 'memorize' 
-                  ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' 
-                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
-              }`}
+              className={`px-4 sm:px-6 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all ${flashcardSubMode === 'memorize'
+                ? 'bg-black text-white dark:bg-white dark:text-black shadow-md'
+                : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                }`}
             >
               GHI NHỚ (QUẸT THẺ)
             </button>
@@ -393,8 +395,8 @@ export default function VocabStudy() {
               Tiến trình: {currentIndex + 1} / {studyData.length}
             </span>
             <div className="h-1 bg-slate-100 dark:bg-slate-800 w-24 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-black dark:bg-white transition-all duration-500" 
+              <div
+                className="h-full bg-black dark:bg-white transition-all duration-500"
                 style={{ width: `${((currentIndex + 1) / (studyData.length || 1)) * 100}%` }}
               />
             </div>
@@ -415,8 +417,8 @@ export default function VocabStudy() {
               Tiến trình: {currentIndex + 1} / {studyData.length}
             </span>
             <div className="h-1 bg-slate-100 dark:bg-slate-800 w-32 sm:w-48 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-black dark:bg-white transition-all duration-500" 
+              <div
+                className="h-full bg-black dark:bg-white transition-all duration-500"
                 style={{ width: `${((currentIndex + 1) / (studyData.length || 1)) * 100}%` }}
               />
             </div>
@@ -433,7 +435,7 @@ export default function VocabStudy() {
       {activeMode === 'flashcard' ? (
         flashcardSubMode === 'memorize' ? (
           /* MEMORIZE (SWIPE CARD) MODE */
-          <div 
+          <div
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -444,20 +446,18 @@ export default function VocabStudy() {
             className="perspective h-[380px] sm:h-[450px] cursor-grab active:cursor-grabbing select-none relative"
             style={{ touchAction: 'none' }}
           >
-            <div 
+            <div
               key={currentIndex}
               style={cardStyle}
-              className={`relative w-full h-full duration-700 preserve-3d shadow-2xl rounded-[3rem] transition-shadow ${
-                swipeDirection === 'right' ? 'shadow-emerald-200/50 dark:shadow-emerald-950/20' :
+              className={`relative w-full h-full duration-700 preserve-3d shadow-2xl rounded-[3rem] transition-shadow ${swipeDirection === 'right' ? 'shadow-emerald-200/50 dark:shadow-emerald-950/20' :
                 swipeDirection === 'left' ? 'shadow-rose-200/50 dark:shadow-rose-950/20' : ''
-              } ${isFlipped ? 'rotate-y-180' : ''}`}
+                } ${isFlipped ? 'rotate-y-180' : ''}`}
             >
               {/* Front Face */}
-              <div className={`absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 rounded-[3rem] flex flex-col items-center justify-center p-6 sm:p-12 text-center transition-colors duration-300 ${
-                swipeDirection === 'right' ? 'border-emerald-500 bg-emerald-50/5' :
+              <div className={`absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 rounded-[3rem] flex flex-col items-center justify-center p-6 sm:p-12 text-center transition-colors duration-300 ${swipeDirection === 'right' ? 'border-emerald-500 bg-emerald-50/5' :
                 swipeDirection === 'left' ? 'border-rose-500 bg-rose-50/5' :
-                'border-slate-100 dark:border-slate-800'
-              }`}>
+                  'border-slate-100 dark:border-slate-800'
+                }`}>
                 {/* Swipe Status Badges */}
                 {swipeDirection === 'right' && (
                   <div className="absolute top-8 right-8 border-4 border-emerald-500 text-emerald-500 text-xs font-black uppercase px-4 py-1.5 rounded-xl tracking-widest rotate-12 scale-110 animate-in fade-in duration-200">
@@ -474,7 +474,7 @@ export default function VocabStudy() {
                   {studyData[currentIndex]?.word}
                 </h2>
                 <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.4em]">NHẤN ĐỂ LẬT HOẶC QUẸT</p>
-                
+
                 <div className="flex gap-4 sm:gap-16 mt-8 sm:mt-12 text-slate-300 dark:text-slate-700 flex-wrap justify-center">
                   <div className="flex items-center gap-1.5">
                     <span className="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center text-[10px] font-black">←</span>
@@ -488,11 +488,10 @@ export default function VocabStudy() {
               </div>
 
               {/* Back Face */}
-              <div className={`absolute inset-0 backface-hidden rotate-y-180 bg-white dark:bg-slate-900 border-2 rounded-[3rem] flex flex-col items-center justify-center p-6 sm:p-12 text-center transition-colors duration-300 ${
-                swipeDirection === 'right' ? 'border-emerald-500 bg-emerald-50/5' :
+              <div className={`absolute inset-0 backface-hidden rotate-y-180 bg-white dark:bg-slate-900 border-2 rounded-[3rem] flex flex-col items-center justify-center p-6 sm:p-12 text-center transition-colors duration-300 ${swipeDirection === 'right' ? 'border-emerald-500 bg-emerald-50/5' :
                 swipeDirection === 'left' ? 'border-rose-500 bg-rose-50/5' :
-                'border-slate-100 dark:border-slate-800'
-              }`}>
+                  'border-slate-100 dark:border-slate-800'
+                }`}>
                 <span className="text-[10px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-widest mb-4">{studyData[currentIndex]?.word}</span>
                 <div className="h-px w-12 bg-slate-100 dark:bg-slate-800 mb-8" />
                 <h3 className="text-2xl sm:text-3xl md:text-4xl font-black italic text-slate-900 dark:text-white mb-4">{studyData[currentIndex]?.meaning}</h3>
@@ -502,7 +501,7 @@ export default function VocabStudy() {
           </div>
         ) : (
           /* CLASSIC FLASHCARD MODE */
-          <div 
+          <div
             onClick={() => setIsFlipped(!isFlipped)}
             className="perspective h-[380px] sm:h-[450px] cursor-pointer group"
           >
@@ -525,36 +524,34 @@ export default function VocabStudy() {
             </div>
           </div>
         )
-      ) : (
+      ) : activeMode === 'quiz' ? (
         /* QUIZ MODE */
         <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-[3rem] p-6 sm:p-16 text-center space-y-6 sm:space-y-12 shadow-sm">
           <div className="space-y-4">
             <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">Dịch sang tiếng Nhật</span>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-black italic text-slate-900 dark:text-white select-all break-all whitespace-pre-wrap leading-tight">"{studyData[currentIndex]?.meaning}"</h2>
           </div>
-          
+
           <input
             autoFocus
             value={userInput}
             onChange={e => !feedback && setUserInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
             placeholder="Nhập từ vựng..."
-            className={`w-full max-w-md mx-auto py-3 sm:py-6 px-6 sm:px-10 rounded-full border-2 text-center text-lg sm:text-2xl font-bold transition-all ${
-              feedback === 'correct' ? 'border-emerald-500 text-emerald-500 bg-emerald-50/50' :
+            className={`w-full max-w-md mx-auto py-3 sm:py-6 px-6 sm:px-10 rounded-full border-2 text-center text-lg sm:text-2xl font-bold transition-all ${feedback === 'correct' ? 'border-emerald-500 text-emerald-500 bg-emerald-50/50' :
               feedback === 'incorrect' ? 'border-rose-500 text-rose-500 bg-rose-50/50' :
-              'border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white bg-transparent'
-            }`}
+                'border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white bg-transparent'
+              }`}
           />
-          
+
           {feedback === 'incorrect' && (
             <p className="text-rose-500 font-bold animate-bounce">Đáp án: {studyData[currentIndex]?.word}</p>
           )}
         </div>
-      )}
+      ) : null}
 
       {activeMode === 'flashcard' ? (
         flashcardSubMode === 'memorize' ? (
-          /* MEMORIZE MODE ACTIONS (SWIPE) */
           <div className="flex justify-center gap-6 mt-8">
             <button
               onClick={() => handleSwipe('left')}
@@ -579,10 +576,9 @@ export default function VocabStudy() {
             </button>
           </div>
         ) : (
-          /* CLASSIC MODE ACTIONS (PREV / NEXT) */
           <div className="flex flex-col sm:flex-row gap-4 mt-8">
             <button
-              onClick={() => { if (currentIndex > 0) { setCurrentIndex(prev => prev - 1); setIsFlipped(false); }}}
+              onClick={() => { if (currentIndex > 0) { setCurrentIndex(prev => prev - 1); setIsFlipped(false); } }}
               disabled={currentIndex === 0}
               className="flex-1 py-5 border border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:border-black dark:hover:border-white transition-all disabled:opacity-20"
               title="Quay lại (Phím mũi tên ←)"
@@ -605,11 +601,10 @@ export default function VocabStudy() {
             </button>
           </div>
         )
-      ) : (
-        /* QUIZ MODE ACTIONS */
+      ) : activeMode === 'quiz' ? (
         <div className="flex flex-col sm:flex-row gap-4 mt-8">
           <button
-            onClick={() => { if (currentIndex > 0) { setCurrentIndex(prev => prev - 1); setFeedback(null); setUserInput(''); }}}
+            onClick={() => { if (currentIndex > 0) { setCurrentIndex(prev => prev - 1); setFeedback(null); setUserInput(''); } }}
             disabled={currentIndex === 0}
             className="flex-1 py-5 border border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:border-black dark:hover:border-white transition-all disabled:opacity-20"
           >
@@ -622,7 +617,7 @@ export default function VocabStudy() {
             {feedback ? (currentIndex === studyData.length - 1 ? 'KẾT THÚC' : 'TIẾP THEO') : 'KIỂM TRA'}
           </button>
         </div>
-      )}
+      ) : null}
     </div>
   );
 
@@ -672,11 +667,10 @@ export default function VocabStudy() {
                     <button
                       key={unit}
                       onClick={() => { setSelectedUnit(unit); setActiveMode('flashcard'); }}
-                      className={`px-5 py-2 rounded-xl text-[11px] font-black transition-all ${
-                        selectedUnit === unit 
-                          ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105' 
-                          : 'bg-slate-50 text-slate-400 dark:bg-slate-900 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white'
-                      }`}
+                      className={`px-5 py-2 rounded-xl text-[11px] font-black transition-all ${selectedUnit === unit
+                        ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105'
+                        : 'bg-slate-50 text-slate-400 dark:bg-slate-900 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white'
+                        }`}
                     >
                       BÀI {unit}
                     </button>
@@ -687,7 +681,7 @@ export default function VocabStudy() {
               <div className="flex items-center gap-6">
                 <div className="hidden md:flex items-center gap-3">
                   <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">XÁO TRỘN</span>
-                  <button 
+                  <button
                     onClick={() => setIsShuffle(!isShuffle)}
                     className={`relative w-11 h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
                   >
@@ -696,17 +690,17 @@ export default function VocabStudy() {
                 </div>
                 <div className="flex items-center bg-slate-50/50 dark:bg-slate-900/50 p-1 rounded-2xl shadow-inner border border-slate-100 dark:border-slate-800 w-full sm:w-auto justify-between sm:justify-start">
                   {[
-                    { id: 'flashcard', label: 'FLASHCARD' },
-                    { id: 'quiz', label: 'LUYỆN TẬP' }
+                    { id: 'list', label: 'Danh sách' },
+                    { id: 'flashcard', label: 'Flashcard' },
+                    { id: 'quiz', label: 'Luyện tập' }
                   ].map(m => (
                     <button
                       key={m.id}
                       onClick={() => setActiveMode(m.id)}
-                      className={`flex-1 sm:flex-none px-2 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[9px] sm:text-[10px] font-black tracking-widest transition-all text-center ${
-                        activeMode === m.id 
-                          ? 'bg-black text-white dark:bg-white dark:text-black shadow-xl' 
-                          : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                      }`}
+                      className={`flex-1 sm:flex-none px-2 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[9px] sm:text-[10px] font-black tracking-widest transition-all text-center ${activeMode === m.id
+                        ? 'bg-black text-white dark:bg-white dark:text-black shadow-xl'
+                        : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                        }`}
                     >
                       {m.label}
                     </button>
@@ -717,7 +711,7 @@ export default function VocabStudy() {
 
             {/* Main Content */}
             <div className="pt-4 pb-20">
-              {StudyScreen}
+              {activeMode === 'list' ? ListScreen : StudyScreen}
             </div>
           </>
         )}
@@ -730,7 +724,7 @@ export default function VocabStudy() {
             <div className="py-8 border-y border-slate-50 dark:border-slate-800 text-6xl font-black italic">
               {score} <span className="text-2xl text-slate-200 dark:text-slate-700">/ {studyData.length}</span>
             </div>
-            <button 
+            <button
               onClick={() => { setShowResults(false); setActiveMode('flashcard'); }}
               className="w-full py-5 bg-black dark:bg-white text-white dark:text-black rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all"
             >
@@ -740,8 +734,10 @@ export default function VocabStudy() {
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
         .animate-in { animation: fade-in 0.5s ease-out forwards; }
         .perspective { perspective: 2000px; }
         .preserve-3d { transform-style: preserve-3d; }

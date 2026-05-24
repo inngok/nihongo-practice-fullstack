@@ -286,26 +286,16 @@ export default function StudyPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { id: 'cards', label: 'FLASHCARD' },
             { id: 'quiz', label: 'LUYỆN TẬP' },
             { id: 'multiple_choice', label: 'TRẮC NGHIỆM' },
-            { id: 'listening', label: 'NGHE ĐIỀN' },
-            { id: 'list', label: 'DANH SÁCH' }
+            { id: 'listening', label: 'NGHE ĐIỀN' }
           ].map(m => (
             <button
               key={m.id}
-              onClick={() => {
-                if (m.id === 'list') {
-                  const element = document.getElementById('grammar-list-section');
-                  if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
-                  }
-                } else {
-                  setActiveMode(m.id);
-                }
-              }}
+              onClick={() => setActiveMode(m.id)}
               className="flex items-center justify-center py-4 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-black dark:hover:border-white hover:bg-white dark:hover:bg-slate-950 transition-all duration-300 hover:shadow-md active:scale-95 group"
             >
               <span className="text-[9px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 group-hover:text-black dark:group-hover:text-white">{m.label}</span>

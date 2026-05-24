@@ -14,7 +14,7 @@ public class NewsArticle implements Serializable {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String newsId; // NHK's unique ID for the news
+    private String newsId;
 
     @Column(nullable = false)
     private String title;
@@ -26,10 +26,12 @@ public class NewsArticle implements Serializable {
     private String contentRaw;
 
     @Column(columnDefinition = "TEXT")
-    private String translation; // AI translated text
+    private String translation;
 
     @Column(columnDefinition = "TEXT")
-    private String extractedVocab; // AI extracted vocabulary
+    private String extractedVocab;
+
+
 
     private String imageUrl;
     
@@ -49,7 +51,7 @@ public class NewsArticle implements Serializable {
 
     public NewsArticle() {}
 
-    // Getters and Setters
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getNewsId() { return newsId; }
@@ -64,6 +66,7 @@ public class NewsArticle implements Serializable {
     public void setTranslation(String translation) { this.translation = translation; }
     public String getExtractedVocab() { return extractedVocab; }
     public void setExtractedVocab(String extractedVocab) { this.extractedVocab = extractedVocab; }
+
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
     public String getAudioUrl() { return audioUrl; }
