@@ -856,14 +856,15 @@ export default function StudyPage() {
         .backface-hidden { 
           backface-visibility: hidden; 
           -webkit-backface-visibility: hidden;
-          transform: translate3d(0, 0, 0);
-          -webkit-transform: translate3d(0, 0, 0);
         }
         .perspective *, .preserve-3d * {
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
         }
-        .rotate-y-180 { transform: rotateY(180deg); }
+        .rotate-y-180 { 
+          transform: rotateY(180deg); 
+          -webkit-transform: rotateY(180deg);
+        }
       `}} />
     </div>
   );

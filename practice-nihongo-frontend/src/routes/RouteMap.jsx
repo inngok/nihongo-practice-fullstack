@@ -246,19 +246,12 @@ export default function RouteMap() {
           <Route index element={<Dashboard />} />
           <Route path="users" element={<UserManager />} />
           <Route path="import" element={<DataImporter />} />
-          {/* Legacy/Deep paths for management */}
-          <Route path="grammar" element={<GrammarManager />} />
-          <Route path="books" element={<BookManager />} />
-          <Route path="vocabulary" element={<VocabManager />} />
-          <Route path="kanji" element={<KanjiManager />} />
           <Route path="ai" element={<AiManager />} />
           <Route path="jlpt-vocab" element={<JlptPastVocabManager />} />
         </Route>
       </Route>
 
-      {/* Map legacy/specific management paths to the new structure if needed, 
-          but here we just use the grouped approach. 
-          The user previously had /grammar/manage etc. Let's keep those for compatibility but group them. */}
+      {/* Direct Management Paths (accessed from Sidebar and dropdown) */}
       <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
         <Route path="grammar/manage" element={<GrammarManager />} />
         <Route path="grammar/books" element={<BookManager />} />

@@ -16,7 +16,9 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final String secretString = "antigravity_nihongo_secret_key_fixed_minimum_256_bits_for_security_hs256";
+    private final Key key = Keys.hmacShaKeyFor(secretString.getBytes());
+
     private final long jwtExpirationMs = 1800000; // 30 minutes
 
     public String extractUsername(String token) {

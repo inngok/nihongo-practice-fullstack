@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Check, X, Cpu, Loader2, Bot, ChevronRight, ChevronLeft } from 'lucide-react';
 import vocabService from '../../api/vocabService';
@@ -7,6 +7,7 @@ import { API_BASE_URL } from '../../config';
 
 export default function VocabStudy() {
   const navigate = useNavigate();
+  const isTouching = useRef(false);
   const [searchParams] = useSearchParams();
   const bookId = searchParams.get('bookId');
   const { fetchWithAuth, currentUser } = useAuth();
@@ -24,6 +25,7 @@ export default function VocabStudy() {
   const [showResults, setShowResults] = useState(false);
   const [completedIds, setCompletedIds] = useState([]);
   const [isShuffle, setIsShuffle] = useState(false);
+  const [showVietnameseFirst, setShowVietnameseFirst] = useState(false);
   const [studyData, setStudyData] = useState([]);
 
   // Swipe Card States
@@ -248,6 +250,7 @@ export default function VocabStudy() {
 
   const handleTouchStart = (e) => {
     if (activeMode !== 'flashcard') return;
+    isTouching.current = true;
     setIsDragging(true);
     setDragStartX(e.touches[0].clientX);
     setDragOffsetX(0);
@@ -278,17 +281,21 @@ export default function VocabStudy() {
       setDragOffsetX(0);
       setSwipeDirection(null);
     }
+
+    setTimeout(() => {
+      isTouching.current = false;
+    }, 500);
   };
 
   const handleMouseDown = (e) => {
-    if (activeMode !== 'flashcard') return;
+    if (activeMode !== 'flashcard' || isTouching.current) return;
     setIsDragging(true);
     setDragStartX(e.clientX);
     setDragOffsetX(0);
   };
 
   const handleMouseMove = (e) => {
-    if (!isDragging || activeMode !== 'flashcard') return;
+    if (!isDragging || activeMode !== 'flashcard' || isTouching.current) return;
     const deltaX = e.clientX - dragStartX;
     setDragOffsetX(deltaX);
     if (deltaX > 40) setSwipeDirection('right');
@@ -297,7 +304,7 @@ export default function VocabStudy() {
   };
 
   const handleMouseUp = () => {
-    if (!isDragging || activeMode !== 'flashcard') return;
+    if (!isDragging || activeMode !== 'flashcard' || isTouching.current) return;
     setIsDragging(false);
 
     if (dragOffsetX > 120) {
@@ -366,9 +373,14 @@ export default function VocabStudy() {
   );
 
   const rotateDeg = dragOffsetX * 0.04;
+  // If the card is flipped 180deg Y, we must negate translation & rotation to match visual dragging direction
+  const xOffset = isFlipped ? -dragOffsetX : dragOffsetX;
+  const rDeg = isFlipped ? -rotateDeg : rotateDeg;
   const cardStyle = {
-    transform: `translateX(${dragOffsetX}px) rotate(${rotateDeg}deg) ${isFlipped ? 'rotateY(180deg)' : ''}`,
+    transform: `translateX(${xOffset}px) rotate(${rDeg}deg) ${isFlipped ? 'rotateY(180deg)' : ''}`,
+    WebkitTransform: `translateX(${xOffset}px) rotate(${rDeg}deg) ${isFlipped ? 'rotateY(180deg)' : ''}`,
     transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+    WebkitTransition: isDragging ? 'none' : '-webkit-transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
   };
 
   const StudyScreen = (
@@ -477,8 +489,8 @@ export default function VocabStudy() {
                   </div>
                 )}
 
-                <h2 className="text-4xl sm:text-5xl md:text-7xl font-medium text-slate-900 dark:text-white font-kanji mb-6 sm:mb-8 select-all break-all whitespace-pre-wrap leading-tight">
-                  {studyData[currentIndex]?.word}
+                <h2 className={`font-medium mb-6 sm:mb-8 select-all break-all whitespace-pre-wrap leading-tight ${showVietnameseFirst ? 'text-2xl sm:text-3xl md:text-5xl italic text-slate-900 dark:text-white' : 'text-4xl sm:text-5xl md:text-7xl font-kanji text-slate-900 dark:text-white'}`}>
+                  {showVietnameseFirst ? studyData[currentIndex]?.meaning : studyData[currentIndex]?.word}
                 </h2>
                 <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.4em]">NHẤN ĐỂ LẬT HOẶC QUẸT</p>
 
@@ -499,10 +511,28 @@ export default function VocabStudy() {
                 swipeDirection === 'left' ? 'border-rose-500 bg-rose-50/5' :
                   'border-slate-100 dark:border-slate-800'
                 }`}>
-                <span className="text-[10px] font-normal text-slate-300 dark:text-slate-500 uppercase tracking-widest mb-4">{studyData[currentIndex]?.word}</span>
+                {/* Swipe Status Badges on Back Face (Visible when flipped and swiped) */}
+                {swipeDirection === 'right' && (
+                  <div className="absolute top-8 right-8 border-4 border-emerald-500 text-emerald-500 text-xs font-black uppercase px-4 py-1.5 rounded-xl tracking-widest rotate-12 scale-110 animate-in fade-in duration-200">
+                    ĐÃ NHỚ
+                  </div>
+                )}
+                {swipeDirection === 'left' && (
+                  <div className="absolute top-8 left-8 border-4 border-rose-500 text-rose-500 text-xs font-black uppercase px-4 py-1.5 rounded-xl tracking-widest -rotate-12 scale-110 animate-in fade-in duration-200">
+                    CHƯA THUỘC
+                  </div>
+                )}
+
+                <span className="text-[10px] font-normal text-slate-300 dark:text-slate-500 uppercase tracking-widest mb-4">
+                  {showVietnameseFirst ? studyData[currentIndex]?.meaning : studyData[currentIndex]?.word}
+                </span>
                 <div className="h-px w-12 bg-slate-100 dark:bg-slate-800 mb-8" />
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-medium italic text-slate-900 dark:text-white mb-4">{studyData[currentIndex]?.meaning}</h3>
-                <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 italic uppercase">{studyData[currentIndex]?.reading}</p>
+                <h3 className={`font-medium text-slate-900 dark:text-white mb-4 ${showVietnameseFirst ? 'text-3xl sm:text-4xl md:text-5xl font-kanji' : 'text-2xl sm:text-3xl md:text-4xl italic'}`}>
+                  {showVietnameseFirst ? studyData[currentIndex]?.word : studyData[currentIndex]?.meaning}
+                </h3>
+                <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 italic uppercase">
+                  {studyData[currentIndex]?.reading}
+                </p>
               </div>
             </div>
           </div>
@@ -515,18 +545,24 @@ export default function VocabStudy() {
             <div key={currentIndex} className={`relative w-full h-full transition-all duration-700 preserve-3d shadow-2xl rounded-[3rem] ${isFlipped ? 'rotate-y-180' : 'hover:scale-[1.01]'}`}>
               {/* Front Face */}
               <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] flex flex-col items-center justify-center p-6 sm:p-12 text-center">
-                <h2 className="text-4xl sm:text-5xl md:text-7xl font-medium text-slate-900 dark:text-white font-kanji mb-6 sm:mb-8 select-all break-all whitespace-pre-wrap leading-tight">
-                  {studyData[currentIndex]?.word}
+                <h2 className={`font-medium mb-6 sm:mb-8 select-all break-all whitespace-pre-wrap leading-tight ${showVietnameseFirst ? 'text-2xl sm:text-3xl md:text-5xl italic text-slate-900 dark:text-white' : 'text-4xl sm:text-5xl md:text-7xl font-kanji text-slate-900 dark:text-white'}`}>
+                  {showVietnameseFirst ? studyData[currentIndex]?.meaning : studyData[currentIndex]?.word}
                 </h2>
-                <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.4em] animate-pulse">NHẤN ĐỂ LẬT THẺ</p>
+                <p className="text-[10px] font-black text-slate-300 dark:text-slate-655 uppercase tracking-[0.4em] animate-pulse">NHẤN ĐỂ LẬT THẺ</p>
               </div>
 
               {/* Back Face */}
               <div className="absolute inset-0 backface-hidden rotate-y-180 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] flex flex-col items-center justify-center p-6 sm:p-12 text-center">
-                <span className="text-[10px] font-normal text-slate-300 dark:text-slate-500 uppercase tracking-widest mb-4">{studyData[currentIndex]?.word}</span>
+                <span className="text-[10px] font-normal text-slate-300 dark:text-slate-500 uppercase tracking-widest mb-4">
+                  {showVietnameseFirst ? studyData[currentIndex]?.meaning : studyData[currentIndex]?.word}
+                </span>
                 <div className="h-px w-12 bg-slate-100 dark:bg-slate-800 mb-8" />
-                <h3 className="text-2xl sm:text-3xl md:text-4xl font-medium italic text-slate-900 dark:text-white mb-4">{studyData[currentIndex]?.meaning}</h3>
-                <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 italic uppercase">{studyData[currentIndex]?.reading}</p>
+                <h3 className={`font-medium text-slate-900 dark:text-white mb-4 ${showVietnameseFirst ? 'text-3xl sm:text-4xl md:text-5xl font-kanji' : 'text-2xl sm:text-3xl md:text-4xl italic'}`}>
+                  {showVietnameseFirst ? studyData[currentIndex]?.word : studyData[currentIndex]?.meaning}
+                </h3>
+                <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 italic uppercase">
+                  {studyData[currentIndex]?.reading}
+                </p>
               </div>
             </div>
           </div>
@@ -662,11 +698,21 @@ export default function VocabStudy() {
               <div className="space-y-4 w-full md:w-auto">
                 <div className="flex justify-between items-center w-full">
                   <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.2em]">CHỌN BÀI HỌC</p>
-                  <div className="flex items-center gap-3 md:hidden">
-                    <span className="text-[9px] font-black text-slate-300">XÁO TRỘN</span>
-                    <button onClick={() => setIsShuffle(!isShuffle)} className={`w-8 h-4 rounded-full ${isShuffle ? 'bg-black' : 'bg-slate-200'} relative transition-colors`}>
-                      <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${isShuffle ? 'left-4.5' : 'left-0.5'}`} />
-                    </button>
+                  <div className="flex items-center gap-4 md:hidden">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-black text-slate-300">XÁO TRỘN</span>
+                      <button onClick={() => setIsShuffle(!isShuffle)} className={`w-8 h-4 rounded-full ${isShuffle ? 'bg-black' : 'bg-slate-200'} relative transition-colors`}>
+                        <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${isShuffle ? 'left-[18px]' : 'left-0.5'}`} />
+                      </button>
+                    </div>
+                    {activeMode === 'flashcard' && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-black text-slate-300">VIỆT → NHẬT</span>
+                        <button onClick={() => { setShowVietnameseFirst(!showVietnameseFirst); setIsFlipped(false); }} className={`w-8 h-4 rounded-full ${showVietnameseFirst ? 'bg-black' : 'bg-slate-200'} relative transition-colors`}>
+                          <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${showVietnameseFirst ? 'left-[18px]' : 'left-0.5'}`} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -690,14 +736,27 @@ export default function VocabStudy() {
               </div>
 
               <div className="flex items-center gap-6">
-                <div className="hidden md:flex items-center gap-3">
-                  <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">XÁO TRỘN</span>
-                  <button
-                    onClick={() => setIsShuffle(!isShuffle)}
-                    className={`relative w-11 h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-                  >
-                    <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 ${isShuffle ? 'left-6 bg-white dark:bg-black' : 'left-1 bg-white dark:bg-slate-400'}`} />
-                  </button>
+                <div className="hidden md:flex items-center gap-6">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">XÁO TRỘN</span>
+                    <button
+                      onClick={() => setIsShuffle(!isShuffle)}
+                      className={`relative w-11 h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+                    >
+                      <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 ${isShuffle ? 'left-6 bg-white dark:bg-black' : 'left-1 bg-white dark:bg-slate-400'}`} />
+                    </button>
+                  </div>
+                  {activeMode === 'flashcard' && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">VIỆT → NHẬT</span>
+                      <button
+                        onClick={() => { setShowVietnameseFirst(!showVietnameseFirst); setIsFlipped(false); }}
+                        className={`relative w-11 h-6 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'left-6 bg-white dark:bg-black' : 'left-1 bg-white dark:bg-slate-400'}`} />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center bg-slate-50/50 dark:bg-slate-900/50 p-1 rounded-2xl shadow-inner border border-slate-100 dark:border-slate-800 w-full sm:w-auto justify-between sm:justify-start">
                   {[
@@ -758,18 +817,22 @@ export default function VocabStudy() {
         @keyframes progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
         .animate-in { animation: fade-in 0.5s ease-out forwards; }
         .perspective { perspective: 2000px; }
-        .preserve-3d { transform-style: preserve-3d; }
+        .preserve-3d { 
+          transform-style: preserve-3d; 
+          -webkit-transform-style: preserve-3d;
+        }
         .backface-hidden { 
           backface-visibility: hidden; 
           -webkit-backface-visibility: hidden;
-          transform: translate3d(0, 0, 0);
-          -webkit-transform: translate3d(0, 0, 0);
         }
         .perspective *, .preserve-3d * {
           -webkit-font-smoothing: antialiased;
           -moz-osx-font-smoothing: grayscale;
         }
-        .rotate-y-180 { transform: rotateY(180deg); }
+        .rotate-y-180 { 
+          transform: rotateY(180deg); 
+          -webkit-transform: rotateY(180deg);
+        }
       `}} />
     </div>
   );

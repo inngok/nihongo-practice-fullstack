@@ -28,6 +28,9 @@ public class NhkNewsCrawlerService {
     @Autowired
     private AiService aiService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Scheduled(cron = "0 0 0 * * ?")
     @CacheEvict(value = "newsListCache", allEntries = true)
     public void crawlDailyNhkNews() {
@@ -225,6 +228,13 @@ public class NhkNewsCrawlerService {
 
             newsArticleRepository.save(article);
             log.info("Lưu thành công bài báo: " + newsId);
+
+            // Broadcast real-time notification
+            try {
+                notificationService.broadcastNewArticle(article);
+            } catch (Exception ex) {
+                log.error("Lỗi khi gửi thông báo tin tức mới: ", ex);
+            }
 
         } catch (Exception e) {
             log.error("Lỗi khi crawl bài báo ID: " + newsId, e);

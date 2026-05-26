@@ -215,20 +215,26 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (!response.ok) {
-        logout();
-        throw new Error("Refresh token expired");
+        if (response.status >= 400 && response.status < 500) {
+          logout();
+          throw new Error("Refresh token expired");
+        } else {
+          throw new Error(`Server returned error status: ${response.status}`);
+        }
       }
 
       const data = await response.json();
       localStorage.setItem('nihongo_token', data.accessToken);
       return data.accessToken;
     } catch (error) {
-      logout();
-      messageApi.warning({
-        content: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!',
-        duration: 4,
-        style: { marginTop: '10vh' }
-      });
+      if (error.message === "Refresh token expired" || error.message === "No refresh token available") {
+        logout();
+        messageApi.warning({
+          content: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!',
+          duration: 4,
+          style: { marginTop: '10vh' }
+        });
+      }
       throw error;
     }
   };
