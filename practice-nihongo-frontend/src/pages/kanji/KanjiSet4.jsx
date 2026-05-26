@@ -39,6 +39,7 @@ export default function KanjiSet4() {
   const [typingFeedback, setTypingFeedback] = useState(null); // 'correct' | 'incorrect' | null
   const [typingFinished, setTypingFinished] = useState(false);
   const typingInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (!bookId) {
@@ -47,6 +48,12 @@ export default function KanjiSet4() {
     }
     fetchData();
   }, [bookId]);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -214,14 +221,27 @@ export default function KanjiSet4() {
 
   const handleTypingSubmit = (e) => {
     e.preventDefault();
-    if (typingFeedback !== null || filteredKanjis.length === 0) return;
+    if (filteredKanjis.length === 0) return;
+
+    // If already has feedback (correct or incorrect), pressing Enter advances to the next card immediately
+    if (typingFeedback !== null) {
+      moveToNextTyping();
+      return;
+    }
 
     const isCorrect = normalizeText(typingInput) === normalizeText(filteredKanjis[typingIndex].hanviet);
     setTypingFeedback(isCorrect ? 'correct' : 'incorrect');
-    if (isCorrect) setTimeout(() => moveToNextTyping(), 1000);
+    if (isCorrect) {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => moveToNextTyping(), 1000);
+    }
   };
 
   const moveToNextTyping = () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
     setTypingInput('');
     setTypingFeedback(null);
     if (typingIndex < filteredKanjis.length - 1) {
@@ -235,7 +255,8 @@ export default function KanjiSet4() {
   const handleSkipTyping = () => {
     setTypingInput(filteredKanjis[typingIndex]?.hanviet || '');
     setTypingFeedback('incorrect');
-    setTimeout(() => moveToNextTyping(), 2000);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => moveToNextTyping(), 2000);
   };
 
   const handleAddFlashcard = async (kanji, e) => {

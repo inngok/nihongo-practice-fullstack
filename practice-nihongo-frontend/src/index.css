@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-body, button, input, select, textarea, .ant-btn, .ant-select, .ant-input, .ant-dropdown-menu {
+body, button, input, select, textarea, .font-sans, .ant-btn, .ant-select, .ant-input, .ant-dropdown-menu {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
 }
 
