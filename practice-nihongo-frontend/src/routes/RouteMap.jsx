@@ -53,6 +53,7 @@ const DataImporter = lazy(() => import("../pages/manage/DataImporter"));
 const UserManager = lazy(() => import("../pages/manage/UserManager"));
 const AiManager = lazy(() => import("../pages/manage/AiManager"));
 const JlptPastVocabManager = lazy(() => import("../pages/manage/JlptPastVocabManager"));
+const ConfusingGrammarManager = lazy(() => import("../pages/manage/ConfusingGrammarManager"));
 
 // --- Layout & Route Wrappers ---
 
@@ -181,7 +182,7 @@ export default function RouteMap() {
       theme={{
         algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
         token: {
-          fontFamily: "Inter, sans-serif",
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
           ...(isDark ? {
             colorBgBase: '#020617', // Slate 950
             colorBgContainer: '#0f172a', // Slate 900
@@ -246,21 +247,15 @@ export default function RouteMap() {
           <Route index element={<Dashboard />} />
           <Route path="users" element={<UserManager />} />
           <Route path="import" element={<DataImporter />} />
-          {/* Legacy/Deep paths for management */}
-          <Route path="grammar" element={<GrammarManager />} />
-          <Route path="books" element={<BookManager />} />
-          <Route path="vocabulary" element={<VocabManager />} />
-          <Route path="kanji" element={<KanjiManager />} />
           <Route path="ai" element={<AiManager />} />
           <Route path="jlpt-vocab" element={<JlptPastVocabManager />} />
         </Route>
       </Route>
 
-      {/* Map legacy/specific management paths to the new structure if needed, 
-          but here we just use the grouped approach. 
-          The user previously had /grammar/manage etc. Let's keep those for compatibility but group them. */}
+      {/* Direct Management Paths (accessed from Sidebar and dropdown) */}
       <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
         <Route path="grammar/manage" element={<GrammarManager />} />
+        <Route path="grammar/confusing-manage" element={<ConfusingGrammarManager />} />
         <Route path="grammar/books" element={<BookManager />} />
         <Route path="vocabulary/manage" element={<VocabManager />} />
         <Route path="kanji/manage" element={<KanjiManager />} />

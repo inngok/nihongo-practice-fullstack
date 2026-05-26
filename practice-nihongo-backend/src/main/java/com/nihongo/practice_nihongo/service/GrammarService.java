@@ -18,7 +18,6 @@ public class GrammarService {
     }
 
     public Grammar createGrammar(Grammar grammar) {
-        // Bạn có thể thêm logic kiểm tra dữ liệu ở đây
         return grammarRepository.save(grammar);
     }
 

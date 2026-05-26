@@ -50,13 +50,15 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         }
       } catch (refreshError) {
-        console.error('Auto token refresh failed, logging out:', refreshError);
-        // Clear expired auth session data
-        localStorage.removeItem('nihongo_user');
-        localStorage.removeItem('nihongo_token');
-        localStorage.removeItem('nihongo_refresh_token');
-        // Redirect to login page
-        window.location.href = '/login';
+        console.error('Auto token refresh failed:', refreshError);
+        // Only log out if the server explicitly rejected the refresh token (e.g. 400, 401, 403)
+        // If it was a network error (no response) or 503/500 server error, don't log the user out.
+        if (refreshError.response && refreshError.response.status >= 400 && refreshError.response.status < 500) {
+          localStorage.removeItem('nihongo_user');
+          localStorage.removeItem('nihongo_token');
+          localStorage.removeItem('nihongo_refresh_token');
+          window.location.href = '/login';
+        }
       }
     }
 

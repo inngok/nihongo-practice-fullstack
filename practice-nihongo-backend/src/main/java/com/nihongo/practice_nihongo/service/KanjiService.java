@@ -63,8 +63,7 @@ public class KanjiService {
                     Book book = bookRepository.findById(kanji.getBook().getId()).orElse(null);
                     existing.setBook(book);
                 }
-                
-                // Map fields over to ensure JPA updates the existing record
+        
                 kanji.setId(existing.getId());
                 kanji.setBook(existing.getBook());
             } else {

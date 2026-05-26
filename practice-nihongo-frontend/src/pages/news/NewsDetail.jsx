@@ -127,7 +127,7 @@ export default function NewsDetail() {
   if (!article) return <div className="p-10 pt-32 max-w-3xl mx-auto"><Alert type="error" message="Không tìm thấy bài báo" /></div>;
 
   return (
-    <div className="max-w-3xl mx-auto p-6 pt-28">
+    <div className="max-w-4xl mx-auto p-6 pt-28">
       <Breadcrumb 
         className="mb-6"
         items={[
@@ -153,7 +153,7 @@ export default function NewsDetail() {
         />
       )}
 
-      <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-8 leading-tight tracking-tight">
+      <h1 className="font-kanji text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-8 leading-tight tracking-tight">
         {article.title}
       </h1>
       
@@ -190,7 +190,7 @@ export default function NewsDetail() {
         </div>
       </div>
       
-      <Card className="shadow-xl shadow-slate-200/40 dark:shadow-none dark:bg-slate-800/80 dark:border-slate-700/80 rounded-[2rem] border-0 leading-loose nhk-article-content text-xl md:text-2xl font-medium text-slate-800 dark:text-slate-200 mb-12">
+      <Card className="shadow-xl shadow-slate-200/40 dark:shadow-none dark:bg-slate-800/80 dark:border-slate-700/80 rounded-[2rem] border-0 leading-loose nhk-article-content font-kanji text-xl md:text-2xl font-medium text-slate-800 dark:text-slate-200 mb-12">
         <style>
           {`
             ${!showFurigana ? '.nhk-article-content rt { display: none; }' : ''}
@@ -228,7 +228,7 @@ export default function NewsDetail() {
                   
                   <div className="relative z-10">
                     <div className="flex items-end gap-3 mb-4">
-                      <span className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">
+                      <span className="font-kanji text-3xl font-black tracking-tighter text-slate-900 dark:text-white leading-none">
                         {item.word}
                       </span>
                       <span className="px-3 py-1 text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 mb-1">

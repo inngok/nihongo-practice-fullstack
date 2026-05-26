@@ -35,7 +35,6 @@ public class JlptPastVocabService {
                 
                 String history = existing.getExamHistory() != null ? existing.getExamHistory() : "";
                 
-                // Check if exam period already exists to avoid duplicate import
                 if (!history.contains(examPeriod)) {
                     existing.setAppearanceCount(existing.getAppearanceCount() + 1);
                     if (history.isEmpty()) {
@@ -44,7 +43,6 @@ public class JlptPastVocabService {
                         existing.setExamHistory(history + ", " + examPeriod);
                     }
                     
-                    // Update kanji and meaning if provided (optional logic, but good to have)
                     if (newVocab.getKanji() != null && !newVocab.getKanji().isEmpty()) {
                         existing.setKanji(newVocab.getKanji());
                     }

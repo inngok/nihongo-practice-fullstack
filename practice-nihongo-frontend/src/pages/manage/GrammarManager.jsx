@@ -516,15 +516,7 @@ export default function GrammarManager() {
             <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">Cập nhật kho ngữ pháp giáo trình hệ thống</p>
           </div>
           <div className="flex gap-3 self-start md:self-auto">
-            {filteredGrammars.length > 0 && (
-              <button
-                onClick={handleDeleteAll}
-                className="bg-red-50 hover:bg-red-100 text-red-600 px-5 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2"
-              >
-                <DeleteOutlined className="text-[10px]" />
-                {selectedBookId ? 'Xóa sách' : 'Xóa hết'}
-              </button>
-            )}
+
             <button
               onClick={() => navigate('/grammar/books')}
               className="px-5 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-900 transition-all shadow-sm"

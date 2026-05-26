@@ -22,6 +22,7 @@ export default function AdminSidebar({ onClose }) {
     { path: '/grammar/books', label: 'Bộ sách' },
     { path: '/vocabulary/manage', label: 'Từ vựng' },
     { path: '/grammar/manage', label: 'Ngữ pháp' },
+    { path: '/grammar/confusing-manage', label: 'Phân biệt Ngữ pháp' },
     { path: '/kanji/manage', label: 'Hán tự' },
     { type: 'divider' },
     { path: '/manage/users', label: 'Quản lý người dùng' },

@@ -1,14 +1,86 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Dropdown, Space } from 'antd';
-import { DownOutlined, SettingOutlined, UserOutlined, ImportOutlined, DatabaseOutlined, PieChartOutlined, FontSizeOutlined } from '@ant-design/icons';
+import { useNotifications } from '../../context/NotificationContext';
+import { Dropdown, Badge } from 'antd';
+import { DownOutlined, SettingOutlined, UserOutlined, ImportOutlined, DatabaseOutlined, PieChartOutlined, FontSizeOutlined, BellOutlined, ClearOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
 export default function Header() {
   const pathname = useLocation().pathname;
+  const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
+  const { notifications, unreadCount, markAllAsRead, markAsRead, clearAll } = useNotifications();
 
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
+
+  const notificationDropdown = (
+    <div className="w-[340px] md:w-[400px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-3xl shadow-2xl p-4 flex flex-col gap-3">
+      <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+        <span className="font-extrabold text-sm text-slate-900 dark:text-slate-50 uppercase tracking-wider">
+          Thông báo ({unreadCount})
+        </span>
+        <div className="flex gap-3.5">
+          {unreadCount > 0 && (
+            <button 
+              onClick={markAllAsRead} 
+              className="text-[11px] font-extrabold uppercase text-slate-900 hover:text-slate-600 dark:text-slate-100 dark:hover:text-slate-300 transition-colors flex items-center gap-1"
+            >
+              <CheckCircleOutlined /> Đọc hết
+            </button>
+          )}
+          {notifications.length > 0 && (
+            <button 
+              onClick={clearAll} 
+              className="text-[11px] font-extrabold uppercase text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-colors flex items-center gap-1"
+            >
+              <ClearOutlined /> Xóa hết
+            </button>
+          )}
+        </div>
+      </div>
+ 
+      <div className="max-h-[320px] overflow-y-auto no-scrollbar flex flex-col gap-2">
+        {notifications.length === 0 ? (
+          <div className="py-10 text-center text-xs text-slate-400 dark:text-slate-600 font-extrabold uppercase tracking-widest">
+            Không có thông báo nào
+          </div>
+        ) : (
+          notifications.map(notif => (
+            <div 
+              key={`${notif.type}-${notif.id}`}
+              onClick={() => {
+                markAsRead(notif.id);
+                if (notif.type === 'NEW_ARTICLE') {
+                  navigate(`/news/${notif.id}`);
+                }
+              }}
+              className={`flex gap-3.5 items-center p-3 rounded-2xl cursor-pointer transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-850/80 border border-transparent ${!notif.read ? 'bg-slate-100/40 dark:bg-slate-800/40 border-slate-200/50 dark:border-slate-800/40 shadow-sm' : ''}`}
+            >
+              {notif.imageUrl ? (
+                <img 
+                  src={notif.imageUrl} 
+                  alt="" 
+                  className="w-12 h-12 object-cover rounded-xl shrink-0 border border-slate-100 dark:border-slate-800/40"
+                />
+              ) : (
+                <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50 flex items-center justify-center rounded-xl shrink-0 text-lg">
+                  📰
+                </div>
+              )}
+              <div className="flex-grow min-w-0">
+                <h4 className={`font-kanji text-[13px] md:text-[14px] leading-normal line-clamp-2 ${!notif.read ? 'font-bold text-slate-950 dark:text-slate-50' : 'font-medium text-slate-450 dark:text-slate-500'}`}>
+                  {notif.title}
+                </h4>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 mt-1 block uppercase tracking-wider">
+                  {new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(notif.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <header className="fixed top-0 z-[1000] w-full bg-white/95 dark:bg-slate-950/95 backdrop-blur-sm border-b border-slate-50 dark:border-slate-900 px-4 md:px-12 py-3 md:py-4 flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4 transition-all duration-500">
@@ -19,6 +91,16 @@ export default function Header() {
 
         {/* Right side controls on mobile */}
         <div className="flex items-center gap-3 md:gap-6">
+          <div className="md:hidden">
+            <Dropdown dropdownRender={() => notificationDropdown} trigger={['click']} placement="bottomRight">
+              <div className="relative w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer text-slate-650 dark:text-slate-350 transition-all select-none shadow-sm">
+                <Badge count={unreadCount} size="small" offset={[2, -2]}>
+                  <BellOutlined className="text-base" />
+                </Badge>
+              </div>
+            </Dropdown>
+          </div>
+
           {isAdmin && (
             <Dropdown
               menu={{
@@ -102,7 +184,7 @@ export default function Header() {
         </div>
       </div>
 
-      <nav className="flex items-center gap-4 md:gap-8 text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-550 overflow-x-auto no-scrollbar w-full md:w-auto justify-center">
+      <nav className="flex items-center gap-4 md:gap-8 text-[10px] md:text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 overflow-x-auto no-scrollbar w-full md:w-auto justify-center">
         {[
           { path: '/', label: 'Trang chủ' },
           { path: '/grammar', label: 'Ngữ pháp' },
@@ -116,8 +198,8 @@ export default function Header() {
             key={nav.path}
             to={nav.path}
             className={`transition-all whitespace-nowrap py-1 border-b-2 ${(nav.path === '/' && pathname === '/') || (nav.path !== '/' && (pathname === nav.path || pathname.startsWith(nav.path + '/')))
-                ? 'text-black border-black dark:text-white dark:border-white'
-                : 'border-transparent hover:text-black dark:hover:text-white hover:border-slate-200 dark:hover:hover:border-slate-800'
+                ? 'text-black border-black dark:text-white dark:border-white font-black'
+                : 'border-transparent text-slate-600 hover:text-black dark:text-slate-400 dark:hover:text-white hover:border-slate-200 dark:hover:hover:border-slate-800 font-black'
               }`}
           >
             {nav.label}
@@ -126,6 +208,14 @@ export default function Header() {
       </nav>
 
       <div className="hidden md:flex flex-1 items-center justify-end gap-4 text-xs font-bold uppercase tracking-widest">
+        <Dropdown dropdownRender={() => notificationDropdown} trigger={['click']} placement="bottomRight">
+          <div className="relative w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer text-slate-655 dark:text-slate-355 transition-all select-none shadow-sm">
+            <Badge count={unreadCount} size="small" offset={[2, -2]}>
+              <BellOutlined className="text-base" />
+            </Badge>
+          </div>
+        </Dropdown>
+
         {currentUser ? (
           <Dropdown
             menu={{
