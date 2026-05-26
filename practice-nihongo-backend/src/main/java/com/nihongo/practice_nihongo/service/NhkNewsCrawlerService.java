@@ -229,7 +229,6 @@ public class NhkNewsCrawlerService {
             newsArticleRepository.save(article);
             log.info("Lưu thành công bài báo: " + newsId);
 
-            // Broadcast real-time notification
             try {
                 notificationService.broadcastNewArticle(article);
             } catch (Exception ex) {

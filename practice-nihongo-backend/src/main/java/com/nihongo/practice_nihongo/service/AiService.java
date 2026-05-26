@@ -300,7 +300,8 @@ public class AiService {
         );
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setContentType(new MediaType("application", "json", java.nio.charset.StandardCharsets.UTF_8));
+        headers.setAcceptCharset(List.of(java.nio.charset.StandardCharsets.UTF_8));
         if (activeKey != null && !activeKey.isEmpty()) {
             headers.set("x-goog-api-key", activeKey);
         }
@@ -362,7 +363,6 @@ public class AiService {
     public String generateChatResponse(String scenario, List<Map<String, String>> history, String userMessage) throws Exception {
         StringBuilder historyPrompt = new StringBuilder();
         if (history != null && !history.isEmpty()) {
-            // Keep only last 6 messages to keep tokens low!
             int start = Math.max(0, history.size() - 6);
             for (int i = start; i < history.size(); i++) {
                 Map<String, String> msg = history.get(i);
@@ -411,5 +411,128 @@ public class AiService {
         String res = callGemini(prompt);
         recordAiUsage(true);
         return res;
+    }
+
+    public String explainConfusingGrammar(String groupTitle, String itemsJson) throws Exception {
+        try {
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
+                recordAiUsage(true);
+                return "{\"explanation\": \"Chưa cấu hình API Key để kích hoạt tính năng giải thích AI.\", \"tip\": \"Vui lòng cấu hình API Key trong trang quản trị.\", \"examples\": []}";
+            }
+            
+            String prompt = "You are a professional Japanese teacher. Explain the differences, nuances, and usage contexts of the following group of confusing Japanese grammar structures.\n" +
+                    "Group: " + groupTitle + "\n" +
+                    "Structures:\n" + itemsJson + "\n\n" +
+                    "Your task:\n" +
+                    "1. Provide a detailed, easy-to-understand explanation in Vietnamese contrasting these grammar points, explaining when to use which, and their specific nuances.\n" +
+                    "2. Generate 1 natural Japanese example sentence for each grammar point to demonstrate the contrast. For each example, provide its Romaji, Hiragana reading, and Vietnamese translation.\n" +
+                    "3. Highlight a key tip or common mistake in Vietnamese to help students avoid confusion.\n\n" +
+                    "You MUST return the response strictly as a JSON object with the following keys:\n" +
+                    "{\n" +
+                    "  \"explanation\": \"(detailed comparison in Vietnamese, with clear paragraphs and bullet points if needed)\",\n" +
+                    "  \"tip\": \"(key tip or common mistake in Vietnamese)\",\n" +
+                    "  \"examples\": [\n" +
+                    "    {\n" +
+                    "      \"pattern\": \"(the grammar pattern, e.g. 〜てもいい)\",\n" +
+                    "      \"sentence\": \"(natural Japanese example sentence)\",\n" +
+                    "      \"romaji\": \"(Romaji translation)\",\n" +
+                    "      \"translation\": \"(Vietnamese translation)\"\n" +
+                    "    }\n" +
+                    "  ]\n" +
+                    "}\n" +
+                    "Do not include any formatting, markdown, or other text except the clean JSON object.";
+            String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res;
+        } catch (Exception e) {
+            recordAiUsage(false);
+            log.error("AI Error explaining confusing grammar: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    public String generateConfusingGrammarFromPatterns(String groupTitle, String groupDescription, List<String> patterns) throws Exception {
+        try {
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
+                throw new Exception("No Gemini API keys configured");
+            }
+            
+            String patternsStr = String.join(", ", patterns);
+            String prompt = "You are a professional Japanese teacher. Create a comparative analysis for these patterns: " + patternsStr + ".\n" +
+                    "Group Title: " + groupTitle + "\n" +
+                    "Group Description: " + groupDescription + "\n\n" +
+                    "CRITICAL RULES:\n" +
+                    "- ALL Vietnamese text (explanation, tip, baseMeaning, nuance, exampleTranslation) MUST be written with full Vietnamese diacritical marks (dau tieng Viet day du). For example: 'Tự động từ', 'Trạng thái', 'Hành động', NOT 'Tu dong tu' or 'Trang thai'.\n" +
+                    "- DO NOT use any emojis, icons, or decorative symbols (such as ✦, ■, ⚠️, ✨, etc.) in the 'explanation' or 'tip' fields. Use only pure text.\n" +
+                    "- Each pattern must have its own separate item in the 'items' array.\n\n" +
+                    "Return strictly JSON:\n" +
+                    "{\n" +
+                    "  \"explanation\": \"(pure text comparative explanation in Vietnamese)\",\n" +
+                    "  \"tip\": \"(pure text memory tip in Vietnamese)\",\n" +
+                    "  \"items\": [\n" +
+                    "    {\n" +
+                    "      \"pattern\": \"(the pattern, e.g. 〜てもいい)\",\n" +
+                    "      \"baseMeaning\": \"(literal meaning in Vietnamese)\",\n" +
+                    "      \"nuance\": \"(nuance tag in Vietnamese, e.g. ĐƯỢC PHÉP)\",\n" +
+                    "      \"similarityPercentage\": (integer percentage, e.g. 80),\n" +
+                    "      \"exampleSentence\": \"(single Japanese sentence)\",\n" +
+                    "      \"exampleRomaji\": \"(Romaji)\",\n" +
+                    "      \"exampleTranslation\": \"(Vietnamese translation)\"\n" +
+                    "    }\n" +
+                    "  ]\n" +
+                    "}\n" +
+                    "Do not include any formatting or text outside the raw JSON.";
+            String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res;
+        } catch (Exception e) {
+            recordAiUsage(false);
+            log.error("AI Error generating confusing grammar: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    public String generateConfusingGrammarFromPrompt(String userPrompt) throws Exception {
+        try {
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
+                throw new Exception("No Gemini API keys configured");
+            }
+            
+            String prompt = "You are a professional Japanese teacher. Create a JSON response for a confusing grammar group based on this request: \"" + userPrompt + "\".\n\n" +
+                    "CRITICAL RULES:\n" +
+                    "- ALL Vietnamese text (title, description, explanation, tip, baseMeaning, nuance, exampleTranslation) MUST be written with full Vietnamese diacritical marks (dau tieng Viet day du). For example: 'Tự động từ', 'Trạng thái tự nhiên', NOT 'Tu dong tu' or 'Trang thai tu nhien'.\n" +
+                    "- DO NOT use any emojis, icons, or decorative symbols (such as ✦, ■, ⚠️, ✨, etc.) in the 'explanation' or 'tip' fields. Use only pure text.\n" +
+                    "- Treat each compared pattern/verb as a SEPARATE item in the 'items' array. Never combine them (e.g. create separate items for '開く (あく)' and '開ける (あける)').\n" +
+                    "- 'similarityPercentage' must be 40-50% for opposing verbs like transitive/intransitive, not 100%.\n\n" +
+                    "Return strictly JSON:\n" +
+                    "{\n" +
+                    "  \"title\": \"(descriptive title in Vietnamese)\",\n" +
+                    "  \"description\": \"(concise description in Vietnamese)\",\n" +
+                    "  \"explanation\": \"(pure text comparative explanation in Vietnamese)\",\n" +
+                    "  \"tip\": \"(pure text memory tip in Vietnamese)\",\n" +
+                    "  \"items\": [\n" +
+                    "    {\n" +
+                    "      \"pattern\": \"(the pattern, e.g. 開く (あく))\",\n" +
+                    "      \"baseMeaning\": \"(literal meaning in Vietnamese)\",\n" +
+                    "      \"nuance\": \"(concise nuance tag, e.g. TRẠNG THÁI TỰ NHIÊN)\",\n" +
+                    "      \"similarityPercentage\": (integer 10-100),\n" +
+                    "      \"exampleSentence\": \"(single Japanese sentence)\",\n" +
+                    "      \"exampleRomaji\": \"(Romaji)\",\n" +
+                    "      \"exampleTranslation\": \"(Vietnamese translation)\"\n" +
+                    "    }\n" +
+                    "  ]\n" +
+                    "}\n" +
+                    "Do not include any formatting or text outside the raw JSON.";
+            String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res;
+        } catch (Exception e) {
+            recordAiUsage(false);
+            log.error("AI Error generating confusing grammar from prompt: " + e.getMessage());
+            throw e;
+        }
     }
 }

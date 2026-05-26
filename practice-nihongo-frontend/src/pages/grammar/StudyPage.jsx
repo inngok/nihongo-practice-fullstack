@@ -817,14 +817,22 @@ export default function StudyPage() {
           <>
             {/* Header Section */}
             {activeMode === 'menu' && (
-              <div className="relative pl-6">
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-black dark:bg-white rounded-full" />
-                <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white uppercase italic leading-none">
-                  NGỮ PHÁP
-                </h1>
-                <p className="text-[10px] font-black text-slate-200 dark:text-slate-800 mt-1 uppercase tracking-[0.3em]">
-                  {grammarData[0]?.book?.levelLabel || ''}
-                </p>
+              <div className="mb-8 md:mb-10">
+                <span className="text-[10px] font-black tracking-widest text-slate-400 dark:text-slate-500 uppercase block mb-3">HỌC TẬP & LUYỆN TẬP</span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                  <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white uppercase leading-none">
+                    NGỮ PHÁP
+                  </h1>
+                  {grammarData[0]?.book?.title && (
+                    <span className="hidden sm:inline text-slate-300 dark:text-slate-700 text-lg">|</span>
+                  )}
+                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400 leading-none">
+                    {grammarData[0]?.book?.title || ''}
+                  </span>
+                  <span className="px-2.5 py-1 bg-slate-950 text-white dark:bg-white dark:text-black rounded-lg text-[9px] font-black tracking-widest uppercase shadow-sm self-start sm:self-auto">
+                    {grammarData[0]?.book?.levelLabel || 'N3'}
+                  </span>
+                </div>
               </div>
             )}
 
