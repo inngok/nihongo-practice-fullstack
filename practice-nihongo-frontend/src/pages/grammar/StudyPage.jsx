@@ -20,17 +20,29 @@ export default function StudyPage() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedLesson, setSelectedLesson] = useState('');
   const [quizInput, setQuizInput] = useState('');
   const [quizStatus, setQuizStatus] = useState('idle'); // idle, hint, correct, incorrect, revealed
   const [mcOptions, setMcOptions] = useState([]);
   const [mcSelected, setMcSelected] = useState(null);
   const [mcChecked, setMcChecked] = useState(false);
 
+  const uniqueLessons = useMemo(() => {
+    const lessons = new Set();
+    grammarData.forEach(g => {
+      if (g.unit) lessons.add(g.unit);
+    });
+    return Array.from(lessons).sort((a, b) => a - b);
+  }, [grammarData]);
+
   const activeData = useMemo(() => {
     let data = grammarData;
+    if (selectedLesson) {
+      data = data.filter(item => item.unit && item.unit.toString() === selectedLesson.toString());
+    }
     if (isShuffle) return [...data].sort(() => Math.random() - 0.5);
     return data;
-  }, [grammarData, isShuffle]);
+  }, [grammarData, isShuffle, selectedLesson]);
 
   useEffect(() => {
     fetchGrammar();
@@ -313,15 +325,36 @@ export default function StudyPage() {
           </div>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-700 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm cấu trúc..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-transparent outline-none font-medium text-slate-900 dark:text-white text-base"
-          />
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-700 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm cấu trúc..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-transparent outline-none font-medium text-slate-900 dark:text-white text-base"
+            />
+          </div>
+          {uniqueLessons.length > 0 && (
+            <div className="sm:w-48 relative">
+              <select
+                value={selectedLesson}
+                onChange={(e) => {
+                  setSelectedLesson(e.target.value);
+                  setCurrentIndex(0);
+                  setIsFlipped(false);
+                  setQuizStatus('idle');
+                }}
+                className="w-full px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-transparent outline-none font-medium text-slate-900 dark:text-white text-base appearance-none cursor-pointer"
+              >
+                <option value="" className="text-slate-900 dark:text-slate-900">Tất cả bài</option>
+                {uniqueLessons.map(lesson => (
+                  <option key={lesson} value={lesson} className="text-slate-900 dark:text-slate-900">Bài {lesson}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
@@ -342,8 +375,13 @@ export default function StudyPage() {
                     <p className="text-sm text-slate-400 dark:text-slate-500 font-medium mt-0.5">{item.meaning}</p>
                   </div>
                 </div>
-                <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider">
-                  {item.level || 'N3'}
+                <div className="flex items-center gap-2">
+                  <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider">
+                    Bài {item.unit || 1}
+                  </div>
+                  <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider">
+                    {item.level || 'N3'}
+                  </div>
                 </div>
               </div>
 

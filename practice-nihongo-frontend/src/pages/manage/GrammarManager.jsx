@@ -605,6 +605,7 @@ export default function GrammarManager() {
                   </th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Cấu trúc</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Ý nghĩa</th>
+                  <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Sách</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Level</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Bài học</th>
                   <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 text-right">Hành động</th>
@@ -631,6 +632,11 @@ export default function GrammarManager() {
                         </div>
                       </td>
                       <td className="px-6 py-5 text-slate-500 dark:text-slate-400 text-[13px] italic">{item.meaning}</td>
+                      <td className="px-6 py-5">
+                        <span className="text-[12px] font-semibold text-slate-700 dark:text-slate-300">
+                          {item.book?.title || 'Không rõ'}
+                        </span>
+                      </td>
                       <td className="px-6 py-5">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${levelStyles[item.level] || levelStyles.N5}`}>
                           {item.level}
@@ -663,7 +669,7 @@ export default function GrammarManager() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="px-6 py-12 text-center text-slate-300 dark:text-slate-600 italic text-sm">Chưa có dữ liệu.</td>
+                    <td colSpan="7" className="px-6 py-12 text-center text-slate-300 dark:text-slate-600 italic text-sm">Chưa có dữ liệu.</td>
                   </tr>
                 )}
               </tbody>
