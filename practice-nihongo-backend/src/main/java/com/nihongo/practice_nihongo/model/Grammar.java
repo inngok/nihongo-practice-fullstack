@@ -37,9 +37,12 @@ public class Grammar {
     @JoinColumn(name = "book_id")
     private Book book;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean publish = true;
+
     public Grammar() {}
 
-    public Grammar(Long id, String structure, String meaning, String explanation, String exampleSentence, String exampleMeaning, String quizSentence, String level, Integer week, Integer day, Book book) {
+    public Grammar(Long id, String structure, String meaning, String explanation, String exampleSentence, String exampleMeaning, String quizSentence, String level, Integer week, Integer day, Book book, Boolean publish) {
         this.id = id;
         this.structure = structure;
         this.meaning = meaning;
@@ -51,6 +54,7 @@ public class Grammar {
         this.week = week;
         this.day = day;
         this.book = book;
+        this.publish = publish != null ? publish : true;
     }
 
     // Manual Getters and Setters
@@ -76,6 +80,8 @@ public class Grammar {
     public void setDay(Integer day) { this.day = day; }
     public Book getBook() { return book; }
     public void setBook(Book book) { this.book = book; }
+    public Boolean getPublish() { return publish; }
+    public void setPublish(Boolean publish) { this.publish = publish; }
 
     public static class GrammarBuilder {
         private Long id;
@@ -89,6 +95,7 @@ public class Grammar {
         private Integer week;
         private Integer day;
         private Book book;
+        private Boolean publish = true;
 
         public GrammarBuilder id(Long id) { this.id = id; return this; }
         public GrammarBuilder structure(String structure) { this.structure = structure; return this; }
@@ -101,9 +108,10 @@ public class Grammar {
         public GrammarBuilder week(Integer week) { this.week = week; return this; }
         public GrammarBuilder day(Integer day) { this.day = day; return this; }
         public GrammarBuilder book(Book book) { this.book = book; return this; }
+        public GrammarBuilder publish(Boolean publish) { this.publish = publish; return this; }
 
         public Grammar build() {
-            return new Grammar(id, structure, meaning, explanation, exampleSentence, exampleMeaning, quizSentence, level, week, day, book);
+            return new Grammar(id, structure, meaning, explanation, exampleSentence, exampleMeaning, quizSentence, level, week, day, book, publish);
         }
     }
 

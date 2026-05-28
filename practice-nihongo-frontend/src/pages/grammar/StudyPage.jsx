@@ -146,6 +146,12 @@ export default function StudyPage() {
     try {
       const response = await grammarService.getAll();
       let data = response.data;
+      
+      const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ROLE_ADMIN';
+      if (!isAdmin) {
+        data = data.filter(item => item.publish !== false);
+      }
+
       if (targetBookId) {
         data = data.filter(item => item.book && String(item.book.id) === String(targetBookId));
       }

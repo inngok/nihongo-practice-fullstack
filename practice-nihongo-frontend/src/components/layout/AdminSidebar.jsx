@@ -29,6 +29,7 @@ export default function AdminSidebar({ onClose }) {
     { path: '/manage/ai', label: 'Quản lý AI' },
     { path: '/manage/import', label: 'Nhập dữ liệu' },
     { path: '/manage/jlpt-vocab', label: 'JLPT Từ vựng' },
+
   ];
 
   return (
