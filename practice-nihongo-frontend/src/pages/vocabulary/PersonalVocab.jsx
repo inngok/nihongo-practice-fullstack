@@ -28,7 +28,7 @@ export default function PersonalVocab() {
   const { fetchWithAuth } = useAuth();
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    word: '', reading: '', meaning: '', example: '', exampleMeaning: ''
+    word: '', reading: '', meaning: '', example: '', exampleMeaning: '', itemType: 'VOCAB'
   });
 
   useEffect(() => {
@@ -63,13 +63,13 @@ export default function PersonalVocab() {
   };
 
   const openAddModal = () => {
-    setFormData({ word: '', reading: '', meaning: '', example: '', exampleMeaning: '' });
+    setFormData({ word: '', reading: '', meaning: '', example: '', exampleMeaning: '', itemType: 'VOCAB' });
     setEditingId(null);
     setIsModalOpen(true);
   };
 
   const openEditModal = (vocab) => {
-    setFormData({ word: vocab.word, reading: vocab.reading, meaning: vocab.meaning, example: vocab.example, exampleMeaning: vocab.exampleMeaning });
+    setFormData({ word: vocab.word, reading: vocab.reading, meaning: vocab.meaning, example: vocab.example, exampleMeaning: vocab.exampleMeaning, itemType: vocab.itemType || 'VOCAB' });
     setEditingId(vocab.id);
     setIsModalOpen(true);
   };
@@ -243,18 +243,24 @@ export default function PersonalVocab() {
                 <div key={activeTab === 'personal' ? item.id : item.flashcardId} className="p-6 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-black dark:hover:border-white transition-all">
                   <div className="flex justify-between items-start mb-4">
                     <div className="space-y-1">
-                      <div className="text-xl font-bold text-slate-900 dark:text-white font-kanji leading-tight">{activeTab === 'saved-kanji' ? item.character : item.word}</div>
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{activeTab === 'saved-kanji' ? item.hanviet : item.reading}</div>
+                      {item.itemType === 'TEXT' ? (
+                        <div className="text-sm font-bold text-slate-900 dark:text-white leading-relaxed mb-2 break-words whitespace-pre-wrap">{item.word}</div>
+                      ) : (
+                        <>
+                          <div className="text-xl font-bold text-slate-900 dark:text-white font-kanji leading-tight">{activeTab === 'saved-kanji' ? item.character : item.word}</div>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{activeTab === 'saved-kanji' ? item.hanviet : item.reading}</div>
+                        </>
+                      )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 ml-4">
                       {activeTab === 'personal' ? (
-                        <button onClick={() => openEditModal(item)} className="text-[9px] font-bold text-slate-300 hover:text-black dark:hover:text-white uppercase">Sửa</button>
+                        <button onClick={() => openEditModal(item)} className="text-[9px] font-bold text-slate-300 hover:text-black dark:hover:text-white uppercase shrink-0">Sửa</button>
                       ) : null}
-                      <button onClick={() => activeTab === 'personal' ? personalVocabService.delete(item.id).then(fetchData) : flashcardService.delete(item.flashcardId).then(fetchData)} className="text-[9px] font-bold text-slate-300 hover:text-rose-500 uppercase">Xóa</button>
+                      <button onClick={() => activeTab === 'personal' ? personalVocabService.delete(item.id).then(fetchData) : flashcardService.delete(item.flashcardId).then(fetchData)} className="text-[9px] font-bold text-slate-300 hover:text-rose-500 uppercase shrink-0">Xóa</button>
                     </div>
                   </div>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">{item.meaning}</p>
-                  {item.example && (
+                  <p className={`font-medium text-slate-600 dark:text-slate-300 mb-3 whitespace-pre-wrap ${item.itemType === 'TEXT' ? 'text-[11px] italic' : 'text-sm'}`}>{item.meaning}</p>
+                  {item.example && item.itemType !== 'TEXT' && (
                     <div className="pt-3 border-t border-slate-50 dark:border-slate-800/50">
                       <p className="text-[11px] text-slate-500 leading-relaxed">{item.example}</p>
                       <p className="text-[10px] text-slate-400 italic mt-1">{item.exampleMeaning}</p>
@@ -283,18 +289,38 @@ export default function PersonalVocab() {
         styles={{ content: { borderRadius: '24px', padding: '32px' } }}
       >
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center px-1"><label className="text-[9px] font-bold uppercase text-slate-400">Từ vựng</label><button type="button" onClick={handleAiAutoFill} disabled={isAiLoading} className="text-[9px] font-bold text-black dark:text-white uppercase"><ThunderboltOutlined /> AI TỰ ĐIỀN</button></div>
-              <input type="text" name="word" value={formData.word} onChange={handleInputChange} required className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 font-bold text-lg" />
-            </div>
-            <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Cách đọc</label><input type="text" name="reading" value={formData.reading} onChange={handleInputChange} required className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 font-bold text-lg" /></div>
+          <div className="flex gap-4 p-1 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+            <button type="button" onClick={() => setFormData(p => ({...p, itemType: 'VOCAB'}))} className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all ${formData.itemType === 'VOCAB' ? 'bg-white dark:bg-slate-800 shadow-sm text-black dark:text-white' : 'text-slate-400'}`}>Từ vựng</button>
+            <button type="button" onClick={() => setFormData(p => ({...p, itemType: 'TEXT'}))} className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-widest rounded-md transition-all ${formData.itemType === 'TEXT' ? 'bg-white dark:bg-slate-800 shadow-sm text-black dark:text-white' : 'text-slate-400'}`}>Đoạn văn</button>
           </div>
-          <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Ý nghĩa</label><input type="text" name="meaning" value={formData.meaning} onChange={handleInputChange} required className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 font-bold text-base" /></div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Ví dụ</label><input type="text" name="example" value={formData.example} onChange={handleInputChange} className="w-full bg-transparent border-b border-slate-100 outline-none py-1 text-base md:text-sm" /></div>
-            <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Dịch</label><input type="text" name="exampleMeaning" value={formData.exampleMeaning} onChange={handleInputChange} className="w-full bg-transparent border-b border-slate-100 outline-none py-1 text-base md:text-sm italic text-slate-400" /></div>
-          </div>
+          
+          {formData.itemType === 'VOCAB' ? (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center px-1"><label className="text-[9px] font-bold uppercase text-slate-400">Từ vựng</label><button type="button" onClick={handleAiAutoFill} disabled={isAiLoading} className="text-[9px] font-bold text-black dark:text-white uppercase"><ThunderboltOutlined /> AI TỰ ĐIỀN</button></div>
+                  <input type="text" name="word" value={formData.word} onChange={handleInputChange} required className="w-full bg-transparent border-b border-slate-100 dark:border-slate-800 outline-none py-1.5 font-bold text-lg" />
+                </div>
+                <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Cách đọc</label><input type="text" name="reading" value={formData.reading} onChange={handleInputChange} required className="w-full bg-transparent border-b border-slate-100 dark:border-slate-800 outline-none py-1.5 font-bold text-lg" /></div>
+              </div>
+              <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Ý nghĩa</label><input type="text" name="meaning" value={formData.meaning} onChange={handleInputChange} required className="w-full bg-transparent border-b border-slate-100 dark:border-slate-800 outline-none py-1.5 font-bold text-base" /></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Ví dụ</label><input type="text" name="example" value={formData.example} onChange={handleInputChange} className="w-full bg-transparent border-b border-slate-100 dark:border-slate-800 outline-none py-1 text-base md:text-sm" /></div>
+                <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400 px-1">Dịch</label><input type="text" name="exampleMeaning" value={formData.exampleMeaning} onChange={handleInputChange} className="w-full bg-transparent border-b border-slate-100 dark:border-slate-800 outline-none py-1 text-base md:text-sm italic text-slate-400" /></div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center px-1"><label className="text-[9px] font-bold uppercase text-slate-400">Đoạn văn tiếng Nhật</label></div>
+                <textarea name="word" value={formData.word} onChange={handleInputChange} required rows={4} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl outline-none p-4 font-bold text-sm resize-none custom-scrollbar" placeholder="Nhập hoặc dán câu / đoạn văn vào đây..." />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[9px] font-bold uppercase text-slate-400 px-1">Bản dịch / Ghi chú</label>
+                <textarea name="meaning" value={formData.meaning} onChange={handleInputChange} required rows={3} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl outline-none p-4 text-xs resize-none custom-scrollbar italic" placeholder="Bản dịch tiếng Việt..." />
+              </div>
+            </>
+          )}
           <button type="submit" className="w-full py-4 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-[10px] uppercase tracking-widest shadow-lg">LƯU VÀO SỔ TAY</button>
         </form>
       </Modal>

@@ -25,7 +25,7 @@ const customStyles = `
     border-radius: 12px !important;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
     border: 1px solid #e2e8f0 !important;
-    z-index: 10000 !important;
+    z-index: 999999 !important;
   }
   .dark .custom-select-popup {
     background-color: #0f172a !important;
@@ -71,6 +71,7 @@ export default function VocabManager() {
   const [bulkInput, setBulkInput] = useState('');
   const [previewData, setPreviewData] = useState([]);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     word: '', reading: '', meaning: '', example: '', exampleMeaning: '', bookId: '', week: '', day: ''
@@ -302,28 +303,6 @@ export default function VocabManager() {
             <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">Cập nhật kho từ vựng giáo trình hệ thống</p>
           </div>
           <div className="flex gap-3 self-start md:self-auto">
-            {filteredVocabs.length > 0 && (
-              <button
-                onClick={() => {
-                  Modal.confirm({
-                    title: selectedBookId ? 'Xóa từ vựng theo sách' : 'Xóa tất cả từ vựng',
-                    content: `Bạn có chắc muốn xóa ${filteredVocabs.length} từ vựng${selectedBookId ? ' của sách này' : ''}?`,
-                    okText: 'Xóa',
-                    okType: 'danger',
-                    centered: true,
-                    onOk: async () => {
-                      for (const v of filteredVocabs) await vocabService.delete(v.id);
-                      fetchData();
-                      messageApi.success('Đã xóa thành công!');
-                    }
-                  });
-                }}
-                className="px-5 py-2.5 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-900 hover:text-rose-600 dark:hover:text-rose-400 transition-all shadow-sm flex items-center gap-2"
-              >
-                <DeleteOutlined className="text-[10px]" />
-                {selectedBookId ? 'Xóa sách' : 'Xóa hết'}
-              </button>
-            )}
             <button
               onClick={openAddModal}
               className="bg-black text-white dark:bg-white dark:text-black px-6 py-2.5 rounded-lg text-xs font-bold hover:opacity-80 transition-all shadow-xl flex items-center gap-2"
@@ -668,8 +647,10 @@ export default function VocabManager() {
                       />
                     </div>
                     <button 
+                      disabled={isSaving}
                       onClick={async () => {
                         const items = previewData.filter(i => i.selected); if (!items.length || !selectedBookId) return messageApi.warning('Vui lòng chọn giáo trình và ít nhất 1 từ vựng');
+                        setIsSaving(true);
                         try { 
                           for (const itm of items) {
                             await vocabService.create({ 
@@ -686,11 +667,13 @@ export default function VocabManager() {
                           setFormData(prev => ({...prev, week: ''}));
                         } catch (e) { 
                           messageApi.error('Lỗi lưu dữ liệu!'); 
+                        } finally {
+                          setIsSaving(false);
                         }
                       }} 
-                      className="px-8 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-md hover:-translate-y-0.5 transition-transform"
+                      className="px-8 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-md hover:-translate-y-0.5 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      LƯU TẤT CẢ
+                      {isSaving ? 'ĐANG LƯU...' : 'LƯU TẤT CẢ'}
                     </button>
                   </div>
                 </div>

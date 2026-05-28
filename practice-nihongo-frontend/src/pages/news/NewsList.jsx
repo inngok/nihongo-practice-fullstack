@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Spin, Typography, Tag, Space, Alert, Button, message } from 'antd';
+import { Card, Spin, Typography, Tag, Space, Alert, Button, message, Pagination } from 'antd';
 import { CalendarOutlined, ReadOutlined, ArrowRightOutlined, SyncOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
@@ -13,6 +13,8 @@ export default function NewsList() {
   const [error, setError] = useState(null);
   const [crawling, setCrawling] = useState(false);
   const [crawlingHistory, setCrawlingHistory] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
 
@@ -128,17 +130,20 @@ export default function NewsList() {
              <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300">Chưa có bài báo nào</h3>
            </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-            {news.map(article => (
-              <Link to={`/news/${article.id}`} key={article.id} className="group flex">
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+              {news.slice((currentPage - 1) * pageSize, currentPage * pageSize).map(article => (
+                <Link to={`/news/${article.id}`} key={article.id} className="group flex">
                 <div className="flex flex-col w-full bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500">
                   <div className="relative h-56 w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
                     {article.imageUrl ? (
-                      <img 
-                        alt={article.title} 
-                        src={article.imageUrl} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
-                      />
+                      <div className="w-full h-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center p-2">
+                        <img 
+                          alt={article.title} 
+                          src={article.imageUrl} 
+                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out" 
+                        />
+                      </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <ReadOutlined className="text-5xl text-slate-400 dark:text-slate-600" />
@@ -172,8 +177,25 @@ export default function NewsList() {
                   </div>
                 </div>
               </Link>
-            ))}
-          </div>
+              ))}
+            </div>
+            
+            {news.length > pageSize && (
+              <div className="flex justify-center mt-12 mb-8">
+                <Pagination
+                  current={currentPage}
+                  pageSize={pageSize}
+                  total={news.length}
+                  onChange={(page) => {
+                    setCurrentPage(page);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  showSizeChanger={false}
+                  className="custom-pagination"
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

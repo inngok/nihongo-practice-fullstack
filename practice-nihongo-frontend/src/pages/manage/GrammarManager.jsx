@@ -17,6 +17,7 @@ const customSelectStyles = `
     border-radius: 16px !important;
     box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1) !important;
     border: 1px solid #f1f5f9 !important;
+    z-index: 999999 !important;
   }
   .dark .custom-select-popup {
     background-color: #020617 !important;

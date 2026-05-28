@@ -233,6 +233,24 @@ public class AiService {
         }
     }
 
+    public String generateContent(String prompt, int maxTokens) throws Exception {
+        try {
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
+                recordAiUsage(true);
+                return "[Không có API Key cho dịch thuật]";
+            }
+            // For now, maxTokens is simply ignored in callGemini as the current implementation doesn't strictly pass maxOutputTokens.
+            String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res;
+        } catch (Exception e) {
+            recordAiUsage(false);
+            log.error("Gemini Error generating content: " + e.getMessage());
+            throw e;
+        }
+    }
+
     private String buildPrompt(String rawData, String type) {
         String schema;
         String typeUpper = type != null ? type.toUpperCase() : "";
