@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Search, ArrowLeft, Volume2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, ArrowLeft, Volume2, ChevronDown } from 'lucide-react';
 import grammarService from '../../api/grammarService';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
@@ -359,6 +359,7 @@ export default function StudyPage() {
                   <option key={lesson} value={lesson} className="text-slate-900 dark:text-slate-900">Bài {lesson}</option>
                 ))}
               </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
             </div>
           )}
         </div>

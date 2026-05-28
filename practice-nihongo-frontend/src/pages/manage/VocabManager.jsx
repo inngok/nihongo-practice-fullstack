@@ -69,9 +69,9 @@ export default function VocabManager() {
   const [editingId, setEditingId] = useState(null);
   const [modalTab, setModalTab] = useState('single');
   const [bulkInput, setBulkInput] = useState('');
-  const [previewData, setPreviewData] = useState([]);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
 
   const [formData, setFormData] = useState({
     word: '', reading: '', meaning: '', example: '', exampleMeaning: '', bookId: '', week: '', day: ''
@@ -263,6 +263,64 @@ export default function VocabManager() {
     });
   };
 
+  const handleCleanDuplicates = () => {
+    let data = Array.isArray(vocabs) ? vocabs : [];
+    if (selectedBookId) {
+      data = data.filter(v => (v.bookId || v.book?.id)?.toString() === selectedBookId.toString());
+    }
+    if (selectedLesson) {
+      data = data.filter(v => v.week?.toString() === selectedLesson.toString());
+    }
+
+    const vCounts = {};
+    data.forEach(v => {
+      if (v.word) {
+        const key = `${v.bookId || v.book?.id || 'none'}_${v.week || 'none'}_${v.word.trim()}`;
+        vCounts[key] = (vCounts[key] || 0) + 1;
+      }
+    });
+
+    const vSeen = {};
+    const duplicateIds = [];
+    data.forEach(v => {
+      if (v.word) {
+        const key = `${v.bookId || v.book?.id || 'none'}_${v.week || 'none'}_${v.word.trim()}`;
+        if (vCounts[key] > 1) {
+          if (vSeen[key]) duplicateIds.push(v.id);
+          else vSeen[key] = true;
+        }
+      }
+    });
+
+    if (duplicateIds.length === 0) {
+      return messageApi.info('Không tìm thấy từ vựng trùng lặp nào.');
+    }
+
+    Modal.confirm({
+      title: 'Dọn dẹp từ vựng trùng lặp',
+      content: `Phát hiện ${duplicateIds.length} bản sao bị trùng. Bạn có muốn xóa tự động tất cả các bản copy và chỉ giữ lại 1 bản gốc không?`,
+      okText: 'Dọn dẹp ngay',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        setIsCleaning(true);
+        const hide = messageApi.loading(`Đang dọn dẹp ${duplicateIds.length} bản trùng...`, 0);
+        try {
+          for (const id of duplicateIds) {
+            await vocabService.delete(id);
+          }
+          messageApi.success(`Đã xóa sạch ${duplicateIds.length} bản trùng!`);
+          fetchData();
+        } catch (err) {
+          messageApi.error('Lỗi khi dọn dẹp trùng lặp!');
+        } finally {
+          setIsCleaning(false);
+          hide();
+        }
+      }
+    });
+  };
+
   const toggleSelectOne = (id) => setSelectedIds(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id]);
   const toggleSelectAll = () => setSelectedIds(selectedIds.length === filteredVocabs.length ? [] : filteredVocabs.map(v => v.id));
 
@@ -326,12 +384,19 @@ export default function VocabManager() {
             />
           </div>
           
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
             <button
-              onClick={() => setShowDuplicatesOnly(!showDuplicatesOnly)}
+              onClick={() => { setShowDuplicatesOnly(!showDuplicatesOnly); setCurrentPage(1); }}
               className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors border ${showDuplicatesOnly ? 'bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-900/30 dark:border-rose-800' : 'bg-transparent border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800'}`}
             >
-              Lọc từ trùng lặp
+              Chỉ hiện bản trùng
+            </button>
+            <button
+              onClick={handleCleanDuplicates}
+              disabled={isCleaning}
+              className="px-4 py-2 rounded-xl text-sm font-bold transition-colors border bg-rose-500 text-white hover:bg-rose-600 border-rose-500 shadow-sm"
+            >
+              {isCleaning ? 'Đang dọn dẹp...' : 'Dọn dẹp bản trùng (Giữ 1 bản gốc)'}
             </button>
           </div>
 

@@ -64,6 +64,8 @@ export default function KanjiManager() {
   const [bulkInput, setBulkInput] = useState('');
   const [previewData, setPreviewData] = useState([]);
   const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
 
   // Filter State
@@ -127,8 +129,48 @@ export default function KanjiManager() {
     if (selectedLesson && selectedLesson !== "") {
       data = data.filter(k => k.week?.toString() === selectedLesson.toString());
     }
-    return data;
-  }, [kanjis, selectedBookId, selectedLesson]);
+    // Duplicate detection for Kanji
+    const kanjiCounts = {};
+    data.forEach(k => {
+      if (k.character) {
+        const char = k.character.trim();
+        const bookId = k.bookId || k.book?.id || 'none';
+        const week = k.week || 'none';
+        const key = `${bookId}_${week}_${char}`;
+        kanjiCounts[key] = (kanjiCounts[key] || 0) + 1;
+      }
+    });
+
+    const kanjiSeen = {};
+    let result = data.map(k => {
+      let isDuplicate = false;
+      let isSecondaryDuplicate = false;
+
+      if (k.character) {
+        const char = k.character.trim();
+        const bookId = k.bookId || k.book?.id || 'none';
+        const week = k.week || 'none';
+        const key = `${bookId}_${week}_${char}`;
+
+        isDuplicate = kanjiCounts[key] > 1;
+        
+        if (isDuplicate) {
+          if (kanjiSeen[key]) {
+             isSecondaryDuplicate = true;
+          } else {
+             kanjiSeen[key] = true;
+          }
+        }
+      }
+      return { ...k, isDuplicate, isSecondaryDuplicate };
+    });
+
+    if (showDuplicatesOnly) {
+      result = result.filter(k => k.isSecondaryDuplicate);
+    }
+
+    return result;
+  }, [kanjis, selectedBookId, selectedLesson, showDuplicatesOnly]);
 
   const uniqueLessons = React.useMemo(() => {
     let data = kanjis || [];
@@ -196,6 +238,66 @@ export default function KanjiManager() {
           fetchData();
         } catch (err) {
           messageApi.error('Có lỗi xảy ra khi xóa hàng loạt');
+        }
+      }
+    });
+  };
+
+  const handleCleanDuplicates = () => {
+    // Find all items that are secondary duplicates in the CURRENT selected book/lesson view
+    // We compute this from the raw kanjis without the showDuplicatesOnly filter
+    let data = kanjis || [];
+    if (selectedBookId && selectedBookId !== "") {
+      data = data.filter(k => (k.bookId || k.book?.id)?.toString() === selectedBookId.toString());
+    }
+    if (selectedLesson && selectedLesson !== "") {
+      data = data.filter(k => k.week?.toString() === selectedLesson.toString());
+    }
+
+    const kCounts = {};
+    data.forEach(k => {
+      if (k.character) {
+        const key = `${k.bookId || k.book?.id || 'none'}_${k.week || 'none'}_${k.character.trim()}`;
+        kCounts[key] = (kCounts[key] || 0) + 1;
+      }
+    });
+
+    const kSeen = {};
+    const duplicateIds = [];
+    data.forEach(k => {
+      if (k.character) {
+        const key = `${k.bookId || k.book?.id || 'none'}_${k.week || 'none'}_${k.character.trim()}`;
+        if (kCounts[key] > 1) {
+          if (kSeen[key]) duplicateIds.push(k.id);
+          else kSeen[key] = true;
+        }
+      }
+    });
+
+    if (duplicateIds.length === 0) {
+      return messageApi.info('Không tìm thấy chữ Hán trùng lặp nào.');
+    }
+
+    Modal.confirm({
+      title: 'Dọn dẹp chữ Hán trùng lặp',
+      content: `Phát hiện ${duplicateIds.length} chữ Hán bị trùng lặp. Bạn có muốn tự động xóa các bản copy và chỉ giữ lại 1 bản gốc không?`,
+      okText: 'Xóa bản trùng',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        setIsCleaning(true);
+        const hide = messageApi.loading(`Đang dọn dẹp ${duplicateIds.length} bản trùng...`, 0);
+        try {
+          for (const id of duplicateIds) {
+            await kanjiService.delete(id);
+          }
+          messageApi.success(`Đã xóa sạch ${duplicateIds.length} bản trùng!`);
+          fetchData();
+        } catch (err) {
+          messageApi.error('Lỗi khi dọn dẹp trùng lặp!');
+        } finally {
+          setIsCleaning(false);
+          hide();
         }
       }
     });
@@ -468,11 +570,27 @@ export default function KanjiManager() {
         </div>
 
         {/* Filter Bar */}
-        <div className="flex gap-4 mb-8 p-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl items-center">
+        <div className="flex flex-wrap gap-4 mb-8 p-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl items-center">
           <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
             <FilterOutlined className="text-sm" />
-            <span className="text-sm font-semibold">Bộ lọc nhanh:</span>
+            <span className="text-sm font-semibold">Bộ lọc:</span>
           </div>
+
+          <button
+            onClick={() => { setShowDuplicatesOnly(!showDuplicatesOnly); setCurrentPage(1); }}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors border ${showDuplicatesOnly ? 'bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-900/30 dark:border-rose-800' : 'bg-transparent border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800'}`}
+          >
+            Chỉ hiện bản trùng
+          </button>
+
+          <button
+            onClick={handleCleanDuplicates}
+            disabled={isCleaning}
+            className="px-4 py-2 rounded-xl text-sm font-bold transition-colors border bg-rose-500 text-white hover:bg-rose-600 border-rose-500 shadow-sm"
+          >
+            {isCleaning ? 'Đang dọn dẹp...' : 'Dọn dẹp bản trùng (Giữ 1 bản gốc)'}
+          </button>
+
           <Select
             value={selectedBookId}
             onChange={(value) => { setSelectedBookId(value); setSelectedLesson(''); setCurrentPage(1); }}
@@ -501,9 +619,9 @@ export default function KanjiManager() {
               ...uniqueLessons.map(l => ({ value: l.toString(), label: `Bài ${l}` }))
             ]}
           />
-          {(selectedBookId || selectedLesson) && (
+          {(selectedBookId || selectedLesson || showDuplicatesOnly) && (
             <button 
-              onClick={() => { setSelectedBookId(''); setSelectedLesson(''); }}
+              onClick={() => { setSelectedBookId(''); setSelectedLesson(''); setShowDuplicatesOnly(false); }}
               className="px-3 py-1.5 text-sm font-semibold text-slate-400 hover:text-red-500 transition-colors"
             >
               Xóa lọc
@@ -548,7 +666,14 @@ export default function KanjiManager() {
                         className="w-4 h-4 rounded border-slate-200 dark:border-slate-800 text-black dark:text-white focus:ring-0 cursor-pointer"
                       />
                     </td>
-                    <td className="px-6 py-5 font-bold text-slate-900 dark:text-white text-2xl leading-none">{item.character}</td>
+                    <td className="px-6 py-5 font-bold text-slate-900 dark:text-white text-2xl leading-none">
+                      <div className="flex items-center gap-3">
+                        {item.character}
+                        {item.isDuplicate && (
+                          <span className="text-[9px] font-black uppercase bg-rose-100 text-rose-600 px-2 py-1 rounded-md border border-rose-200 tracking-widest" title="Chữ Hán này bị lặp lại">Trùng</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-5">
                       <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-widest text-[11px] bg-slate-50 dark:bg-slate-800 px-2 py-1 rounded">
                         {item.hanviet}
