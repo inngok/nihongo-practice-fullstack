@@ -899,16 +899,7 @@ export default function GrammarManager() {
                    </select>
                  </div>
 
-                 <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl">
-                   <div className="flex flex-col">
-                     <span className="text-xs font-black uppercase tracking-[0.1em] text-slate-900 dark:text-white">Hiển thị cho học viên</span>
-                     <span className="text-[10px] text-slate-400">Cho phép học viên xem và học ngữ pháp này</span>
-                   </div>
-                   <label className="relative inline-flex items-center cursor-pointer">
-                     <input type="checkbox" checked={formData.publish} onChange={(e) => setFormData(prev => ({...prev, publish: e.target.checked}))} className="sr-only peer" />
-                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-black dark:peer-checked:bg-white"></div>
-                   </label>
-                 </div>
+
 
                   <div className="pt-4">
                    <button 

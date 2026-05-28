@@ -35,6 +35,8 @@ export default function Grammar() {
   const filteredBooks = React.useMemo(() => {
     if (!Array.isArray(books)) return [];
     return books.filter(book => {
+      if (!isAdmin && book.publishGrammar === false) return false;
+      
       if (!currentUser) return true;
       const bookLevel = (book.levelLabel || '').toUpperCase();
       const bookTitle = (book.title || '').toUpperCase();
@@ -42,7 +44,7 @@ export default function Grammar() {
       const targetLvl = (currentUser.jlptLevel || 'N3').toUpperCase();
       return bookLevel.includes(targetLvl) || bookTitle.includes(targetLvl) || bookJpTitle.includes(targetLvl);
     });
-  }, [books, currentUser]);
+  }, [books, currentUser, isAdmin]);
 
   return (
     <div className="min-h-screen w-full bg-transparent flex flex-col items-center pt-36 md:pt-28 pb-16 px-6 font-sans relative overflow-hidden selection:bg-slate-200 dark:selection:bg-slate-800">

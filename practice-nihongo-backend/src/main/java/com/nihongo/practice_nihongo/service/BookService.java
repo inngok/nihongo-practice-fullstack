@@ -45,6 +45,9 @@ public class BookService {
         if (book.getType() == null) {
             book.setType("VOCABULARY");
         }
+        if (book.getPublishGrammar() == null) {
+            book.setPublishGrammar(true);
+        }
         return bookRepository.save(book);
     }
 
@@ -55,6 +58,7 @@ public class BookService {
         book.setLevelLabel(bookDetails.getLevelLabel());
         book.setNum(bookDetails.getNum());
         book.setType(bookDetails.getType() != null ? bookDetails.getType() : "VOCABULARY");
+        book.setPublishGrammar(bookDetails.getPublishGrammar() != null ? bookDetails.getPublishGrammar() : true);
         return bookRepository.save(book);
     }
 

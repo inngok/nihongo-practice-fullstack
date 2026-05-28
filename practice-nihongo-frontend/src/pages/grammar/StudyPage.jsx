@@ -149,7 +149,7 @@ export default function StudyPage() {
       
       const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ROLE_ADMIN';
       if (!isAdmin) {
-        data = data.filter(item => item.publish !== false);
+        data = data.filter(item => item.publish !== false && (!item.book || item.book.publishGrammar !== false));
       }
 
       if (targetBookId) {
