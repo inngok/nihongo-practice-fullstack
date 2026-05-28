@@ -5,7 +5,7 @@ import bookService from '../../api/bookService';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
 import { createPortal } from 'react-dom';
-import { Modal, message, Select, Empty } from 'antd';
+import { Modal, message, Select, Empty, Pagination } from 'antd';
 import { 
   PlusOutlined, 
   EditOutlined, 
@@ -80,6 +80,9 @@ export default function VocabManager() {
   const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
   const [bulkUpdateData, setBulkUpdateData] = useState({ week: '', day: '', bookId: '' });
   const [messageApi, contextHolder] = message.useMessage();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   useEffect(() => {
     fetchData();
@@ -339,7 +342,7 @@ export default function VocabManager() {
               type="text" 
               placeholder="Tìm trong danh sách bài học..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               className="bg-transparent border-none outline-none w-full text-sm placeholder:text-slate-300"
             />
           </div>
@@ -357,7 +360,7 @@ export default function VocabManager() {
             <FilterOutlined className="text-slate-400 text-xs" />
             <Select
               value={selectedBookId}
-              onChange={v => { setSelectedBookId(v); setSelectedLesson(''); }}
+              onChange={v => { setSelectedBookId(v); setSelectedLesson(''); setCurrentPage(1); }}
               className="flex-grow custom-select text-sm font-semibold"
               variant="borderless"
               classNames={{ popup: 'custom-select-popup' }}
@@ -369,7 +372,7 @@ export default function VocabManager() {
           <div className="flex items-center gap-2 px-4 border-l border-slate-200 dark:border-slate-800 min-w-[140px]">
             <Select
               value={selectedLesson}
-              onChange={v => setSelectedLesson(v)}
+              onChange={v => { setSelectedLesson(v); setCurrentPage(1); }}
               className="flex-grow custom-select text-sm font-semibold"
               variant="borderless"
               classNames={{ popup: 'custom-select-popup' }}
@@ -415,7 +418,7 @@ export default function VocabManager() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                  {filteredVocabs.map((v) => (
+                  {filteredVocabs.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((v) => (
                     <tr key={v.id} className={`transition-colors ${selectedIds.includes(v.id) ? 'bg-slate-50 dark:bg-slate-800/50' : 'hover:bg-slate-50/50'}`}>
                       <td className="pl-6 py-4">
                         <input 
@@ -451,6 +454,17 @@ export default function VocabManager() {
                   ))}
                 </tbody>
               </table>
+              
+              <div className="flex justify-end p-6 border-t border-slate-100 dark:border-slate-800">
+                <Pagination 
+                  current={currentPage}
+                  pageSize={pageSize}
+                  total={filteredVocabs.length}
+                  onChange={(page, size) => { setCurrentPage(page); setPageSize(size); }}
+                  showSizeChanger
+                  showTotal={(total) => `Tổng số ${total} từ vựng`}
+                />
+              </div>
             </div>
           )}
         </div>

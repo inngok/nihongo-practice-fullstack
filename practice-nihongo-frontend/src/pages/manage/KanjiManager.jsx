@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import kanjiService from '../../api/kanjiService';
 import bookService from '../../api/bookService';
-import { Modal, message, Select } from 'antd';
+import { Modal, message, Select, Pagination } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
@@ -72,6 +72,9 @@ export default function KanjiManager() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
   const [bulkUpdateData, setBulkUpdateData] = useState({ week: '', page: '', bookId: '' });
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   
   const [formData, setFormData] = useState({
     character: '',
@@ -472,7 +475,7 @@ export default function KanjiManager() {
           </div>
           <Select
             value={selectedBookId}
-            onChange={(value) => { setSelectedBookId(value); setSelectedLesson(''); }}
+            onChange={(value) => { setSelectedBookId(value); setSelectedLesson(''); setCurrentPage(1); }}
             placeholder="Tất cả giáo trình"
             className="w-72 custom-select text-sm font-semibold"
             variant="borderless"
@@ -486,7 +489,7 @@ export default function KanjiManager() {
           />
           <Select
             value={selectedLesson}
-            onChange={(value) => setSelectedLesson(value)}
+            onChange={(value) => { setSelectedLesson(value); setCurrentPage(1); }}
             placeholder="Tất cả bài"
             className="w-40 custom-select text-sm font-semibold"
             variant="borderless"
@@ -535,7 +538,7 @@ export default function KanjiManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-850">
-                {filteredKanjis.map((item) => (
+                {filteredKanjis.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((item) => (
                   <tr key={item.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors group ${selectedIds.includes(item.id) ? 'bg-slate-50/80 dark:bg-slate-850/50' : ''}`}>
                     <td className="px-6 py-5">
                       <input 
@@ -590,6 +593,16 @@ export default function KanjiManager() {
                 ))}
               </tbody>
             </table>
+            <div className="flex justify-end p-6 border-t border-slate-100 dark:border-slate-800">
+              <Pagination 
+                current={currentPage}
+                pageSize={pageSize}
+                total={filteredKanjis.length}
+                onChange={(page, size) => { setCurrentPage(page); setPageSize(size); }}
+                showSizeChanger
+                showTotal={(total) => `Tổng số ${total} Hán tự`}
+              />
+            </div>
           </div>
         )}
       </div>
