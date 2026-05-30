@@ -374,9 +374,39 @@ export default function KanjiManager() {
     e.preventDefault();
     const payload = {
       ...formData,
-      book: formData.bookId ? { id: parseInt(formData.bookId) } : null
+      book: formData.bookId ? { id: parseInt(formData.bookId) } : null,
+      week: formData.week ? parseInt(formData.week) : null,
+      day: formData.day ? parseInt(formData.day) : null
     };
     delete payload.bookId;
+
+    if (!editingId) {
+        const exists = kanjis.find(k => 
+            k.character?.trim() === formData.character?.trim() && 
+            (k.book?.id === parseInt(formData.bookId) || k.bookId === parseInt(formData.bookId)) && 
+            k.week === (formData.week ? parseInt(formData.week) : null)
+        );
+        if (exists) {
+            Modal.confirm({
+                title: 'Hán tự đã tồn tại',
+                content: 'Chữ Hán này đã có trong bài. Bạn muốn ghi đè dữ liệu mới không?',
+                okText: 'Ghi đè',
+                cancelText: 'Hủy',
+                onOk: async () => {
+                    try {
+                        await kanjiService.update(exists.id, payload);
+                        setIsModalOpen(false);
+                        resetForm();
+                        fetchData();
+                        messageApi.success('Đã ghi đè thành công!');
+                    } catch (err) {
+                        messageApi.error('Đã có lỗi xảy ra!');
+                    }
+                }
+            });
+            return;
+        }
+    }
 
     try {
       if (editingId) {
@@ -478,33 +508,71 @@ export default function KanjiManager() {
     const itemsToSave = previewData.filter(item => item.selected);
     if (itemsToSave.length === 0) return messageApi.warning('Không có chữ Hán nào được chọn');
 
-    const hide = messageApi.loading(`Đang lưu ${itemsToSave.length} chữ Hán...`, 0);
-    try {
-      const payload = itemsToSave.map(item => ({
-        character: item.character,
-        kunyomi: item.kunyomi,
-        onyomi: item.onyomi,
-        hanviet: item.hanviet,
-        meaning: item.meaning,
-        examples: item.examples,
-        book: { id: parseInt(selectedBookId) },
-        week: formData.week ? parseInt(formData.week) : null,
-        day: formData.day ? parseInt(formData.day) : null
-      }));
+    const bookIdInt = parseInt(selectedBookId);
+    const weekInt = formData.week ? parseInt(formData.week) : null;
 
-      for (const item of payload) {
-        await kanjiService.create(item);
+    const duplicates = [];
+    const newItems = [];
+
+    itemsToSave.forEach(itm => {
+      const exists = kanjis.find(k => 
+         k.character?.trim() === itm.character?.trim() && 
+         (k.book?.id === bookIdInt || k.bookId === bookIdInt) && 
+         k.week === weekInt
+      );
+      if (exists) {
+         duplicates.push({ ...itm, existingId: exists.id });
+      } else {
+         newItems.push(itm);
       }
+    });
 
-      messageApi.success(`Đã lưu thành công ${itemsToSave.length} chữ Hán!`);
-      setIsModalOpen(false);
-      setBulkInput('');
-      setPreviewData([]);
-      fetchData();
-    } catch (err) {
-      messageApi.error('Lỗi khi lưu dữ liệu: ' + err.message);
-    } finally {
-      hide();
+    const saveProcess = async (shouldOverwrite) => {
+        const hide = messageApi.loading(`Đang lưu chữ Hán...`, 0);
+        try {
+          for (const item of newItems) {
+            await kanjiService.create({
+              ...item,
+              book: { id: bookIdInt },
+              week: weekInt,
+              day: formData.day ? parseInt(formData.day) : null
+            });
+          }
+
+          if (shouldOverwrite) {
+            for (const dup of duplicates) {
+              await kanjiService.update(dup.existingId, {
+                ...dup,
+                book: { id: bookIdInt },
+                week: weekInt,
+                day: formData.day ? parseInt(formData.day) : null
+              });
+            }
+          }
+
+          messageApi.success(`Đã lưu thành công!`);
+          setIsModalOpen(false);
+          setBulkInput('');
+          setPreviewData([]);
+          fetchData();
+        } catch (err) {
+          messageApi.error('Lỗi khi lưu dữ liệu: ' + err.message);
+        } finally {
+          hide();
+        }
+    };
+
+    if (duplicates.length > 0) {
+      Modal.confirm({
+          title: 'Phát hiện Hán tự trùng lặp',
+          content: `Có ${duplicates.length} Hán tự đã tồn tại trong bài học này. Bạn muốn ghi đè dữ liệu mới hay giữ lại chữ cũ?`,
+          okText: 'Ghi đè (Overwrite)',
+          cancelText: 'Giữ cái cũ (Skip)',
+          onOk: () => saveProcess(true),
+          onCancel: () => saveProcess(false)
+      });
+    } else {
+      saveProcess(false);
     }
   };
 

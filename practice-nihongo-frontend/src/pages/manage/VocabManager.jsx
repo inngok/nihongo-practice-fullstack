@@ -72,6 +72,7 @@ export default function VocabManager() {
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isCleaning, setIsCleaning] = useState(false);
+  const [previewData, setPreviewData] = useState([]);
 
   const [formData, setFormData] = useState({
     word: '', reading: '', meaning: '', example: '', exampleMeaning: '', bookId: '', week: '', day: ''
@@ -235,6 +236,34 @@ export default function VocabManager() {
       day: formData.day ? parseInt(formData.day) : null 
     };
     delete payload.bookId;
+    
+    if (!editingId) {
+      const exists = vocabs.find(v => 
+          v.word?.trim() === formData.word?.trim() && 
+          (v.book?.id === parseInt(formData.bookId) || v.bookId === parseInt(formData.bookId)) && 
+          v.week === (formData.week ? parseInt(formData.week) : null)
+      );
+      if (exists) {
+          Modal.confirm({
+              title: 'Từ vựng đã tồn tại',
+              content: 'Từ này đã có trong bài. Bạn muốn ghi đè dữ liệu mới không?',
+              okText: 'Ghi đè',
+              cancelText: 'Hủy',
+              onOk: async () => {
+                  try {
+                      await vocabService.update(exists.id, payload);
+                      setIsModalOpen(false);
+                      fetchData();
+                      messageApi.success('Đã ghi đè thành công!');
+                  } catch (err) {
+                      messageApi.error('Lỗi lưu dữ liệu!');
+                  }
+              }
+          });
+          return;
+      }
+    }
+
     try {
       if (editingId) await vocabService.update(editingId, payload);
       else await vocabService.create(payload);
@@ -714,26 +743,72 @@ export default function VocabManager() {
                     <button 
                       disabled={isSaving}
                       onClick={async () => {
-                        const items = previewData.filter(i => i.selected); if (!items.length || !selectedBookId) return messageApi.warning('Vui lòng chọn giáo trình và ít nhất 1 từ vựng');
-                        setIsSaving(true);
-                        try { 
-                          for (const itm of items) {
-                            await vocabService.create({ 
-                              ...itm, 
-                              week: formData.week ? parseInt(formData.week) : null,
-                              book: { id: parseInt(selectedBookId) } 
-                            }); 
-                          }
-                          messageApi.success('Đã lưu hệ thống!'); 
-                          setIsModalOpen(false); 
-                          fetchData(); 
-                          setPreviewData([]); 
-                          setBulkInput(''); 
-                          setFormData(prev => ({...prev, week: ''}));
-                        } catch (e) { 
-                          messageApi.error('Lỗi lưu dữ liệu!'); 
-                        } finally {
-                          setIsSaving(false);
+                        const items = previewData.filter(i => i.selected); 
+                        if (!items.length || !selectedBookId) return messageApi.warning('Vui lòng chọn giáo trình và ít nhất 1 từ vựng');
+                        
+                        const bookIdInt = parseInt(selectedBookId);
+                        const weekInt = formData.week ? parseInt(formData.week) : null;
+                        
+                        const duplicates = [];
+                        const newItems = [];
+                        
+                        items.forEach(itm => {
+                            const exists = vocabs.find(v => 
+                                v.word?.trim() === itm.word?.trim() && 
+                                (v.book?.id === bookIdInt || v.bookId === bookIdInt) && 
+                                v.week === weekInt
+                            );
+                            if (exists) {
+                                duplicates.push({ ...itm, existingId: exists.id });
+                            } else {
+                                newItems.push(itm);
+                            }
+                        });
+
+                        const saveProcess = async (shouldOverwrite) => {
+                           setIsSaving(true);
+                           try {
+                               for (const itm of newItems) {
+                                   await vocabService.create({ 
+                                      ...itm, 
+                                      week: weekInt,
+                                      book: { id: bookIdInt } 
+                                   });
+                               }
+                               
+                               if (shouldOverwrite) {
+                                   for (const dup of duplicates) {
+                                       await vocabService.update(dup.existingId, {
+                                           ...dup,
+                                           week: weekInt,
+                                           book: { id: bookIdInt }
+                                       });
+                                   }
+                               }
+                               messageApi.success('Đã lưu hệ thống!'); 
+                               setIsModalOpen(false); 
+                               fetchData(); 
+                               setPreviewData([]); 
+                               setBulkInput(''); 
+                               setFormData(prev => ({...prev, week: ''}));
+                           } catch (e) {
+                               messageApi.error('Lỗi lưu dữ liệu!'); 
+                           } finally {
+                               setIsSaving(false);
+                           }
+                        };
+
+                        if (duplicates.length > 0) {
+                            Modal.confirm({
+                                title: 'Phát hiện từ vựng trùng lặp',
+                                content: `Có ${duplicates.length} từ vựng đã tồn tại trong bài học này. Bạn muốn ghi đè dữ liệu mới hay giữ lại từ cũ?`,
+                                okText: 'Ghi đè (Overwrite)',
+                                cancelText: 'Giữ cái cũ (Skip)',
+                                onOk: () => saveProcess(true),
+                                onCancel: () => saveProcess(false)
+                            });
+                        } else {
+                            saveProcess(false);
                         }
                       }} 
                       className="px-8 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-md hover:-translate-y-0.5 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"

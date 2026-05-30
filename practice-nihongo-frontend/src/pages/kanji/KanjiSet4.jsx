@@ -66,7 +66,10 @@ export default function KanjiSet4() {
       setBook(bookRes.data);
       
       // Declarative Null-coalescing Sort: No if-else needed!
-      const sortedKanjis = kanjiRes.data.sort((a, b) => (a.page ?? Infinity) - (b.page ?? Infinity));
+      const sortedKanjis = kanjiRes.data.sort((a, b) => {
+         if (a.week !== b.week) return (a.week ?? Infinity) - (b.week ?? Infinity);
+         return (a.page ?? Infinity) - (b.page ?? Infinity);
+      });
       setKanjis(sortedKanjis);
 
       // Pre-populate Ruby-Red Hearts with active cards
@@ -82,12 +85,16 @@ export default function KanjiSet4() {
 
   // Declarative Virtual Paging array builder
   const uniquePages = React.useMemo(() => {
+    const dbWeeks = new Set(kanjis.map(k => k.week).filter(w => w !== null && w !== undefined));
+    if (dbWeeks.size > 0) {
+      return Array.from(dbWeeks).sort((a, b) => a - b).map(w => `week_${w}`);
+    }
     const dbPages = new Set(kanjis.map(k => k.page).filter(p => p !== null && p !== undefined));
     if (dbPages.size > 0) {
-      return Array.from(dbPages).sort((a, b) => a - b);
+      return Array.from(dbPages).sort((a, b) => a - b).map(p => `page_${p}`);
     }
     const numPages = Math.ceil(kanjis.length / 80);
-    return Array.from({ length: numPages }, (_, i) => i + 1);
+    return Array.from({ length: numPages }, (_, i) => i + 1).map(p => `virtual_${p}`);
   }, [kanjis]);
 
   // Functional matching & clean page slice mapping
@@ -95,11 +102,15 @@ export default function KanjiSet4() {
     let result = kanjis;
 
     if (selectedPageFilter !== 'all') {
-      const pageNum = Number(selectedPageFilter);
-      const hasDbPages = kanjis.some(k => k.page !== null && k.page !== undefined);
-      result = hasDbPages
-        ? kanjis.filter(k => k.page === pageNum)
-        : kanjis.slice((pageNum - 1) * 80, pageNum * 80);
+      const [type, valStr] = selectedPageFilter.split('_');
+      const val = Number(valStr);
+      if (type === 'week') {
+         result = kanjis.filter(k => k.week === val);
+      } else if (type === 'page') {
+         result = kanjis.filter(k => k.page === val);
+      } else if (type === 'virtual') {
+         result = kanjis.slice((val - 1) * 80, val * 80);
+      }
     }
 
     if (activeMode === 'list' && searchQuery.trim() !== '') {
@@ -436,19 +447,23 @@ export default function KanjiSet4() {
           >
             Tất cả
           </button>
-          {uniquePages.map(p => (
-            <button
-              key={p}
-              onClick={() => setSelectedPageFilter(String(p))}
-              className={`text-[9px] font-black tracking-wider uppercase px-4 py-2 rounded-lg transition-all ${
-                selectedPageFilter === String(p)
-                  ? 'bg-slate-950 text-white dark:bg-white dark:text-black shadow-sm'
-                  : 'bg-slate-50 text-slate-400 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-500 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800'
-              }`}
-            >
-              Trang {p}
-            </button>
-          ))}
+          {uniquePages.map(p => {
+            const [type, val] = p.split('_');
+            const label = type === 'week' ? `Bài ${val}` : type === 'page' ? `Trang ${val}` : `Phần ${val}`;
+            return (
+              <button
+                key={p}
+                onClick={() => setSelectedPageFilter(p)}
+                className={`text-[9px] font-black tracking-wider uppercase px-4 py-2 rounded-lg transition-all ${
+                  selectedPageFilter === p
+                    ? 'bg-slate-950 text-white dark:bg-white dark:text-black shadow-sm'
+                    : 'bg-slate-50 text-slate-400 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-500 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Header Title & Study Modes Swapper Container */}
