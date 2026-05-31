@@ -291,7 +291,8 @@ export default function GrammarManager() {
 
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
+    if ((name === 'week' || name === 'day' || name === 'page') && value !== '' && parseInt(value) < 1) value = '1';
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -619,7 +620,7 @@ export default function GrammarManager() {
               disabled={isCleaning}
               className="px-4 py-2 rounded-xl text-sm font-bold transition-colors border bg-rose-500 text-white hover:bg-rose-600 border-rose-500 shadow-sm"
             >
-              {isCleaning ? 'Đang dọn dẹp...' : 'Dọn dẹp bản trùng (Giữ 1 bản gốc)'}
+              {isCleaning ? 'Đang dọn dẹp...' : 'Dọn dẹp bản trùng'}
             </button>
           </div>
 
@@ -838,8 +839,9 @@ export default function GrammarManager() {
                 <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Tuần</label>
                 <input
                   type="number"
+                  min="1"
                   value={bulkUpdateData.week}
-                  onChange={(e) => setBulkUpdateData(prev => ({ ...prev, week: e.target.value }))}
+                  onChange={(e) => { let v = e.target.value; if(v !== '' && parseInt(v) < 1) v = '1'; setBulkUpdateData(prev => ({ ...prev, week: v })) }}
                   placeholder="VD: 1, 2..."
                   className="w-full px-1 py-2 bg-transparent border-b border-slate-100 dark:border-slate-800 outline-none focus:border-black dark:focus:border-white transition-all text-sm font-medium"
                 />
@@ -848,8 +850,9 @@ export default function GrammarManager() {
                 <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Ngày</label>
                 <input
                   type="number"
+                  min="1"
                   value={bulkUpdateData.day}
-                  onChange={(e) => setBulkUpdateData(prev => ({ ...prev, day: e.target.value }))}
+                  onChange={(e) => { let v = e.target.value; if(v !== '' && parseInt(v) < 1) v = '1'; setBulkUpdateData(prev => ({ ...prev, day: v })) }}
                   placeholder="VD: 1, 2..."
                   className="w-full px-1 py-2 bg-transparent border-b border-slate-100 dark:border-slate-800 outline-none focus:border-black dark:focus:border-white transition-all text-sm font-medium"
                 />
@@ -1095,7 +1098,7 @@ export default function GrammarManager() {
                         type="number"
                         min="1"
                         value={formData.week}
-                        onChange={(e) => setFormData(prev => ({ ...prev, week: e.target.value }))}
+                        onChange={(e) => { let v = e.target.value; if(v !== '' && parseInt(v) < 1) v = '1'; setFormData(prev => ({ ...prev, week: v })) }}
                         className="w-12 bg-transparent outline-none text-xs font-bold text-center text-slate-700 dark:text-slate-300"
                       />
                     </div>
@@ -1106,7 +1109,7 @@ export default function GrammarManager() {
                         type="number"
                         min="1"
                         value={formData.day}
-                        onChange={(e) => setFormData(prev => ({ ...prev, day: e.target.value }))}
+                        onChange={(e) => { let v = e.target.value; if(v !== '' && parseInt(v) < 1) v = '1'; setFormData(prev => ({ ...prev, day: v })) }}
                         className="w-12 bg-transparent outline-none text-xs font-bold text-center text-slate-700 dark:text-slate-300"
                       />
                     </div>

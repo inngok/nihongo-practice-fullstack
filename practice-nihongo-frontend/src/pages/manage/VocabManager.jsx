@@ -192,7 +192,8 @@ export default function VocabManager() {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
+    if ((name === 'week' || name === 'day' || name === 'page') && value !== '' && parseInt(value) < 1) value = '1';
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -844,7 +845,7 @@ export default function VocabManager() {
               <Select value={bulkUpdateData.bookId} onChange={v => setBulkUpdateData(p => ({ ...p, bookId: v }))} className="w-full custom-select" variant="borderless" options={books.map(b => ({ value: b.id, label: b.title.toUpperCase() }))} />
             </div>
             <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400">Bài</label><input type="number" min="1" value={bulkUpdateData.week} onChange={e => setBulkUpdateData(p => ({ ...p, week: e.target.value }))} className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 font-bold" /></div>
+              <div className="space-y-2"><label className="text-[9px] font-bold uppercase text-slate-400">Bài</label><input type="number" min="1" value={bulkUpdateData.week} onChange={e => { let v = e.target.value; if(v !== '' && parseInt(v) < 1) v = '1'; setBulkUpdateData(p => ({ ...p, week: v })) }} className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 font-bold" /></div>
             </div>
             <button
               onClick={async () => {
