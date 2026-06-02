@@ -212,7 +212,11 @@ public class NhkNewsCrawlerService {
             
             if (!skipAi) {
                 try {
-                    log.info("Đang dùng AI trích xuất từ vựng cho bài: " + newsId);
+                    log.info("Đang dùng AI trích xuất từ vựng và dịch cho bài: " + newsId);
+                    
+                    String translation = aiService.generateContent("Dịch bài báo tiếng Nhật sau sang tiếng Việt tự nhiên và dễ hiểu, chỉ trả về nội dung dịch, không có bất kỳ giải thích nào khác:\n\n" + contentRaw.toString(), 2500);
+                    article.setTranslation(translation);
+
                     String extractedVocab = aiService.extractVocabularyFromNews(contentRaw.toString());
                     article.setExtractedVocab(extractedVocab);
 

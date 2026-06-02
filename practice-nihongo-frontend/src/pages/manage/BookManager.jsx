@@ -31,7 +31,8 @@ export default function BookManager() {
     japaneseTitle: '',
     levelLabel: '',
     num: '',
-    types: ['VOCABULARY']
+    types: ['VOCABULARY'],
+    publishGrammar: true
   });
 
   useEffect(() => {
@@ -63,7 +64,8 @@ export default function BookManager() {
       japaneseTitle: '',
       levelLabel: '',
       num: '',
-      types: ['VOCABULARY']
+      types: ['VOCABULARY'],
+      publishGrammar: true
     });
     setEditingId(null);
   };
@@ -80,7 +82,8 @@ export default function BookManager() {
       japaneseTitle: book.japaneseTitle,
       levelLabel: book.levelLabel,
       num: book.num,
-      types: bookTypes
+      types: bookTypes,
+      publishGrammar: book.publishGrammar !== false
     });
     setEditingId(book.id);
     setIsModalOpen(true);
@@ -94,7 +97,8 @@ export default function BookManager() {
         japaneseTitle: formData.japaneseTitle,
         levelLabel: formData.levelLabel,
         num: formData.num,
-        type: formData.types.join(',')
+        type: formData.types.join(','),
+        publishGrammar: formData.publishGrammar
       };
 
       if (editingId) {
@@ -365,6 +369,19 @@ export default function BookManager() {
                   ))}
                 </select>
               </div>
+
+              {formData.types.includes('GRAMMAR') && (
+                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-900 dark:text-white">HIỂN THỊ NGỮ PHÁP</span>
+                    <span className="text-[10px] text-slate-400">Cho phép học viên xem phần ngữ pháp của sách này</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked={formData.publishGrammar} onChange={(e) => setFormData(prev => ({...prev, publishGrammar: e.target.checked}))} className="sr-only peer" />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-black dark:peer-checked:bg-white"></div>
+                  </label>
+                </div>
+              )}
 
               <div className="pt-4 flex gap-4">
                 <button

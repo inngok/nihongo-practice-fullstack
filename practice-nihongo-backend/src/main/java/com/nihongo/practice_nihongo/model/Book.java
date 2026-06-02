@@ -27,9 +27,12 @@ public class Book {
     @JsonIgnore
     private List<Grammar> grammars;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean publishGrammar = true;
+
     public Book() {}
 
-    public Book(Long id, String title, String japaneseTitle, String levelLabel, String num, String type, List<Grammar> grammars) {
+    public Book(Long id, String title, String japaneseTitle, String levelLabel, String num, String type, List<Grammar> grammars, Boolean publishGrammar) {
         this.id = id;
         this.title = title;
         this.japaneseTitle = japaneseTitle;
@@ -37,6 +40,7 @@ public class Book {
         this.num = num;
         this.type = type;
         this.grammars = grammars;
+        this.publishGrammar = publishGrammar != null ? publishGrammar : true;
     }
 
     // Manual Getters and Setters
@@ -54,6 +58,8 @@ public class Book {
     public void setType(String type) { this.type = type; }
     public List<Grammar> getGrammars() { return grammars; }
     public void setGrammars(List<Grammar> grammars) { this.grammars = grammars; }
+    public Boolean getPublishGrammar() { return publishGrammar; }
+    public void setPublishGrammar(Boolean publishGrammar) { this.publishGrammar = publishGrammar; }
 
     public static class BookBuilder {
         private Long id;
@@ -63,6 +69,7 @@ public class Book {
         private String num;
         private String type;
         private List<Grammar> grammars;
+        private Boolean publishGrammar = true;
 
         public BookBuilder id(Long id) { this.id = id; return this; }
         public BookBuilder title(String title) { this.title = title; return this; }
@@ -71,9 +78,10 @@ public class Book {
         public BookBuilder num(String num) { this.num = num; return this; }
         public BookBuilder type(String type) { this.type = type; return this; }
         public BookBuilder grammars(List<Grammar> grammars) { this.grammars = grammars; return this; }
+        public BookBuilder publishGrammar(Boolean publishGrammar) { this.publishGrammar = publishGrammar; return this; }
 
         public Book build() {
-            return new Book(id, title, japaneseTitle, levelLabel, num, type, grammars);
+            return new Book(id, title, japaneseTitle, levelLabel, num, type, grammars, publishGrammar);
         }
     }
 

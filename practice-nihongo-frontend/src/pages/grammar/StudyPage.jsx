@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Search, ArrowLeft, Volume2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, ArrowLeft, Volume2, ChevronDown } from 'lucide-react';
 import grammarService from '../../api/grammarService';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
@@ -20,17 +20,39 @@ export default function StudyPage() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedLesson, setSelectedLesson] = useState('');
   const [quizInput, setQuizInput] = useState('');
   const [quizStatus, setQuizStatus] = useState('idle'); // idle, hint, correct, incorrect, revealed
   const [mcOptions, setMcOptions] = useState([]);
   const [mcSelected, setMcSelected] = useState(null);
   const [mcChecked, setMcChecked] = useState(false);
 
+  const uniqueLessons = useMemo(() => {
+    const lessons = new Set();
+    grammarData.forEach(g => {
+      if (g.unit) lessons.add(g.unit);
+    });
+    return Array.from(lessons).sort((a, b) => a - b);
+  }, [grammarData]);
+
   const activeData = useMemo(() => {
     let data = grammarData;
+    if (selectedLesson) {
+      data = data.filter(item => item.unit && item.unit.toString() === selectedLesson.toString());
+    }
+
+    data = [...data].sort((a, b) => {
+      const unitA = parseInt(a.unit) || 0;
+      const unitB = parseInt(b.unit) || 0;
+      if (unitA !== unitB) return unitA - unitB;
+      const dayA = parseInt(a.day) || 0;
+      const dayB = parseInt(b.day) || 0;
+      return dayA - dayB;
+    });
+
     if (isShuffle) return [...data].sort(() => Math.random() - 0.5);
     return data;
-  }, [grammarData, isShuffle]);
+  }, [grammarData, isShuffle, selectedLesson]);
 
   useEffect(() => {
     fetchGrammar();
@@ -96,8 +118,10 @@ export default function StudyPage() {
 
   useEffect(() => {
     if (activeMode === 'multiple_choice' && activeData[currentIndex]) {
-      const correctOption = activeData[currentIndex].quiz.answer;
-      const uniqueAnswers = Array.from(new Set(grammarData.map(item => item.quiz.answer)));
+      const correctOption = activeData[currentIndex]?.quiz.answer;
+      if (!correctOption) return;
+
+      const uniqueAnswers = Array.from(new Set(grammarData.map(item => item.quiz?.answer).filter(Boolean)));
       let otherOptions = uniqueAnswers.filter(ans => ans !== correctOption);
       otherOptions = otherOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
       const allOptions = [correctOption, ...otherOptions].sort(() => 0.5 - Math.random());
@@ -134,6 +158,12 @@ export default function StudyPage() {
     try {
       const response = await grammarService.getAll();
       let data = response.data;
+      
+      const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ROLE_ADMIN';
+      if (!isAdmin) {
+        data = data.filter(item => item.publish !== false && (!item.book || item.book.publishGrammar !== false));
+      }
+
       if (targetBookId) {
         data = data.filter(item => item.book && String(item.book.id) === String(targetBookId));
       }
@@ -313,15 +343,58 @@ export default function StudyPage() {
           </div>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-700 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm cấu trúc..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-transparent outline-none font-medium text-slate-900 dark:text-white text-base"
-          />
+        {uniqueLessons.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em]">CHỌN BÀI HỌC</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  setSelectedLesson('');
+                  setCurrentIndex(0);
+                  setIsFlipped(false);
+                  setQuizStatus('idle');
+                }}
+                className={`px-5 py-2 rounded-2xl text-[11px] font-black transition-all ${
+                  selectedLesson === ''
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105' 
+                    : 'bg-slate-50 text-slate-400 dark:bg-slate-900 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                TẤT CẢ
+              </button>
+              {uniqueLessons.map(lesson => (
+                <button
+                  key={lesson}
+                  onClick={() => {
+                    setSelectedLesson(lesson);
+                    setCurrentIndex(0);
+                    setIsFlipped(false);
+                    setQuizStatus('idle');
+                  }}
+                  className={`px-5 py-2 rounded-2xl text-[11px] font-black transition-all ${
+                    selectedLesson === lesson 
+                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105' 
+                      : 'bg-slate-50 text-slate-400 dark:bg-slate-900 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  BÀI {lesson}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-3 mt-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-700 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm cấu trúc..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-transparent outline-none font-medium text-slate-900 dark:text-white text-base"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
@@ -332,18 +405,24 @@ export default function StudyPage() {
               className={`p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] hover:border-black dark:hover:border-white transition-all duration-300 cursor-pointer select-none ${expandedId === item.id ? 'border-black dark:border-white ring-2 ring-black/5 dark:ring-white/5 shadow-lg' : 'hover:shadow-md'
                 }`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-xs font-black text-slate-200 dark:text-slate-700 w-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex items-start gap-4 flex-1 min-w-[200px]">
+                  <span className="text-xs font-black text-slate-200 dark:text-slate-700 w-6 shrink-0 mt-1">
                     {(idx + 1).toString().padStart(2, '0')}
                   </span>
-                  <div>
-                    <h3 className="text-xl font-bold italic tracking-tight text-slate-900 dark:text-white">{item.pattern}</h3>
-                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium mt-0.5">{item.meaning}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-bold italic tracking-tight text-slate-900 dark:text-white break-words">{item.pattern}</h3>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium mt-1 break-words leading-snug">{item.meaning}</p>
                   </div>
                 </div>
-                <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider">
-                  {item.level || 'N3'}
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap">
+                    Bài {item.unit || 1}
+                    {item.day ? ` - Ngày ${item.day}` : ''}
+                  </div>
+                  <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap">
+                    {item.level || 'N3'}
+                  </div>
                 </div>
               </div>
 
@@ -796,7 +875,7 @@ export default function StudyPage() {
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 px-4 sm:px-6 md:px-20 pt-20 pb-12 transition-colors">
+    <div className="min-h-screen bg-white dark:bg-slate-950 px-4 sm:px-6 md:px-20 pt-40 md:pt-32 pb-12 transition-colors">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Top Bar */}
         {activeMode === 'menu' && (

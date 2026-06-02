@@ -143,7 +143,7 @@ export default function KanjiStudy() {
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 px-4 sm:px-6 md:px-20 pt-32 pb-10 transition-colors">
+    <div className="min-h-screen bg-white dark:bg-slate-950 px-4 sm:px-6 md:px-20 pt-40 md:pt-32 pb-10 transition-colors">
       {loading ? (
         <div className="flex-grow flex items-center justify-center py-40">
           <div className="w-12 h-12 border-4 border-slate-100 border-t-black dark:border-slate-800 dark:border-t-white rounded-full animate-spin"></div>

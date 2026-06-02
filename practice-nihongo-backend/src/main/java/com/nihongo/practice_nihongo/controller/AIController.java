@@ -75,6 +75,33 @@ public class AIController {
         }
     }
 
+    @PostMapping("/grammar-chat")
+    public ResponseEntity<String> grammarChat(@RequestBody Map<String, Object> request) {
+        try {
+            java.util.List<Map<String, String>> history = (java.util.List<Map<String, String>>) request.get("history");
+            String userMessage = (String) request.get("userMessage");
+            String result = aiService.generateGrammarAssistantResponse(history, userMessage);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/translate")
+    public ResponseEntity<String> translateSentence(@RequestBody Map<String, String> request) {
+        try {
+            String text = request.get("text");
+            if (text == null || text.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Vui lòng cung cấp văn bản cần dịch.");
+            }
+            String prompt = "Dịch đoạn văn tiếng Nhật sau sang tiếng Việt một cách tự nhiên, đúng ngữ cảnh. Chỉ trả về bản dịch, không giải thích thêm:\n" + text;
+            String result = aiService.generateContent(prompt, 500);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
         return ResponseEntity.ok(aiService.getAiUsageStats());

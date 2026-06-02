@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Spin, Typography, Breadcrumb, Alert, Card, Switch, Button, message } from 'antd';
-import { HomeOutlined, ReadOutlined, SoundOutlined, PauseCircleOutlined } from '@ant-design/icons';
+import { HomeOutlined, ReadOutlined, SoundOutlined, PauseCircleOutlined, CloseOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
 import './news.css';
@@ -13,9 +13,15 @@ export default function NewsDetail() {
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showFurigana, setShowFurigana] = useState(true);
+  const [showTranslationText, setShowTranslationText] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const [vocabList, setVocabList] = useState([]);
+  const [selectedText, setSelectedText] = useState('');
+  const [popupPosition, setPopupPosition] = useState(null);
+  const [quickTranslation, setQuickTranslation] = useState('');
+  const [isQuickTranslating, setIsQuickTranslating] = useState(false);
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
 
@@ -101,7 +107,24 @@ export default function NewsDetail() {
       setExtracting(false);
     }
   };
-
+  const handleTranslate = async () => {
+    setTranslating(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/news/${id}/translate`, { method: 'POST' });
+      if (response.ok) {
+        const data = await response.json();
+        setArticle(data);
+        setShowTranslationText(true);
+        message.success('Đã dịch bài thành công!');
+      } else {
+        message.error('Lỗi khi yêu cầu AI dịch bài!');
+      }
+    } catch (error) {
+      message.error('Không thể kết nối đến máy chủ.');
+    } finally {
+      setTranslating(false);
+    }
+  };
   const handleGenerateQuiz = async () => {
     setGeneratingQuiz(true);
     try {
@@ -123,11 +146,83 @@ export default function NewsDetail() {
     }
   };
 
+  const handlePointerUp = (e) => {
+    // Timeout needed to let selection update natively first
+    setTimeout(() => {
+      const selection = window.getSelection();
+      const text = selection.toString().trim();
+      if (text) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        setSelectedText(text);
+        setPopupPosition({
+          top: rect.bottom + window.scrollY + 10,
+          left: rect.left + window.scrollX + (rect.width / 2)
+        });
+        setQuickTranslation('');
+      }
+    }, 10);
+  };
+
+  const handleContentClick = (e) => {
+    // Prevent accidental paragraph selection on touch devices
+    if (window.matchMedia && !window.matchMedia('(hover: hover)').matches) return;
+
+    // If user is selecting text, do not trigger paragraph click
+    if (window.getSelection().toString().trim()) return;
+
+    let target = e.target;
+    while (target && target.tagName !== 'P' && !target.classList?.contains('nhk-article-content')) {
+      target = target.parentElement;
+    }
+
+    if (target && target.tagName === 'P') {
+      const text = target.innerText.trim();
+      if (text) {
+        const rect = target.getBoundingClientRect();
+        setSelectedText(text);
+        setPopupPosition({
+          top: Math.min(rect.bottom + window.scrollY + 10, window.scrollY + window.innerHeight - 150),
+          left: rect.left + window.scrollX + (rect.width / 2)
+        });
+        setQuickTranslation('');
+      }
+    } else {
+      if (!isQuickTranslating) {
+        setSelectedText('');
+        setPopupPosition(null);
+        setQuickTranslation('');
+      }
+    }
+  };
+
+  const handleQuickTranslate = async () => {
+    if (!selectedText) return;
+    setIsQuickTranslating(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/ai/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: selectedText })
+      });
+      if (response.ok) {
+        const data = await response.text();
+        setQuickTranslation(data);
+      } else {
+        message.error('Lỗi dịch thuật!');
+      }
+    } catch (error) {
+      message.error('Lỗi kết nối!');
+    } finally {
+      setIsQuickTranslating(false);
+    }
+  };
+
   if (loading) return <div className="text-center pt-32"><Spin size="large" /></div>;
   if (!article) return <div className="p-10 pt-32 max-w-3xl mx-auto"><Alert type="error" message="Không tìm thấy bài báo" /></div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 pt-28">
+    <div className="max-w-4xl mx-auto p-6 pt-40 md:pt-28">
       <Breadcrumb 
         className="mb-6"
         items={[
@@ -146,18 +241,20 @@ export default function NewsDetail() {
       />
 
       {article.imageUrl && (
-        <img 
-          src={article.imageUrl} 
-          alt={article.title} 
-          className="w-full rounded-xl shadow-md mb-8 max-h-[400px] object-cover" 
-        />
+        <div className="w-full mb-8 bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden flex justify-center items-center p-2 shadow-md">
+          <img 
+            src={article.imageUrl} 
+            alt={article.title} 
+            className="w-full max-h-[500px] object-contain rounded-lg" 
+          />
+        </div>
       )}
 
       <h1 className="font-kanji text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-8 leading-tight tracking-tight">
         {article.title}
       </h1>
       
-      <div className="flex flex-wrap items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-[1.25rem] border border-slate-200/60 dark:border-slate-800 w-fit mb-10 max-w-full backdrop-blur-sm">
+      <div className="flex flex-wrap items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-[1.25rem] border border-slate-200/60 dark:border-slate-800 w-full sm:w-fit mb-10 max-w-full backdrop-blur-sm">
         {article.audioUrl ? (
           <audio 
             controls 
@@ -174,7 +271,7 @@ export default function NewsDetail() {
             size="large"
             icon={isPlaying ? <PauseCircleOutlined /> : <SoundOutlined />}
             onClick={handlePlayAudio}
-            className={`font-bold px-6 shadow-sm border-none ${isPlaying ? '' : 'bg-white text-slate-700 hover:text-indigo-600'}`}
+            className={`font-bold px-6 shadow-sm border-none w-full sm:w-auto ${isPlaying ? '' : 'bg-white text-slate-700 hover:text-indigo-600'}`}
           >
             {isPlaying ? "Đang đọc..." : "Nghe tự động"}
           </Button>
@@ -188,20 +285,111 @@ export default function NewsDetail() {
             className={showFurigana ? "bg-indigo-500" : "bg-slate-300"}
           />
         </div>
+
+        {article.translation && (
+          <div className="flex items-center gap-3 pl-4 pr-3 py-1 border-l-2 border-slate-200/80 dark:border-slate-700">
+            <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Dịch nghĩa</span>
+            <Switch 
+              checked={showTranslationText} 
+              onChange={setShowTranslationText} 
+              className={showTranslationText ? "bg-indigo-500" : "bg-slate-300"}
+            />
+          </div>
+        )}
       </div>
       
-      <Card className="shadow-xl shadow-slate-200/40 dark:shadow-none dark:bg-slate-800/80 dark:border-slate-700/80 rounded-[2rem] border-0 leading-loose nhk-article-content font-kanji text-xl md:text-2xl font-medium text-slate-800 dark:text-slate-200 mb-12">
+      <Card 
+        className="shadow-xl shadow-slate-200/40 dark:shadow-none dark:bg-slate-800/80 dark:border-slate-700/80 rounded-[2rem] border-0 leading-loose nhk-article-content font-kanji text-xl md:text-2xl font-medium text-slate-800 dark:text-slate-200 mb-8"
+        onPointerUp={handlePointerUp}
+        onClick={handleContentClick}
+      >
         <style>
           {`
             ${!showFurigana ? '.nhk-article-content rt { display: none; }' : ''}
+            .nhk-article-content p {
+              padding: 0.5rem;
+              margin-bottom: 0.5rem;
+              border-radius: 0.75rem;
+              transition: all 0.2s;
+            }
+            .nhk-article-content p:hover {
+              background-color: rgba(99, 102, 241, 0.08); /* indigo-500 with low opacity */
+              cursor: pointer;
+            }
           `}
         </style>
         <div dangerouslySetInnerHTML={{ __html: article.contentWithFurigana }} />
       </Card>
 
+      {/* Floating Translate Popup */}
+      {popupPosition && selectedText && (
+        <div 
+          className="absolute z-50 bg-white dark:bg-slate-900 shadow-2xl rounded-3xl p-5 border border-slate-100 dark:border-slate-800 w-80 max-w-[90vw]"
+          style={{ top: popupPosition.top, left: popupPosition.left, transform: 'translateX(-50%)' }}
+          onPointerDown={(e) => e.stopPropagation()} 
+        >
+          {quickTranslation ? (
+             <div className="space-y-3">
+                <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2">
+                   <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black">Bản dịch AI</p>
+                   <button onClick={() => { setSelectedText(''); setPopupPosition(null); }} className="text-[10px] text-slate-400 hover:text-black dark:hover:text-white font-black uppercase tracking-widest transition-colors">Đóng</button>
+                </div>
+                <div className="text-slate-900 dark:text-white font-medium text-sm leading-relaxed">{quickTranslation}</div>
+             </div>
+          ) : (
+             <div className="flex flex-col gap-4">
+               <div className="flex justify-between items-start gap-2">
+                 <div className="text-sm font-medium text-slate-500 dark:text-slate-400 italic line-clamp-2 leading-relaxed">"{selectedText}"</div>
+                 <button 
+                   onClick={() => { setSelectedText(''); setPopupPosition(null); }} 
+                   className="text-slate-400 hover:text-black dark:hover:text-white transition-colors"
+                   title="Đóng"
+                 >
+                   <CloseOutlined />
+                 </button>
+               </div>
+               <Button 
+                 type="primary" 
+                 size="large" 
+                 shape="round" 
+                 className="bg-black dark:bg-white text-white dark:text-black border-none font-bold shadow-xl hover:-translate-y-0.5 transition-transform w-full" 
+                 loading={isQuickTranslating} 
+                 onClick={handleQuickTranslate}
+               >
+                  {isQuickTranslating ? 'Đang dịch...' : 'Dịch nhanh'}
+               </Button>
+             </div>
+          )}
+        </div>
+      )}
+
+      {(article.translation || isAdmin) && (
+        <div className="mb-12">
+          {!article.translation && isAdmin ? (
+            <Button 
+              type="primary" 
+              onClick={handleTranslate} 
+              loading={translating}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white border-none rounded-full px-6 h-10 font-bold shadow-md w-full sm:w-auto"
+            >
+              Dịch bài bằng AI
+            </Button>
+          ) : (
+            article.translation && showTranslationText && (
+              <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-[2rem] border border-indigo-100 dark:border-indigo-800/30">
+                <h3 className="text-sm font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-4">Bản dịch tiếng Việt</h3>
+                <div className="text-base md:text-lg text-slate-700 dark:text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">
+                  {article.translation}
+                </div>
+              </div>
+            )
+          )}
+        </div>
+      )}
+
       {(vocabList.length > 0 || isAdmin) && (
         <div className="mt-10">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <h2 className="text-2xl font-black m-0 text-slate-900 dark:text-white flex items-center gap-3 tracking-tight">
               Từ vựng
             </h2>
@@ -210,7 +398,7 @@ export default function NewsDetail() {
                 type="primary" 
                 onClick={handleExtractVocab} 
                 loading={extracting}
-                className="bg-slate-900 hover:bg-slate-800 text-white border-none rounded-full px-6 h-10 font-bold shadow-md dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+                className="bg-slate-900 hover:bg-slate-800 text-white border-none rounded-full px-6 h-10 font-bold shadow-md dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white w-full sm:w-auto"
               >
                 Phân tích bằng AI
               </Button>

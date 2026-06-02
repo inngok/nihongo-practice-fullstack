@@ -42,6 +42,7 @@ public class PersonalVocabService {
         if (existing != null) {
             existing.setWord(vocab.getWord());
             existing.setReading(vocab.getReading());
+            existing.setItemType(vocab.getItemType() != null ? vocab.getItemType() : "VOCAB");
             existing.setMeaning(vocab.getMeaning());
             existing.setExample(vocab.getExample());
             existing.setExampleMeaning(vocab.getExampleMeaning());

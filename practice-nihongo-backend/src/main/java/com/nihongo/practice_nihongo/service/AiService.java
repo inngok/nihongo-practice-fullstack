@@ -233,6 +233,24 @@ public class AiService {
         }
     }
 
+    public String generateContent(String prompt, int maxTokens) throws Exception {
+        try {
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
+                recordAiUsage(true);
+                return "[Không có API Key cho dịch thuật]";
+            }
+            // For now, maxTokens is simply ignored in callGemini as the current implementation doesn't strictly pass maxOutputTokens.
+            String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res;
+        } catch (Exception e) {
+            recordAiUsage(false);
+            log.error("Gemini Error generating content: " + e.getMessage());
+            throw e;
+        }
+    }
+
     private String buildPrompt(String rawData, String type) {
         String schema;
         String typeUpper = type != null ? type.toUpperCase() : "";
@@ -257,7 +275,8 @@ public class AiService {
                "7. For Grammar, if explanation is missing, provide a short, clear explanation in Vietnamese about how to use the structure.\n" +
                "8. For Kanji, the \"examples\" field MUST contain 3-5 high-quality vocabulary entries. Each entry MUST follow this exact format: \"Word (Reading): Vietnamese meaning\". Separate each entry with a semicolon (;). Example: \"地形 (ちけい): địa hình; 形成 (けいせい): hình thành;\".\n" +
                "9. CRITICAL FOR GRAMMAR: The \"structure\" field MUST ONLY contain the Japanese grammar point using a tilde '〜' (e.g. '〜に囲まれている', '〜を占める'). DO NOT include conjugation formulas (like 'N +' or 'V-ru +') in the \"structure\" field. All conjugation formulas MUST be moved to the beginning of the \"explanation\" field (e.g. 'Cấu trúc: N + に囲まれている. ...').\n" +
-               "10. Ensure the JSON is valid, properly escaped, and encoded in UTF-8.";
+               "10. Ensure the JSON is valid, properly escaped, and encoded in UTF-8.\n" +
+               "11. CRITICAL: You MUST extract and parse EVERY SINGLE item from the input data. DO NOT omit, summarize, or skip ANY words, grammar points, or kanji. The output array MUST contain an entry for every distinct item found in the input.";
     }
 
     private String callGemini(String prompt) throws Exception {
@@ -358,6 +377,28 @@ public class AiService {
 
     private String simulateVocabGeneration(String word) {
         return String.format("{\"reading\": \"[Học viên tự thêm]\", \"meaning\": \"Nghĩa của từ %s\", \"example\": \"%sを勉強します。\", \"exampleMeaning\": \"Tôi học từ %s.\"}", word, word, word);
+    }
+
+    public String generateGrammarAssistantResponse(List<Map<String, String>> history, String userMessage) throws Exception {
+        StringBuilder historyPrompt = new StringBuilder();
+        if (history != null && !history.isEmpty()) {
+            int start = Math.max(0, history.size() - 6);
+            for (int i = start; i < history.size(); i++) {
+                Map<String, String> msg = history.get(i);
+                String sender = "ai".equals(msg.get("sender")) ? "AI" : "User";
+                historyPrompt.append(sender).append(": ").append(msg.get("text")).append("\n");
+            }
+        }
+
+        String prompt = "You are a friendly and expert Japanese grammar assistant. Your task is to explain Japanese grammar to a Vietnamese student.\n" +
+                "The explanation must be in Vietnamese, simple, easy to understand, short, and must include Japanese example sentences with Vietnamese translations.\n" +
+                "Conversation History:\n" + historyPrompt.toString() +
+                "Student just asked: " + userMessage + "\n\n" +
+                "Respond directly with your explanation in Markdown format. Do not use JSON. Just plain Markdown text.";
+
+        String res = callGemini(prompt);
+        recordAiUsage(true);
+        return res;
     }
 
     public String generateChatResponse(String scenario, List<Map<String, String>> history, String userMessage) throws Exception {

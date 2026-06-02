@@ -81,4 +81,33 @@ public class NewsController {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+    @PostMapping("/{id}/translate")
+    @CacheEvict(value = {"newsListCache", "newsDetailCache"}, allEntries = true)
+    public ResponseEntity<NewsArticle> translateNews(@PathVariable Long id) {
+        try {
+            NewsArticle article = newsArticleRepository.findById(id).orElse(null);
+            if (article == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            if (article.getTranslation() != null && !article.getTranslation().trim().isEmpty()) {
+                return ResponseEntity.ok(article);
+            }
+
+            String text = article.getContentRaw();
+            if (text == null || text.trim().isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            String translation = aiService.generateContent("Dịch bài báo tiếng Nhật sau sang tiếng Việt tự nhiên và dễ hiểu, chỉ trả về nội dung dịch, không có bất kỳ giải thích nào khác:\n\n" + text, 2500);
+            article.setTranslation(translation);
+
+            newsArticleRepository.save(article);
+
+            return ResponseEntity.ok(article);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }
