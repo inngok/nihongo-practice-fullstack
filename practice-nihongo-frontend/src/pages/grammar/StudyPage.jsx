@@ -326,7 +326,7 @@ export default function StudyPage() {
             <button
               key={m.id}
               onClick={() => setActiveMode(m.id)}
-              className="flex items-center justify-center py-3 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-black dark:hover:border-white hover:bg-white dark:hover:bg-slate-950 transition-all duration-300 hover:shadow-md active:scale-95 group"
+              className="flex items-center justify-center py-4 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-black dark:hover:border-white hover:bg-white dark:hover:bg-slate-950 transition-all duration-300 hover:shadow-md active:scale-95 group"
             >
               <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 group-hover:text-black dark:group-hover:text-white">{m.label}</span>
             </button>
