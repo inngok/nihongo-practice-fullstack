@@ -254,7 +254,7 @@ export default function NewsDetail() {
         {article.title}
       </h1>
       
-      <div className="flex flex-wrap items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-[1.25rem] border border-slate-200/60 dark:border-slate-800 w-fit mb-10 max-w-full backdrop-blur-sm">
+      <div className="flex flex-wrap items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-[1.25rem] border border-slate-200/60 dark:border-slate-800 w-full sm:w-fit mb-10 max-w-full backdrop-blur-sm">
         {article.audioUrl ? (
           <audio 
             controls 
@@ -271,7 +271,7 @@ export default function NewsDetail() {
             size="large"
             icon={isPlaying ? <PauseCircleOutlined /> : <SoundOutlined />}
             onClick={handlePlayAudio}
-            className={`font-bold px-6 shadow-sm border-none ${isPlaying ? '' : 'bg-white text-slate-700 hover:text-indigo-600'}`}
+            className={`font-bold px-6 shadow-sm border-none w-full sm:w-auto ${isPlaying ? '' : 'bg-white text-slate-700 hover:text-indigo-600'}`}
           >
             {isPlaying ? "Đang đọc..." : "Nghe tự động"}
           </Button>
@@ -370,7 +370,7 @@ export default function NewsDetail() {
               type="primary" 
               onClick={handleTranslate} 
               loading={translating}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white border-none rounded-full px-6 h-10 font-bold shadow-md"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white border-none rounded-full px-6 h-10 font-bold shadow-md w-full sm:w-auto"
             >
               Dịch bài bằng AI
             </Button>
@@ -389,7 +389,7 @@ export default function NewsDetail() {
 
       {(vocabList.length > 0 || isAdmin) && (
         <div className="mt-10">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <h2 className="text-2xl font-black m-0 text-slate-900 dark:text-white flex items-center gap-3 tracking-tight">
               Từ vựng
             </h2>
@@ -398,7 +398,7 @@ export default function NewsDetail() {
                 type="primary" 
                 onClick={handleExtractVocab} 
                 loading={extracting}
-                className="bg-slate-900 hover:bg-slate-800 text-white border-none rounded-full px-6 h-10 font-bold shadow-md dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+                className="bg-slate-900 hover:bg-slate-800 text-white border-none rounded-full px-6 h-10 font-bold shadow-md dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white w-full sm:w-auto"
               >
                 Phân tích bằng AI
               </Button>

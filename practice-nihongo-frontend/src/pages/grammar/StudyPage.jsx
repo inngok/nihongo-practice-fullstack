@@ -405,22 +405,22 @@ export default function StudyPage() {
               className={`p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] hover:border-black dark:hover:border-white transition-all duration-300 cursor-pointer select-none ${expandedId === item.id ? 'border-black dark:border-white ring-2 ring-black/5 dark:ring-white/5 shadow-lg' : 'hover:shadow-md'
                 }`}
             >
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 flex-1">
-                  <span className="text-xs font-black text-slate-200 dark:text-slate-700 w-6 shrink-0">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex items-start gap-4 flex-1 min-w-[200px]">
+                  <span className="text-xs font-black text-slate-200 dark:text-slate-700 w-6 shrink-0 mt-1">
                     {(idx + 1).toString().padStart(2, '0')}
                   </span>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold italic tracking-tight text-slate-900 dark:text-white">{item.pattern}</h3>
-                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium mt-0.5">{item.meaning}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-bold italic tracking-tight text-slate-900 dark:text-white break-words">{item.pattern}</h3>
+                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium mt-1 break-words leading-snug">{item.meaning}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap">
                     Bài {item.unit || 1}
                     {item.day ? ` - Ngày ${item.day}` : ''}
                   </div>
-                  <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap">
+                  <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap">
                     {item.level || 'N3'}
                   </div>
                 </div>

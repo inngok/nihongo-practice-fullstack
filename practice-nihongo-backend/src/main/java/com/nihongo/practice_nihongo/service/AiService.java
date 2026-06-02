@@ -379,6 +379,28 @@ public class AiService {
         return String.format("{\"reading\": \"[Học viên tự thêm]\", \"meaning\": \"Nghĩa của từ %s\", \"example\": \"%sを勉強します。\", \"exampleMeaning\": \"Tôi học từ %s.\"}", word, word, word);
     }
 
+    public String generateGrammarAssistantResponse(List<Map<String, String>> history, String userMessage) throws Exception {
+        StringBuilder historyPrompt = new StringBuilder();
+        if (history != null && !history.isEmpty()) {
+            int start = Math.max(0, history.size() - 6);
+            for (int i = start; i < history.size(); i++) {
+                Map<String, String> msg = history.get(i);
+                String sender = "ai".equals(msg.get("sender")) ? "AI" : "User";
+                historyPrompt.append(sender).append(": ").append(msg.get("text")).append("\n");
+            }
+        }
+
+        String prompt = "You are a friendly and expert Japanese grammar assistant. Your task is to explain Japanese grammar to a Vietnamese student.\n" +
+                "The explanation must be in Vietnamese, simple, easy to understand, short, and must include Japanese example sentences with Vietnamese translations.\n" +
+                "Conversation History:\n" + historyPrompt.toString() +
+                "Student just asked: " + userMessage + "\n\n" +
+                "Respond directly with your explanation in Markdown format. Do not use JSON. Just plain Markdown text.";
+
+        String res = callGemini(prompt);
+        recordAiUsage(true);
+        return res;
+    }
+
     public String generateChatResponse(String scenario, List<Map<String, String>> history, String userMessage) throws Exception {
         StringBuilder historyPrompt = new StringBuilder();
         if (history != null && !history.isEmpty()) {

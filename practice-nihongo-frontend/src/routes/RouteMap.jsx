@@ -5,11 +5,10 @@ import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import ScrollToTopButton from "../components/layout/ScrollToTopButton";
 import AdminSidebar from "../components/layout/AdminSidebar";
+import GrammarAIBot from "../components/GrammarAIBot";
 import { MenuOutlined } from "@ant-design/icons";
 
-// --- Lazy Loading Components ---
 
-// Base & Auth
 const Home = lazy(() => import("../pages/home/Home"));
 const Login = lazy(() => import("../pages/auth/Login"));
 const Register = lazy(() => import("../pages/auth/Register"));
@@ -99,6 +98,7 @@ const UserLayout = () => {
           <Outlet />
         </Suspense>
       </main>
+      <GrammarAIBot />
       {!shouldHideFooter && <Footer />}
     </div>
   );
@@ -124,16 +124,15 @@ const AdminLayout = () => {
 
       {/* Sidebar Backdrop Overlay on Mobile */}
       {isOpen && (
-        <div 
+        <div
           onClick={() => setIsOpen(false)}
           className="lg:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-[1150] transition-opacity"
         />
       )}
 
       {/* Admin Sidebar Container */}
-      <div className={`fixed inset-y-0 left-0 z-[1180] w-64 transform lg:transform-none lg:sticky lg:top-0 lg:h-screen lg:block transition-transform duration-300 ease-in-out ${
-        isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-      }`}>
+      <div className={`fixed inset-y-0 left-0 z-[1180] w-64 transform lg:transform-none lg:sticky lg:top-0 lg:h-screen lg:block transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}>
         <AdminSidebar onClose={() => setIsOpen(false)} />
       </div>
 
@@ -192,76 +191,76 @@ export default function RouteMap() {
       }}
     >
       <Routes>
-      {/* Public & User Routes */}
-      <Route element={<UserLayout />}>
-        <Route index element={<Home />} />
-        <Route path="login" element={<Login />} />
-        <Route path="register" element={<Register />} />
+        {/* Public & User Routes */}
+        <Route element={<UserLayout />}>
+          <Route index element={<Home />} />
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
 
-        {/* Grammar Section */}
-        <Route path="grammar">
-          <Route index element={<Grammar />} />
-          <Route path="study" element={<GrammarStudyWrapper />} />
-          <Route path="confusing" element={<ConfusingGrammar />} />
+          {/* Grammar Section */}
+          <Route path="grammar">
+            <Route index element={<Grammar />} />
+            <Route path="study" element={<GrammarStudyWrapper />} />
+            <Route path="confusing" element={<ConfusingGrammar />} />
+          </Route>
+
+          {/* Vocabulary Section */}
+          <Route path="vocabulary">
+            <Route index element={<Vocabulary />} />
+            <Route path="study" element={<VocabStudyWrapper />} />
+          </Route>
+          {/* Private Routes */}
+          <Route element={<PrivateRoute />}>
+            <Route path="my-vocab" element={<PersonalVocab />} />
+          </Route>
+
+          {/* Kanji Section */}
+          <Route path="kanji">
+            <Route index element={<Kanji />} />
+            <Route path="study" element={<KanjiStudyWrapper />} />
+            <Route path="set-4" element={<KanjiSet4 />} />
+          </Route>
+
+          {/* Exams & Study Tools */}
+
+          <Route path="exam-jlpt">
+            <Route index element={<ExamJLPT />} />
+            <Route path="past-vocab" element={<JlptPastVocab />} />
+          </Route>
+
+
+          <Route path="tips" element={<Tips />} />
+          <Route path="flashcards" element={<Flashcards />} />
+          <Route path="news">
+            <Route index element={<NewsList />} />
+            <Route path=":id" element={<NewsDetail />} />
+          </Route>
+          <Route path="ai-chat" element={<AiChat />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="*" element={<Fallback />} />
         </Route>
 
-        {/* Vocabulary Section */}
-        <Route path="vocabulary">
-          <Route index element={<Vocabulary />} />
-          <Route path="study" element={<VocabStudyWrapper />} />
-        </Route>
-        {/* Private Routes */}
-        <Route element={<PrivateRoute />}>
-          <Route path="my-vocab" element={<PersonalVocab />} />
-        </Route>
-
-        {/* Kanji Section */}
-        <Route path="kanji">
-          <Route index element={<Kanji />} />
-          <Route path="study" element={<KanjiStudyWrapper />} />
-          <Route path="set-4" element={<KanjiSet4 />} />
+        {/* Admin Management Routes */}
+        <Route path="manage" element={<AdminRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="users" element={<UserManager />} />
+            <Route path="import" element={<DataImporter />} />
+            <Route path="ai" element={<AiManager />} />
+            <Route path="jlpt-vocab" element={<JlptPastVocabManager />} />
+          </Route>
         </Route>
 
-        {/* Exams & Study Tools */}
-
-        <Route path="exam-jlpt">
-          <Route index element={<ExamJLPT />} />
-          <Route path="past-vocab" element={<JlptPastVocab />} />
+        {/* Direct Management Paths (accessed from Sidebar and dropdown) */}
+        <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
+          <Route path="grammar/manage" element={<GrammarManager />} />
+          <Route path="grammar/confusing-manage" element={<ConfusingGrammarManager />} />
+          <Route path="grammar/books" element={<BookManager />} />
+          <Route path="vocabulary/manage" element={<VocabManager />} />
+          <Route path="kanji/manage" element={<KanjiManager />} />
         </Route>
-
-
-        <Route path="tips" element={<Tips />} />
-        <Route path="flashcards" element={<Flashcards />} />
-        <Route path="news">
-          <Route index element={<NewsList />} />
-          <Route path=":id" element={<NewsDetail />} />
-        </Route>
-        <Route path="ai-chat" element={<AiChat />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="*" element={<Fallback />} />
-      </Route>
-
-      {/* Admin Management Routes */}
-      <Route path="manage" element={<AdminRoute />}>
-        <Route element={<AdminLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="users" element={<UserManager />} />
-          <Route path="import" element={<DataImporter />} />
-          <Route path="ai" element={<AiManager />} />
-          <Route path="jlpt-vocab" element={<JlptPastVocabManager />} />
-        </Route>
-      </Route>
-
-      {/* Direct Management Paths (accessed from Sidebar and dropdown) */}
-      <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
-        <Route path="grammar/manage" element={<GrammarManager />} />
-        <Route path="grammar/confusing-manage" element={<ConfusingGrammarManager />} />
-        <Route path="grammar/books" element={<BookManager />} />
-        <Route path="vocabulary/manage" element={<VocabManager />} />
-        <Route path="kanji/manage" element={<KanjiManager />} />
-      </Route>
-    </Routes>
-  </ConfigProvider>
+      </Routes>
+    </ConfigProvider>
   );
 }
 

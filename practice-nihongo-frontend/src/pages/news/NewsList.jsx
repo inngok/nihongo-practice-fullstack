@@ -98,7 +98,7 @@ export default function NewsList() {
               Tin tức cập nhật tự động từ NHK News mỗi ngày. Bạn cũng có thể lấy bài mới bằng nút cập nhật thủ công.
             </p>
           </div>
-          <div className="mt-4 md:mt-0 flex gap-2">
+          <div className="mt-4 md:mt-0 flex flex-col sm:flex-row gap-2 w-full md:w-auto">
             {isAdmin && (
               <>
                 <Button 
@@ -106,7 +106,7 @@ export default function NewsList() {
                   icon={<SyncOutlined spin={crawlingHistory} />} 
                   onClick={handleCrawlHistory} 
                   loading={crawlingHistory}
-                  className="rounded-full px-6 h-10 font-bold border-slate-300 text-slate-700 hover:text-indigo-600 hover:border-indigo-600 shadow-sm flex items-center gap-2"
+                  className="rounded-full px-6 h-10 font-bold border-slate-300 text-slate-700 hover:text-indigo-600 hover:border-indigo-600 shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
                   Lấy báo cũ (5 trang)
                 </Button>
@@ -115,7 +115,7 @@ export default function NewsList() {
                   icon={<SyncOutlined spin={crawling} />} 
                   onClick={handleCrawl} 
                   loading={crawling}
-                  className="bg-slate-900 hover:bg-slate-800 text-white border-none rounded-full px-6 h-10 font-bold shadow-md flex items-center gap-2 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+                  className="bg-slate-900 hover:bg-slate-800 text-white border-none rounded-full px-6 h-10 font-bold shadow-md flex items-center justify-center gap-2 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white w-full sm:w-auto"
                 >
                   Cập nhật tin mới
                 </Button>

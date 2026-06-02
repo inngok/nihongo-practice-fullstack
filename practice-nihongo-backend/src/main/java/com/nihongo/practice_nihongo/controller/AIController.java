@@ -75,6 +75,18 @@ public class AIController {
         }
     }
 
+    @PostMapping("/grammar-chat")
+    public ResponseEntity<String> grammarChat(@RequestBody Map<String, Object> request) {
+        try {
+            java.util.List<Map<String, String>> history = (java.util.List<Map<String, String>>) request.get("history");
+            String userMessage = (String) request.get("userMessage");
+            String result = aiService.generateGrammarAssistantResponse(history, userMessage);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
     @PostMapping("/translate")
     public ResponseEntity<String> translateSentence(@RequestBody Map<String, String> request) {
         try {
