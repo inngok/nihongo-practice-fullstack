@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Spin, Typography, Breadcrumb, Alert, Card, Switch, Button, message } from 'antd';
-import { HomeOutlined, ReadOutlined, SoundOutlined, PauseCircleOutlined } from '@ant-design/icons';
+import { HomeOutlined, ReadOutlined, SoundOutlined, PauseCircleOutlined, CloseOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
 import './news.css';
@@ -165,6 +165,9 @@ export default function NewsDetail() {
   };
 
   const handleContentClick = (e) => {
+    // Prevent accidental paragraph selection on touch devices
+    if (window.matchMedia && !window.matchMedia('(hover: hover)').matches) return;
+
     // If user is selecting text, do not trigger paragraph click
     if (window.getSelection().toString().trim()) return;
 
@@ -219,7 +222,7 @@ export default function NewsDetail() {
   if (!article) return <div className="p-10 pt-32 max-w-3xl mx-auto"><Alert type="error" message="Không tìm thấy bài báo" /></div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 pt-28">
+    <div className="max-w-4xl mx-auto p-6 pt-40 md:pt-28">
       <Breadcrumb 
         className="mb-6"
         items={[
@@ -335,7 +338,16 @@ export default function NewsDetail() {
              </div>
           ) : (
              <div className="flex flex-col gap-4">
-               <div className="text-sm font-medium text-slate-500 dark:text-slate-400 italic line-clamp-2 leading-relaxed">"{selectedText}"</div>
+               <div className="flex justify-between items-start gap-2">
+                 <div className="text-sm font-medium text-slate-500 dark:text-slate-400 italic line-clamp-2 leading-relaxed">"{selectedText}"</div>
+                 <button 
+                   onClick={() => { setSelectedText(''); setPopupPosition(null); }} 
+                   className="text-slate-400 hover:text-black dark:hover:text-white transition-colors"
+                   title="Đóng"
+                 >
+                   <CloseOutlined />
+                 </button>
+               </div>
                <Button 
                  type="primary" 
                  size="large" 

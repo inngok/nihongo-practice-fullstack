@@ -417,7 +417,7 @@ export default function KanjiSet4() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-white dark:bg-slate-950 flex flex-col items-center pt-28 md:pt-32 pb-16 px-6 font-sans select-none">
+    <div className="min-h-screen w-full bg-white dark:bg-slate-950 flex flex-col items-center pt-40 md:pt-32 pb-16 px-6 font-sans select-none">
       
       <div className="w-full max-w-6xl">
         

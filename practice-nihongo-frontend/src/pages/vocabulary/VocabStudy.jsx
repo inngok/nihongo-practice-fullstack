@@ -665,7 +665,7 @@ export default function VocabStudy() {
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 px-4 sm:px-6 md:px-20 pt-32 pb-10 transition-colors">
+    <div className="min-h-screen bg-white dark:bg-slate-950 px-4 sm:px-6 md:px-20 pt-40 md:pt-32 pb-10 transition-colors">
       <div className="max-w-7xl mx-auto space-y-12">
         {/* Top Bar */}
         <button

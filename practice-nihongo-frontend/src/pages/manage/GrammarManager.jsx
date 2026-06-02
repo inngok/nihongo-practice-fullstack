@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import grammarService from '../../api/grammarService';
 import bookService from '../../api/bookService';
 import { Modal, message, Select, Pagination } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined, ThunderboltOutlined, SearchOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
 import { createPortal } from 'react-dom';
@@ -72,6 +72,7 @@ export default function GrammarManager() {
   // Filter State
   const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
   const [selectedLesson, setSelectedLesson] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
   const [bulkUpdateData, setBulkUpdateData] = useState({ week: '', day: '', bookId: '' });
@@ -151,6 +152,14 @@ export default function GrammarManager() {
     }
     if (selectedLesson && selectedLesson !== "") {
       data = data.filter(g => g.week?.toString() === selectedLesson.toString());
+    }
+
+    if (searchTerm && searchTerm.trim() !== "") {
+      const lowerSearch = searchTerm.toLowerCase();
+      data = data.filter(g => 
+        (g.structure && g.structure.toLowerCase().includes(lowerSearch)) ||
+        (g.meaning && g.meaning.toLowerCase().includes(lowerSearch))
+      );
     }
 
     // Duplicate detection
@@ -609,6 +618,18 @@ export default function GrammarManager() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Tìm kiếm cấu trúc, ý nghĩa..."
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="pl-9 pr-4 py-2 w-64 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200 dark:focus:ring-slate-700 transition-all text-slate-700 dark:text-slate-200 placeholder-slate-400"
+              />
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <SearchOutlined />
+              </div>
+            </div>
             <button
               onClick={() => { setShowDuplicatesOnly(!showDuplicatesOnly); setCurrentPage(1); }}
               className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors border ${showDuplicatesOnly ? 'bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-900/30 dark:border-rose-800' : 'bg-transparent border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800'}`}
@@ -652,9 +673,9 @@ export default function GrammarManager() {
               ...uniqueLessons.map(l => ({ value: l.toString(), label: `Bài ${l}` }))
             ]}
           />
-          {(selectedBookId || selectedLesson || showDuplicatesOnly) && (
+          {(selectedBookId || selectedLesson || showDuplicatesOnly || searchTerm) && (
             <button
-              onClick={() => { setSelectedBookId(''); setSelectedLesson(''); setShowDuplicatesOnly(false); }}
+              onClick={() => { setSelectedBookId(''); setSelectedLesson(''); setShowDuplicatesOnly(false); setSearchTerm(''); }}
               className="px-3 py-1.5 text-sm font-semibold text-slate-400 hover:text-red-500 transition-colors"
             >
               Xóa lọc

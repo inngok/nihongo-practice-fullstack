@@ -40,6 +40,16 @@ export default function StudyPage() {
     if (selectedLesson) {
       data = data.filter(item => item.unit && item.unit.toString() === selectedLesson.toString());
     }
+
+    data = [...data].sort((a, b) => {
+      const unitA = parseInt(a.unit) || 0;
+      const unitB = parseInt(b.unit) || 0;
+      if (unitA !== unitB) return unitA - unitB;
+      const dayA = parseInt(a.day) || 0;
+      const dayB = parseInt(b.day) || 0;
+      return dayA - dayB;
+    });
+
     if (isShuffle) return [...data].sort(() => Math.random() - 0.5);
     return data;
   }, [grammarData, isShuffle, selectedLesson]);
@@ -108,8 +118,10 @@ export default function StudyPage() {
 
   useEffect(() => {
     if (activeMode === 'multiple_choice' && activeData[currentIndex]) {
-      const correctOption = activeData[currentIndex].quiz.answer;
-      const uniqueAnswers = Array.from(new Set(grammarData.map(item => item.quiz.answer)));
+      const correctOption = activeData[currentIndex]?.quiz.answer;
+      if (!correctOption) return;
+
+      const uniqueAnswers = Array.from(new Set(grammarData.map(item => item.quiz?.answer).filter(Boolean)));
       let otherOptions = uniqueAnswers.filter(ans => ans !== correctOption);
       otherOptions = otherOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
       const allOptions = [correctOption, ...otherOptions].sort(() => 0.5 - Math.random());
@@ -331,7 +343,48 @@ export default function StudyPage() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        {uniqueLessons.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em]">CHỌN BÀI HỌC</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  setSelectedLesson('');
+                  setCurrentIndex(0);
+                  setIsFlipped(false);
+                  setQuizStatus('idle');
+                }}
+                className={`px-5 py-2 rounded-2xl text-[11px] font-black transition-all ${
+                  selectedLesson === ''
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105' 
+                    : 'bg-slate-50 text-slate-400 dark:bg-slate-900 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                TẤT CẢ
+              </button>
+              {uniqueLessons.map(lesson => (
+                <button
+                  key={lesson}
+                  onClick={() => {
+                    setSelectedLesson(lesson);
+                    setCurrentIndex(0);
+                    setIsFlipped(false);
+                    setQuizStatus('idle');
+                  }}
+                  className={`px-5 py-2 rounded-2xl text-[11px] font-black transition-all ${
+                    selectedLesson === lesson 
+                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105' 
+                      : 'bg-slate-50 text-slate-400 dark:bg-slate-900 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  BÀI {lesson}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-3 mt-4">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-700 w-5 h-5" />
             <input
@@ -342,26 +395,6 @@ export default function StudyPage() {
               className="w-full pl-12 pr-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-transparent outline-none font-medium text-slate-900 dark:text-white text-base"
             />
           </div>
-          {uniqueLessons.length > 0 && (
-            <div className="sm:w-48 relative">
-              <select
-                value={selectedLesson}
-                onChange={(e) => {
-                  setSelectedLesson(e.target.value);
-                  setCurrentIndex(0);
-                  setIsFlipped(false);
-                  setQuizStatus('idle');
-                }}
-                className="w-full px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-transparent outline-none font-medium text-slate-900 dark:text-white text-base appearance-none cursor-pointer"
-              >
-                <option value="" className="text-slate-900 dark:text-slate-900">Tất cả bài</option>
-                {uniqueLessons.map(lesson => (
-                  <option key={lesson} value={lesson} className="text-slate-900 dark:text-slate-900">Bài {lesson}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-            </div>
-          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
@@ -372,21 +405,22 @@ export default function StudyPage() {
               className={`p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] hover:border-black dark:hover:border-white transition-all duration-300 cursor-pointer select-none ${expandedId === item.id ? 'border-black dark:border-white ring-2 ring-black/5 dark:ring-white/5 shadow-lg' : 'hover:shadow-md'
                 }`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-xs font-black text-slate-200 dark:text-slate-700 w-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                  <span className="text-xs font-black text-slate-200 dark:text-slate-700 w-6 shrink-0">
                     {(idx + 1).toString().padStart(2, '0')}
                   </span>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-xl font-bold italic tracking-tight text-slate-900 dark:text-white">{item.pattern}</h3>
                     <p className="text-sm text-slate-400 dark:text-slate-500 font-medium mt-0.5">{item.meaning}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider">
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap">
                     Bài {item.unit || 1}
+                    {item.day ? ` - Ngày ${item.day}` : ''}
                   </div>
-                  <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider">
+                  <div className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap">
                     {item.level || 'N3'}
                   </div>
                 </div>
@@ -841,7 +875,7 @@ export default function StudyPage() {
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 px-4 sm:px-6 md:px-20 pt-20 pb-12 transition-colors">
+    <div className="min-h-screen bg-white dark:bg-slate-950 px-4 sm:px-6 md:px-20 pt-40 md:pt-32 pb-12 transition-colors">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Top Bar */}
         {activeMode === 'menu' && (

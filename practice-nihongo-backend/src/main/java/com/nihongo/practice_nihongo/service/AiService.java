@@ -275,7 +275,8 @@ public class AiService {
                "7. For Grammar, if explanation is missing, provide a short, clear explanation in Vietnamese about how to use the structure.\n" +
                "8. For Kanji, the \"examples\" field MUST contain 3-5 high-quality vocabulary entries. Each entry MUST follow this exact format: \"Word (Reading): Vietnamese meaning\". Separate each entry with a semicolon (;). Example: \"地形 (ちけい): địa hình; 形成 (けいせい): hình thành;\".\n" +
                "9. CRITICAL FOR GRAMMAR: The \"structure\" field MUST ONLY contain the Japanese grammar point using a tilde '〜' (e.g. '〜に囲まれている', '〜を占める'). DO NOT include conjugation formulas (like 'N +' or 'V-ru +') in the \"structure\" field. All conjugation formulas MUST be moved to the beginning of the \"explanation\" field (e.g. 'Cấu trúc: N + に囲まれている. ...').\n" +
-               "10. Ensure the JSON is valid, properly escaped, and encoded in UTF-8.";
+               "10. Ensure the JSON is valid, properly escaped, and encoded in UTF-8.\n" +
+               "11. CRITICAL: You MUST extract and parse EVERY SINGLE item from the input data. DO NOT omit, summarize, or skip ANY words, grammar points, or kanji. The output array MUST contain an entry for every distinct item found in the input.";
     }
 
     private String callGemini(String prompt) throws Exception {
