@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Card, Spin, Typography, Tag, Space, Alert, Button, message, Pagination } from 'antd';
 import { CalendarOutlined, ReadOutlined, ArrowRightOutlined, SyncOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
@@ -13,7 +13,8 @@ export default function NewsList() {
   const [error, setError] = useState(null);
   const [crawling, setCrawling] = useState(false);
   const [crawlingHistory, setCrawlingHistory] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get('page')) || 1;
   const pageSize = 12;
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
@@ -187,7 +188,7 @@ export default function NewsList() {
                   pageSize={pageSize}
                   total={news.length}
                   onChange={(page) => {
-                    setCurrentPage(page);
+                    setSearchParams({ page });
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   showSizeChanger={false}

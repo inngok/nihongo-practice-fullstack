@@ -242,7 +242,7 @@ export default function NewsDetail() {
         />
         <Button 
           icon={<ArrowLeftOutlined />} 
-          onClick={() => navigate('/news')}
+          onClick={() => navigate(-1)}
           className="rounded-full font-medium text-slate-600 hover:text-indigo-600 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all hover:-translate-x-1 w-fit"
         >
           Quay lại danh sách
