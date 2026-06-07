@@ -50,9 +50,36 @@ export default function StudyPage() {
       return dayA - dayB;
     });
 
+    if (activeMode === 'quiz' || activeMode === 'multiple_choice' || activeMode === 'listening') {
+      const flattened = [];
+      data.forEach(item => {
+        const sentences = (item.quiz?.sentence || '').split('\n').map(s => s.trim()).filter(Boolean);
+        const quizSentences = (item.quiz?.quizSentence || '').split('\n').map(s => s.trim()).filter(Boolean);
+        const translations = (item.quiz?.translation || '').split('\n').map(s => s.trim()).filter(Boolean);
+        
+        if (sentences.length > 1) {
+          sentences.forEach((sentence, idx) => {
+            flattened.push({
+              ...item,
+              id: `${item.id}_${idx}`,
+              quiz: {
+                ...item.quiz,
+                sentence: sentence,
+                quizSentence: quizSentences[idx] || (quizSentences.length === 1 ? quizSentences[0] : ''),
+                translation: translations[idx] || (translations.length === 1 ? translations[0] : '')
+              }
+            });
+          });
+        } else {
+          flattened.push(item);
+        }
+      });
+      data = flattened;
+    }
+
     if (isShuffle) return [...data].sort(() => Math.random() - 0.5);
     return data;
-  }, [grammarData, isShuffle, selectedLesson]);
+  }, [grammarData, isShuffle, selectedLesson, activeMode]);
 
   useEffect(() => {
     fetchGrammar();
@@ -325,7 +352,15 @@ export default function StudyPage() {
           ].map(m => (
             <button
               key={m.id}
-              onClick={() => setActiveMode(m.id)}
+              onClick={() => {
+                setActiveMode(m.id);
+                setCurrentIndex(0);
+                setIsFlipped(false);
+                setQuizStatus('idle');
+                setMcChecked(false);
+                setMcSelected(null);
+                setQuizInput('');
+              }}
               className="flex items-center justify-center py-4 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-black dark:hover:border-white hover:bg-white dark:hover:bg-slate-950 transition-all duration-300 hover:shadow-md active:scale-95 group"
             >
               <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 group-hover:text-black dark:group-hover:text-white">{m.label}</span>

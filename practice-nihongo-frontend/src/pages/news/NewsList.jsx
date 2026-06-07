@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Card, Spin, Typography, Tag, Space, Alert, Button, message, Pagination } from 'antd';
 import { CalendarOutlined, ReadOutlined, ArrowRightOutlined, SyncOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
@@ -13,7 +13,8 @@ export default function NewsList() {
   const [error, setError] = useState(null);
   const [crawling, setCrawling] = useState(false);
   const [crawlingHistory, setCrawlingHistory] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentPage = parseInt(searchParams.get('page')) || 1;
   const pageSize = 12;
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
@@ -76,10 +77,10 @@ export default function NewsList() {
 
   if (loading) return (
     <div className="flex justify-center items-center h-screen bg-slate-50 dark:bg-slate-950 pt-24">
-        <Spin size="large" />
+      <Spin size="large" />
     </div>
   );
-  
+
   if (error) return (
     <div className="max-w-4xl mx-auto p-10 pt-32 mt-10">
       <Alert type="error" message={error} description="Đã có lỗi xảy ra khi kết nối máy chủ." showIcon />
@@ -95,25 +96,25 @@ export default function NewsList() {
               Báo Nhật Mỗi Ngày
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base max-w-xl font-medium">
-              Tin tức cập nhật tự động từ NHK News mỗi ngày. Bạn cũng có thể lấy bài mới bằng nút cập nhật thủ công.
+              Tin tức cập nhật tự động từ NHK News mỗi ngày.
             </p>
           </div>
           <div className="mt-4 md:mt-0 flex flex-col sm:flex-row gap-2 w-full md:w-auto">
             {isAdmin && (
               <>
-                <Button 
-                  type="default" 
-                  icon={<SyncOutlined spin={crawlingHistory} />} 
-                  onClick={handleCrawlHistory} 
+                <Button
+                  type="default"
+                  icon={<SyncOutlined spin={crawlingHistory} />}
+                  onClick={handleCrawlHistory}
                   loading={crawlingHistory}
                   className="rounded-full px-6 h-10 font-bold border-slate-300 text-slate-700 hover:text-indigo-600 hover:border-indigo-600 shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto"
                 >
                   Lấy báo cũ (5 trang)
                 </Button>
-                <Button 
-                  type="primary" 
-                  icon={<SyncOutlined spin={crawling} />} 
-                  onClick={handleCrawl} 
+                <Button
+                  type="primary"
+                  icon={<SyncOutlined spin={crawling} />}
+                  onClick={handleCrawl}
                   loading={crawling}
                   className="bg-slate-900 hover:bg-slate-800 text-white border-none rounded-full px-6 h-10 font-bold shadow-md flex items-center justify-center gap-2 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white w-full sm:w-auto"
                 >
@@ -125,61 +126,61 @@ export default function NewsList() {
         </div>
 
         {news.length === 0 ? (
-           <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
-             <ReadOutlined className="text-5xl text-slate-300 dark:text-slate-700 mb-4" />
-             <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300">Chưa có bài báo nào</h3>
-           </div>
+          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
+            <ReadOutlined className="text-5xl text-slate-300 dark:text-slate-700 mb-4" />
+            <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300">Chưa có bài báo nào</h3>
+          </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {news.slice((currentPage - 1) * pageSize, currentPage * pageSize).map(article => (
                 <Link to={`/news/${article.id}`} key={article.id} className="group flex">
-                <div className="flex flex-col w-full bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500">
-                  <div className="relative h-56 w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
-                    {article.imageUrl ? (
-                      <div className="w-full h-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center p-2">
-                        <img 
-                          alt={article.title} 
-                          src={article.imageUrl} 
-                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out" 
-                        />
+                  <div className="flex flex-col w-full bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500">
+                    <div className="relative h-56 w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
+                      {article.imageUrl ? (
+                        <div className="w-full h-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center p-2">
+                          <img
+                            alt={article.title}
+                            src={article.imageUrl}
+                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ReadOutlined className="text-5xl text-slate-400 dark:text-slate-600" />
+                        </div>
+                      )}
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-white/90 backdrop-blur-md text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                          N4 - N3
+                        </span>
                       </div>
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ReadOutlined className="text-5xl text-slate-400 dark:text-slate-600" />
+                    </div>
+
+                    <div className="p-6 md:p-8 flex flex-col flex-grow">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-indigo-500 mb-3">
+                        <CalendarOutlined />
+                        <span>{new Date(article.publishedAt).toLocaleDateString('vi-VN')}</span>
                       </div>
-                    )}
-                    <div className="absolute top-4 left-4">
-                      <span className="bg-white/90 backdrop-blur-md text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
-                        N4 - N3
-                      </span>
+
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-snug line-clamp-3 mb-6 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        {article.title}
+                      </h3>
+
+                      <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <span className="text-[11px] font-black tracking-widest uppercase text-slate-400 group-hover:text-indigo-500 transition-colors">
+                          Đọc bài báo
+                        </span>
+                        <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors duration-300">
+                          <ArrowRightOutlined className="text-xs" />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="p-6 md:p-8 flex flex-col flex-grow">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-indigo-500 mb-3">
-                      <CalendarOutlined />
-                      <span>{new Date(article.publishedAt).toLocaleDateString('vi-VN')}</span>
-                    </div>
-                    
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white leading-snug line-clamp-3 mb-6 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                      {article.title}
-                    </h3>
-                    
-                    <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                      <span className="text-[11px] font-black tracking-widest uppercase text-slate-400 group-hover:text-indigo-500 transition-colors">
-                        Đọc bài báo
-                      </span>
-                      <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white transition-colors duration-300">
-                         <ArrowRightOutlined className="text-xs" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
+                </Link>
               ))}
             </div>
-            
+
             {news.length > pageSize && (
               <div className="flex justify-center mt-12 mb-8">
                 <Pagination
@@ -187,7 +188,7 @@ export default function NewsList() {
                   pageSize={pageSize}
                   total={news.length}
                   onChange={(page) => {
-                    setCurrentPage(page);
+                    setSearchParams({ page });
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   showSizeChanger={false}

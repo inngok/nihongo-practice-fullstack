@@ -1008,7 +1008,30 @@ export default function GrammarManager() {
                   </select>
                 </div>
 
-
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 px-1">Tuần (Week)</label>
+                    <input
+                      type="number"
+                      name="week"
+                      min="1"
+                      value={formData.week}
+                      onChange={handleInputChange}
+                      className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 px-1">Ngày (Day)</label>
+                    <input
+                      type="number"
+                      name="day"
+                      min="1"
+                      value={formData.day}
+                      onChange={handleInputChange}
+                      className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all"
+                    />
+                  </div>
+                </div>
 
                 <div className="pt-4">
                   <button

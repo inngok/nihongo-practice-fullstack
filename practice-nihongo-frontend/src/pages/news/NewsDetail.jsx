@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Spin, Typography, Breadcrumb, Alert, Card, Switch, Button, message } from 'antd';
-import { HomeOutlined, ReadOutlined, SoundOutlined, PauseCircleOutlined, CloseOutlined } from '@ant-design/icons';
+import { HomeOutlined, ReadOutlined, SoundOutlined, PauseCircleOutlined, CloseOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
 import './news.css';
@@ -10,6 +10,7 @@ const { Title, Paragraph } = Typography;
 
 export default function NewsDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [article, setArticle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showFurigana, setShowFurigana] = useState(true);
@@ -222,23 +223,31 @@ export default function NewsDetail() {
   if (!article) return <div className="p-10 pt-32 max-w-3xl mx-auto"><Alert type="error" message="Không tìm thấy bài báo" /></div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 pt-40 md:pt-28">
-      <Breadcrumb 
-        className="mb-6"
-        items={[
-          {
-            href: '/',
-            title: <HomeOutlined />,
-          },
-          {
-            href: '/news',
-            title: <><ReadOutlined /> Tin tức</>,
-          },
-          {
-            title: 'Chi tiết',
-          },
-        ]}
-      />
+    <div className="max-w-4xl mx-auto p-6 pt-48 md:pt-32">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative z-20">
+        <Breadcrumb 
+          items={[
+            {
+              href: '/',
+              title: <HomeOutlined />,
+            },
+            {
+              href: '/news',
+              title: <><ReadOutlined /> Tin tức</>,
+            },
+            {
+              title: 'Chi tiết',
+            },
+          ]}
+        />
+        <Button 
+          icon={<ArrowLeftOutlined />} 
+          onClick={() => navigate(-1)}
+          className="rounded-full font-medium text-slate-600 hover:text-indigo-600 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all hover:-translate-x-1 w-fit"
+        >
+          Quay lại danh sách
+        </Button>
+      </div>
 
       {article.imageUrl && (
         <div className="w-full mb-8 bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden flex justify-center items-center p-2 shadow-md">
