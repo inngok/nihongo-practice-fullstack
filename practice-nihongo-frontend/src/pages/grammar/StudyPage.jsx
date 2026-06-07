@@ -4,6 +4,10 @@ import { ChevronLeft, ChevronRight, Search, ArrowLeft, Volume2, ChevronDown } fr
 import grammarService from '../../api/grammarService';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
+import StudyMenu from './components/StudyMenu';
+import FlashcardMode from './components/FlashcardMode';
+import QuizMode from './components/QuizMode';
+import MultipleChoiceMode from './components/MultipleChoiceMode';
 
 export default function StudyPage() {
   const { bookId } = useParams();
@@ -17,15 +21,9 @@ export default function StudyPage() {
   const [activeMode, setActiveMode] = useState('menu');
   const [expandedId, setExpandedId] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLesson, setSelectedLesson] = useState('');
-  const [quizInput, setQuizInput] = useState('');
-  const [quizStatus, setQuizStatus] = useState('idle'); // idle, hint, correct, incorrect, revealed
-  const [mcOptions, setMcOptions] = useState([]);
-  const [mcSelected, setMcSelected] = useState(null);
-  const [mcChecked, setMcChecked] = useState(false);
 
   const uniqueLessons = useMemo(() => {
     const lessons = new Set();
@@ -116,70 +114,6 @@ export default function StudyPage() {
     }
   }, [currentIndex, activeMode, targetBookId, currentUser]);
 
-  // Keyboard navigation for Grammar Flashcards
-  useEffect(() => {
-    if ((activeMode !== 'flashcard' && activeMode !== 'cards') || activeData.length === 0) return;
-
-    const handleKeyDown = (e) => {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        setIsFlipped(prev => !prev);
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        if (currentIndex > 0) {
-          setCurrentIndex(prev => prev - 1);
-          setIsFlipped(false);
-        }
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        if (currentIndex < activeData.length - 1) {
-          setCurrentIndex(prev => prev + 1);
-          setIsFlipped(false);
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeMode, currentIndex, activeData, isFlipped]);
-
-  useEffect(() => {
-    if (activeMode === 'multiple_choice' && activeData[currentIndex]) {
-      const correctOption = activeData[currentIndex]?.quiz.answer;
-      if (!correctOption) return;
-
-      const uniqueAnswers = Array.from(new Set(grammarData.map(item => item.quiz?.answer).filter(Boolean)));
-      let otherOptions = uniqueAnswers.filter(ans => ans !== correctOption);
-      otherOptions = otherOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
-      const allOptions = [correctOption, ...otherOptions].sort(() => 0.5 - Math.random());
-
-      setMcOptions(allOptions);
-      setMcSelected(null);
-      setMcChecked(false);
-    }
-  }, [activeMode, currentIndex, activeData, grammarData]);
-
-  useEffect(() => {
-    if (activeMode !== 'multiple_choice' || mcOptions.length === 0) return;
-
-    const handleKeyDown = (e) => {
-      if (['1', '2', '3', '4'].includes(e.key)) {
-        const idx = parseInt(e.key) - 1;
-        if (idx < mcOptions.length && !mcChecked) {
-          setMcSelected(mcOptions[idx]);
-          setMcChecked(true);
-        }
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        if (mcChecked) {
-          handleNext();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeMode, mcOptions, mcSelected, mcChecked]);
 
   const fetchGrammar = async () => {
     try {
@@ -258,656 +192,28 @@ export default function StudyPage() {
     return <span className="whitespace-pre-wrap">{sentence} <span className="text-slate-400 dark:text-slate-500 mx-1">_____</span></span>;
   };
 
-  const handleQuizSubmit = () => {
-    if (quizStatus === 'correct' || quizStatus === 'revealed' || quizStatus === 'incorrect') {
-      handleNext();
-      return;
-    }
-
-    if (!quizInput.trim()) {
-      if (quizStatus === 'idle') {
-        setQuizStatus('hint');
-      } else if (quizStatus === 'hint') {
-        setQuizStatus('revealed');
-      }
-      return;
-    }
-
-    const currentAnswer = activeData[currentIndex]?.quiz?.answer || '';
-    const cleanAnswer = currentAnswer.replace(/[～~]/g, '').trim().toLowerCase();
-    const cleanInput = quizInput.replace(/[～~]/g, '').trim().toLowerCase();
-
-    if (cleanInput.length > 0 && (cleanInput === cleanAnswer || cleanAnswer.includes(cleanInput))) {
-      setQuizStatus('correct');
-    } else {
-      setQuizStatus('incorrect');
-    }
-  };
-
-  const handleQuizKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleQuizSubmit();
-    }
-  };
-
-  const handleMcSelect = (option) => {
-    if (mcChecked) return;
-    setMcSelected(option);
-    setMcChecked(true);
-  };
-
-  const handleMcSubmit = () => {
-    if (mcChecked) {
-      handleNext();
-    } else {
-      if (mcSelected) {
-        setMcChecked(true);
-      }
-    }
-  };
-
   const handleResetProgress = () => {
     setCurrentIndex(0);
-    setIsFlipped(false);
-    setQuizInput('');
-    setQuizStatus('idle');
-    setMcSelected(null);
-    setMcChecked(false);
   };
 
   const handleToggleShuffle = () => {
     setIsShuffle(!isShuffle);
     setCurrentIndex(0);
-    setIsFlipped(false);
-    setQuizInput('');
-    setQuizStatus('idle');
-    setMcSelected(null);
-    setMcChecked(false);
   };
-
-  const MenuScreen = (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      {/* Selection grid */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center border-b border-slate-50 dark:border-slate-900 pb-3">
-          <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.2em]">CHỌN CHẾ ĐỘ HỌC</p>
-          <div className="flex items-center gap-4">
-            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">XÁO TRỘN</span>
-            <button
-              onClick={handleToggleShuffle}
-              className={`relative w-12 h-6 rounded-full transition-all duration-500 shadow-inner ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-            >
-              <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-500 shadow-sm ${isShuffle ? 'left-7 bg-white dark:bg-black' : 'left-1 bg-white dark:bg-black'}`} />
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {[
-            { id: 'cards', label: 'FLASHCARD' },
-            { id: 'quiz', label: 'LUYỆN TẬP' },
-            { id: 'multiple_choice', label: 'TRẮC NGHIỆM' },
-            { id: 'listening', label: 'NGHE ĐIỀN' }
-          ].map(m => (
-            <button
-              key={m.id}
-              onClick={() => {
-                setActiveMode(m.id);
-                setCurrentIndex(0);
-                setIsFlipped(false);
-                setQuizStatus('idle');
-                setMcChecked(false);
-                setMcSelected(null);
-                setQuizInput('');
-              }}
-              className="flex items-center justify-center py-4 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-black dark:hover:border-white hover:bg-white dark:hover:bg-slate-950 transition-all duration-300 hover:shadow-md active:scale-95 group"
-            >
-              <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 group-hover:text-black dark:group-hover:text-white">{m.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Integrated Grammar List Section */}
-      <div id="grammar-list-section" className="space-y-6 pt-6 border-t border-slate-50 dark:border-slate-900">
-        <div className="flex justify-between items-center pb-1">
-          <div>
-            <h2 className="text-xl font-black tracking-tight text-slate-950 dark:text-white uppercase italic">DANH SÁCH NGỮ PHÁP</h2>
-            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">NHẤN VÀO CẤU TRÚC ĐỂ XEM CHI TIẾT VÍ DỤ</p>
-          </div>
-        </div>
-
-        {uniqueLessons.length > 0 && (
-          <div className="space-y-3">
-            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em]">CHỌN BÀI HỌC</p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => {
-                  setSelectedLesson('');
-                  setCurrentIndex(0);
-                  setIsFlipped(false);
-                  setQuizStatus('idle');
-                }}
-                className={`px-5 py-2 rounded-2xl text-[11px] font-black transition-all ${
-                  selectedLesson === ''
-                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105' 
-                    : 'bg-slate-50 text-slate-400 dark:bg-slate-900 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white'
-                }`}
-              >
-                TẤT CẢ
-              </button>
-              {uniqueLessons.map(lesson => (
-                <button
-                  key={lesson}
-                  onClick={() => {
-                    setSelectedLesson(lesson);
-                    setCurrentIndex(0);
-                    setIsFlipped(false);
-                    setQuizStatus('idle');
-                  }}
-                  className={`px-5 py-2 rounded-2xl text-[11px] font-black transition-all ${
-                    selectedLesson === lesson 
-                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105' 
-                      : 'bg-slate-50 text-slate-400 dark:bg-slate-900 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  BÀI {lesson}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="flex flex-col sm:flex-row gap-3 mt-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-700 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm cấu trúc..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-transparent outline-none font-medium text-slate-900 dark:text-white text-base"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
-          {activeData.filter(i => i.pattern.toLowerCase().includes(searchTerm.toLowerCase())).map((item, idx) => (
-            <div
-              key={item.id}
-              onClick={() => toggleExpand(item.id)}
-              className={`p-4 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] hover:border-black dark:hover:border-white transition-all duration-300 cursor-pointer select-none ${expandedId === item.id ? 'border-black dark:border-white ring-2 ring-black/5 dark:ring-white/5 shadow-lg' : 'hover:shadow-md'
-                }`}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex items-start gap-4 flex-1 min-w-[200px]">
-                  <span className="text-xs font-black text-slate-200 dark:text-slate-700 w-6 shrink-0 mt-1">
-                    {(idx + 1).toString().padStart(2, '0')}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-bold italic tracking-tight text-slate-900 dark:text-white break-words">{item.pattern}</h3>
-                    <p className="text-sm text-slate-400 dark:text-slate-500 font-medium mt-1 break-words leading-snug">{item.meaning}</p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 shrink-0">
-                  <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap">
-                    Bài {item.unit || 1}
-                    {item.day ? ` - Ngày ${item.day}` : ''}
-                  </div>
-                  <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider whitespace-nowrap">
-                    {item.level || 'N3'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Expandable Section */}
-              <div className={`overflow-hidden transition-all duration-300 ${expandedId === item.id ? 'max-h-96 mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 opacity-100' : 'max-h-0 opacity-0'}`}>
-                <div className="space-y-4">
-                  {item.explanation && (
-                    <div className="space-y-1">
-                      <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Cách dùng & Giải thích</h4>
-                      <p className="text-sm md:text-[15px] font-medium text-slate-700 dark:text-slate-300 leading-relaxed">{item.explanation}</p>
-                    </div>
-                  )}
-                  {item.exampleSentence && (() => {
-                    const jpLines = item.exampleSentence.split('\n').map(s => s.trim()).filter(Boolean);
-                    const vnLines = item.exampleMeaning ? item.exampleMeaning.split('\n').map(s => s.trim()).filter(Boolean) : [];
-                    return (
-                      <div className="space-y-2">
-                        <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Ví dụ thực tế</h4>
-                        <div className="space-y-2">
-                          {jpLines.map((jpLine, lineIdx) => {
-                            const vnLine = vnLines[lineIdx] || '';
-                            return (
-                              <div key={lineIdx} className="bg-slate-50/50 dark:bg-slate-950/50 p-4 rounded-2xl border border-slate-100/50 dark:border-slate-900 flex items-start justify-between gap-3 group/ex">
-                                <div className="space-y-1.5 flex-1">
-                                  <p className="text-base font-bold text-slate-900 dark:text-white leading-relaxed">{jpLine}</p>
-                                  {vnLine && (
-                                    <p className="text-xs md:text-sm italic text-slate-500 dark:text-slate-400 leading-relaxed">{vnLine}</p>
-                                  )}
-                                </div>
-                                <button
-                                  onClick={(e) => playAudio(e, jpLine)}
-                                  className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors group/audio shrink-0 mt-0.5"
-                                  title="Nghe phát âm"
-                                >
-                                  <Volume2 className="w-4 h-4 text-slate-400 group-hover/audio:text-slate-900 dark:group-hover/audio:text-white" />
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 
   const handleNext = () => {
     if (currentIndex < activeData.length - 1) {
       setCurrentIndex(prev => prev + 1);
-      setIsFlipped(false);
-      setQuizInput('');
-      setQuizStatus('idle');
     }
   };
 
   const handlePrev = () => {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
-      setIsFlipped(false);
-      setQuizInput('');
-      setQuizStatus('idle');
     }
   };
 
-  const FlashcardScreen = (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl mx-auto">
-      {/* Top Navigation */}
-      <div className="flex justify-between items-center px-2">
-        <button
-          onClick={() => { setActiveMode('menu'); setIsFlipped(false); }}
-          className="group flex items-center gap-1.5 text-[10px] font-black text-slate-500 hover:text-black dark:text-slate-400 dark:hover:text-white uppercase tracking-[0.2em] transition-all"
-        >
-          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-          QUAY LẠI MENU
-        </button>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hidden sm:inline">
-            TIẾN TRÌNH: {currentIndex + 1} / {activeData.length}
-          </span>
-          <button
-            onClick={handleToggleShuffle}
-            className={`px-3 py-1 border rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${isShuffle ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' : 'bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black'}`}
-          >
-            XÁO TRỘN
-          </button>
-          <button
-            onClick={handleResetProgress}
-            className="px-3 py-1 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-          >
-            HỌC LẠI
-          </button>
-        </div>
-      </div>
 
-      <div className="h-1.5 bg-slate-50 dark:bg-slate-900 w-full rounded-full overflow-hidden border border-slate-100/50 dark:border-slate-900/50">
-        <div
-          className="h-full bg-black dark:bg-white transition-all duration-500 rounded-full"
-          style={{ width: `${((currentIndex + 1) / (activeData.length || 1)) * 100}%` }}
-        />
-      </div>
-
-      <div className="perspective h-[380px] sm:h-[420px]">
-        <div
-          key={currentIndex}
-          onClick={() => setIsFlipped(!isFlipped)}
-          className={`relative w-full h-full duration-700 preserve-3d shadow-xl rounded-[2.5rem] cursor-pointer ${isFlipped ? 'rotate-y-180' : 'hover:scale-[1.01]'}`}
-        >
-          <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center p-5 sm:p-8 text-center shadow-inner">
-            <span className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider mb-6 border border-slate-100 dark:border-slate-900">
-              {activeData[currentIndex]?.level || 'N3'}
-            </span>
-            <h2 className="text-3xl sm:text-5xl font-black text-slate-955 dark:text-white mb-6 tracking-tight leading-relaxed">
-              {activeData[currentIndex]?.pattern}
-            </h2>
-            <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] animate-pulse mt-4">NHẤN ĐỂ LẬT THẺ</p>
-          </div>
-
-          {/* Back Face */}
-          <div className="absolute inset-0 backface-hidden rotate-y-180 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-start sm:justify-center p-5 sm:p-8 text-center shadow-inner overflow-y-auto py-8 sm:py-8">
-            <span className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest mb-4">
-              CẤU TRÚC: {activeData[currentIndex]?.pattern}
-            </span>
-
-            <div className="h-px w-12 bg-slate-100 dark:bg-slate-800 mb-6" />
-
-            <h3 className="text-xl sm:text-2xl font-black italic text-slate-950 dark:text-white mb-4">
-              {activeData[currentIndex]?.meaning}
-            </h3>
-
-            {activeData[currentIndex]?.explanation && (
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
-                {activeData[currentIndex]?.explanation}
-              </p>
-            )}
-
-            {activeData[currentIndex]?.exampleSentence && (() => {
-               const jpLines = activeData[currentIndex].exampleSentence.split('\n').map(s => s.trim()).filter(Boolean);
-               const vnLines = activeData[currentIndex].exampleMeaning ? activeData[currentIndex].exampleMeaning.split('\n').map(s => s.trim()).filter(Boolean) : [];
-               return (
-                 <div className="bg-slate-50 dark:bg-slate-950/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-900 text-left w-full max-w-md space-y-2">
-                   <span className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest block mb-1">VÍ DỤ</span>
-                   <div className="space-y-2">
-                     {jpLines.map((jpLine, lineIdx) => {
-                       const vnLine = vnLines[lineIdx] || '';
-                       return (
-                         <div key={lineIdx} className="space-y-0.5 border-l-2 border-slate-200 dark:border-slate-800 pl-2">
-                           <p className="text-sm font-bold text-slate-900 dark:text-white leading-relaxed">{jpLine}</p>
-                           {vnLine && (
-                             <p className="text-xs italic text-slate-400 dark:text-slate-500 leading-relaxed">{vnLine}</p>
-                           )}
-                         </div>
-                       );
-                     })}
-                   </div>
-                 </div>
-               );
-             })()}
-          </div>
-        </div>
-      </div>
-
-      {/* Control Buttons */}
-      <div className="flex justify-between items-center gap-4 px-2">
-        <button
-          onClick={handlePrev}
-          disabled={currentIndex === 0}
-          className="flex-1 py-4 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800 text-slate-700 hover:text-black dark:text-slate-300 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
-        >
-          <ChevronLeft className="w-4 h-4" /> QUAY LẠI
-        </button>
-
-        <button
-          onClick={handleNext}
-          disabled={currentIndex === activeData.length - 1}
-          className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black hover:bg-slate-900 dark:hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
-        >
-          TIẾP THEO <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-
-  const QuizScreen = (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl mx-auto">
-      {/* Top Navigation */}
-      <div className="flex justify-between items-center px-2">
-        <button
-          onClick={() => { setActiveMode('menu'); setQuizStatus('idle'); setQuizInput(''); }}
-          className="group flex items-center gap-1.5 text-[10px] font-black text-slate-500 hover:text-black dark:text-slate-400 dark:hover:text-white uppercase tracking-[0.2em] transition-all"
-        >
-          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-          QUAY LẠI MENU
-        </button>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hidden sm:inline">
-            CÂU: {currentIndex + 1} / {activeData.length}
-          </span>
-          <button
-            onClick={handleToggleShuffle}
-            className={`px-3 py-1 border rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${isShuffle ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' : 'bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black'}`}
-          >
-            XÁO TRỘN
-          </button>
-          <button
-            onClick={handleResetProgress}
-            className="px-3 py-1 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-          >
-            LÀM LẠI
-          </button>
-        </div>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="h-1.5 bg-slate-50 dark:bg-slate-900 w-full rounded-full overflow-hidden border border-slate-100/50 dark:border-slate-900/50">
-        <div
-          className="h-full bg-black dark:bg-white transition-all duration-500 rounded-full"
-          style={{ width: `${((currentIndex + 1) / (activeData.length || 1)) * 100}%` }}
-        />
-      </div>
-
-      {/* Quiz Card */}
-      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 sm:p-12 shadow-sm text-center relative overflow-hidden">
-        {quizStatus === 'correct' && (
-          <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500 animate-pulse"></div>
-        )}
-        {quizStatus === 'incorrect' && (
-          <div className="absolute top-0 left-0 right-0 h-1 bg-rose-500 animate-pulse"></div>
-        )}
-
-        <span className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider mb-8 inline-block border border-slate-100 dark:border-slate-900">
-          ĐIỀN NGỮ PHÁP PHÙ HỢP
-        </span>
-
-        <div className="space-y-6 mb-10">
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-relaxed">
-            {activeData[currentIndex] && getQuizSentence(activeData[currentIndex].quiz.sentence, activeData[currentIndex].quiz.quizSentence, activeData[currentIndex].quiz.answer)}
-          </h2>
-        </div>
-
-        <div className="max-w-sm mx-auto space-y-4">
-          <input
-            type="text"
-            value={quizInput}
-            onChange={(e) => setQuizInput(e.target.value)}
-            onKeyDown={handleQuizKeyDown}
-            readOnly={quizStatus === 'correct' || quizStatus === 'revealed' || quizStatus === 'incorrect'}
-            placeholder="Nhập ngữ pháp..."
-            className={`w-full text-center px-6 py-4 bg-slate-50 dark:bg-slate-950 border-2 rounded-2xl outline-none font-bold text-lg transition-all
-              ${quizStatus === 'correct' ? 'border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30' :
-                quizStatus === 'incorrect' ? 'border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-950/30' :
-                  quizStatus === 'revealed' ? 'border-amber-500 text-amber-600 bg-amber-50 dark:bg-amber-950/30' :
-                    'border-slate-200 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white'}`}
-            autoFocus
-          />
-
-          {quizStatus === 'hint' && (
-            <div className="p-3 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium animate-in fade-in">
-              Gợi ý: Cấu trúc này có nghĩa là "{activeData[currentIndex]?.meaning}"
-            </div>
-          )}
-
-          {(quizStatus === 'correct' || quizStatus === 'revealed' || quizStatus === 'incorrect') && (
-            <div className="space-y-4 animate-in fade-in">
-              <div className={`p-4 rounded-xl ${quizStatus === 'correct' ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300' :
-                quizStatus === 'incorrect' ? 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300' :
-                  'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300'
-                }`}>
-                <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-70">
-                  {quizStatus === 'correct' ? 'CHÍNH XÁC!' : quizStatus === 'incorrect' ? 'CHƯA CHÍNH XÁC - ĐÁP ÁN' : 'ĐÁP ÁN'}
-                </p>
-                <p className="text-xl font-bold">{activeData[currentIndex]?.quiz.answer}</p>
-                {activeData[currentIndex]?.quiz.translation && (
-                  <p className="text-xs mt-2 font-medium italic opacity-90 border-t border-slate-100/10 dark:border-slate-800/20 pt-2">Dịch: {activeData[currentIndex].quiz.translation}</p>
-                )}
-                {activeData[currentIndex]?.explanation && (
-                  <p className="text-xs mt-2 opacity-80">{activeData[currentIndex].explanation}</p>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Control Buttons */}
-      <div className="flex justify-between items-center gap-4 px-2">
-        <button
-          onClick={handlePrev}
-          disabled={currentIndex === 0}
-          className="flex-1 py-4 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800 text-slate-700 hover:text-black dark:text-slate-300 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
-        >
-          <ChevronLeft className="w-4 h-4" /> QUAY LẠI
-        </button>
-
-        <button
-          onClick={handleQuizSubmit}
-          className={`flex-1 py-4 text-white disabled:opacity-40 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 active:scale-95
-            ${(quizStatus === 'correct' || quizStatus === 'revealed' || quizStatus === 'incorrect')
-              ? 'bg-black dark:bg-white text-white dark:text-black hover:bg-slate-900 dark:hover:bg-slate-100 border border-black dark:border-white'
-              : 'bg-black dark:bg-white text-white dark:text-black hover:bg-slate-900 dark:hover:bg-slate-100 border border-black dark:border-white'}`}
-        >
-          {(quizStatus === 'correct' || quizStatus === 'revealed' || quizStatus === 'incorrect') ? (
-            <>TIẾP THEO <ChevronRight className="w-4 h-4" /></>
-          ) : (
-            'KIỂM TRA (ENTER)'
-          )}
-        </button>
-      </div>
-    </div>
-  );
-
-  const MultipleChoiceScreen = (
-    <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl mx-auto">
-      {/* Top Navigation */}
-      <div className="flex justify-between items-center px-2">
-        <button
-          onClick={() => { setActiveMode('menu'); }}
-          className="group flex items-center gap-1.5 text-[10px] font-black text-slate-500 hover:text-black dark:text-slate-400 dark:hover:text-white uppercase tracking-[0.2em] transition-all"
-        >
-          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-          QUAY LẠI MENU
-        </button>
-        <div className="flex items-center gap-2 sm:gap-4">
-          <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest hidden sm:inline">
-            CÂU: {currentIndex + 1} / {activeData.length}
-          </span>
-          <button
-            onClick={handleToggleShuffle}
-            className={`px-3 py-1 border rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${isShuffle ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white' : 'bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black'}`}
-          >
-            XÁO TRỘN
-          </button>
-          <button
-            onClick={handleResetProgress}
-            className="px-3 py-1 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-          >
-            LÀM LẠI
-          </button>
-        </div>
-      </div>
-
-      {/* Progress Bar */}
-      <div className="h-1.5 bg-slate-50 dark:bg-slate-900 w-full rounded-full overflow-hidden border border-slate-100/50 dark:border-slate-900/50">
-        <div
-          className="h-full bg-black dark:bg-white transition-all duration-500 rounded-full"
-          style={{ width: `${((currentIndex + 1) / (activeData.length || 1)) * 100}%` }}
-        />
-      </div>
-
-      {/* MC Card */}
-      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 sm:p-12 shadow-sm relative overflow-hidden">
-        {mcChecked && mcSelected === activeData[currentIndex]?.quiz.answer && (
-          <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500 animate-pulse"></div>
-        )}
-        {mcChecked && mcSelected !== activeData[currentIndex]?.quiz.answer && (
-          <div className="absolute top-0 left-0 right-0 h-1 bg-rose-500 animate-pulse"></div>
-        )}
-
-        <div className="text-center mb-10">
-          <span className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider mb-8 inline-block border border-slate-100 dark:border-slate-900">
-            CHỌN ĐÁP ÁN ĐÚNG
-          </span>
-
-          <div className="space-y-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-relaxed">
-              {activeData[currentIndex] && getQuizSentence(activeData[currentIndex].quiz.sentence, activeData[currentIndex].quiz.quizSentence, activeData[currentIndex].quiz.answer)}
-            </h2>
-            {mcChecked && (
-              <p className="text-sm italic text-slate-500 dark:text-slate-400 whitespace-pre-wrap animate-in fade-in">
-                {activeData[currentIndex]?.quiz.translation}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto">
-          {mcOptions.map((opt, idx) => {
-            const isCorrect = opt === activeData[currentIndex]?.quiz.answer;
-            const isSelected = mcSelected === opt;
-            let btnClass = "border-slate-200 dark:border-slate-800 hover:border-black dark:hover:border-white text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-950";
-
-            if (mcChecked) {
-              if (isCorrect) {
-                btnClass = "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/20";
-              } else if (isSelected && !isCorrect) {
-                btnClass = "border-rose-500 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300";
-              } else {
-                btnClass = "border-slate-100 dark:border-slate-800 text-slate-400 dark:text-slate-600 opacity-50";
-              }
-            } else if (isSelected) {
-              btnClass = "border-black dark:border-white bg-slate-50 dark:bg-slate-900 text-black dark:text-white ring-2 ring-black/10 dark:ring-white/10";
-            }
-
-            return (
-              <button
-                key={idx}
-                onClick={() => handleMcSelect(opt)}
-                disabled={mcChecked}
-                className={`py-4 px-6 rounded-2xl border-2 font-bold text-[15px] transition-all duration-300 ${btnClass} active:scale-95 flex items-center justify-center gap-3 relative`}
-              >
-                <span className="absolute left-4 w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] flex items-center justify-center font-black text-slate-400">{idx + 1}</span>
-                {opt}
-              </button>
-            );
-          })}
-        </div>
-
-        {mcChecked && (
-          <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800 animate-in fade-in text-center">
-            <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-slate-500">GIẢI THÍCH</p>
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              <span className="font-bold text-slate-900 dark:text-white mr-2">{activeData[currentIndex]?.quiz.answer}</span>
-              {activeData[currentIndex]?.explanation || "Cấu trúc này có nghĩa là: " + activeData[currentIndex]?.meaning}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Control Buttons */}
-      <div className="flex justify-between items-center gap-4 px-2">
-        <button
-          onClick={handlePrev}
-          disabled={currentIndex === 0}
-          className="flex-1 py-4 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800 text-slate-700 hover:text-black dark:text-slate-300 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
-        >
-          <ChevronLeft className="w-4 h-4" /> QUAY LẠI
-        </button>
-
-        <button
-          onClick={handleMcSubmit}
-          disabled={!mcSelected && !mcChecked}
-          className={`flex-1 py-4 text-white disabled:opacity-40 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 active:scale-95
-            ${mcChecked
-              ? 'bg-black dark:bg-white text-white dark:text-black hover:bg-slate-900 dark:hover:bg-slate-100'
-              : 'bg-black dark:bg-white text-white dark:text-black hover:bg-slate-900 dark:hover:bg-slate-100 border border-black dark:border-white'}`}
-        >
-          {mcChecked ? (
-            <>TIẾP THEO <ChevronRight className="w-4 h-4" /></>
-          ) : (
-            'KIỂM TRA (ENTER)'
-          )}
-        </button>
-      </div>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 px-4 sm:px-6 md:px-20 pt-40 md:pt-32 pb-12 transition-colors">
@@ -952,17 +258,63 @@ export default function StudyPage() {
 
             {/* Main Interface */}
             <div className="pt-6">
-              {activeMode === 'menu' ? MenuScreen : (
-                activeMode === 'flashcard' || activeMode === 'cards' ? FlashcardScreen : (
-                  activeMode === 'quiz' ? QuizScreen : (
-                    activeMode === 'multiple_choice' ? MultipleChoiceScreen : (
-                      <div className="py-40 text-center space-y-6">
-                        <p className="text-2xl font-black italic text-slate-200">CHẾ ĐỘ ĐANG CẬP NHẬT</p>
-                        <button onClick={() => setActiveMode('menu')} className="px-8 py-3 bg-black text-white rounded-full text-[10px] font-black uppercase tracking-widest">QUAY LẠI</button>
-                      </div>
-                    )
-                  )
-                )
+              {activeMode === 'menu' ? (
+                <StudyMenu
+                  activeData={activeData}
+                  isShuffle={isShuffle}
+                  handleToggleShuffle={handleToggleShuffle}
+                  setActiveMode={setActiveMode}
+                  setCurrentIndex={setCurrentIndex}
+                  uniqueLessons={uniqueLessons}
+                  selectedLesson={selectedLesson}
+                  setSelectedLesson={setSelectedLesson}
+                  searchTerm={searchTerm}
+                  setSearchTerm={setSearchTerm}
+                  toggleExpand={toggleExpand}
+                  expandedId={expandedId}
+                  playAudio={playAudio}
+                />
+              ) : activeMode === 'flashcard' || activeMode === 'cards' ? (
+                <FlashcardMode
+                  activeData={activeData}
+                  currentIndex={currentIndex}
+                  setActiveMode={setActiveMode}
+                  isShuffle={isShuffle}
+                  handleToggleShuffle={handleToggleShuffle}
+                  handleResetProgress={handleResetProgress}
+                  handlePrev={handlePrev}
+                  handleNext={handleNext}
+                />
+              ) : activeMode === 'quiz' ? (
+                <QuizMode
+                  activeData={activeData}
+                  currentIndex={currentIndex}
+                  setActiveMode={setActiveMode}
+                  isShuffle={isShuffle}
+                  handleToggleShuffle={handleToggleShuffle}
+                  handleResetProgress={handleResetProgress}
+                  handlePrev={handlePrev}
+                  handleNext={handleNext}
+                  getQuizSentence={getQuizSentence}
+                />
+              ) : activeMode === 'multiple_choice' ? (
+                <MultipleChoiceMode
+                  activeData={activeData}
+                  grammarData={grammarData}
+                  currentIndex={currentIndex}
+                  setActiveMode={setActiveMode}
+                  isShuffle={isShuffle}
+                  handleToggleShuffle={handleToggleShuffle}
+                  handleResetProgress={handleResetProgress}
+                  handlePrev={handlePrev}
+                  handleNext={handleNext}
+                  getQuizSentence={getQuizSentence}
+                />
+              ) : (
+                <div className="py-40 text-center space-y-6">
+                  <p className="text-2xl font-black italic text-slate-200">CHẾ ĐỘ ĐANG CẬP NHẬT</p>
+                  <button onClick={() => setActiveMode('menu')} className="px-8 py-3 bg-black text-white rounded-full text-[10px] font-black uppercase tracking-widest">QUAY LẠI</button>
+                </div>
               )}
             </div>
           </>
@@ -991,3 +343,4 @@ export default function StudyPage() {
     </div>
   );
 }
+Refactor StudyPage and GrammarManager
