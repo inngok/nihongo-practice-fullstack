@@ -343,4 +343,3 @@ export default function StudyPage() {
     </div>
   );
 }
-Refactor StudyPage and GrammarManager

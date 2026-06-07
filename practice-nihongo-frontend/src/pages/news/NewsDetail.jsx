@@ -7,7 +7,9 @@ import { API_BASE_URL } from '../../config';
 import './news.css';
 import NewsDictationArea from './components/NewsDictationArea';
 import NewsVocabList from './components/NewsVocabList';
-import NewsTranslatePopup from './components/NewsTranslatePopup';const { Title, Paragraph } = Typography;
+import NewsTranslatePopup from './components/NewsTranslatePopup';
+import { CheckCircleOutlined, FormOutlined } from '@ant-design/icons';
+const { Title, Paragraph } = Typography;
 
 export default function NewsDetail() {
   const { id } = useParams();
@@ -27,8 +29,44 @@ export default function NewsDetail() {
   const [dictationMode, setDictationMode] = useState(false);
   const [dictationText, setDictationText] = useState('');
   const [showOriginalInDictation, setShowOriginalInDictation] = useState(false);
+  const [isRead, setIsRead] = useState(false);
+  const [noteText, setNoteText] = useState('');
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
+
+  useEffect(() => {
+    if (currentUser && id) {
+      const readStatus = localStorage.getItem(`news_read_${currentUser.username}_${id}`);
+      if (readStatus === 'true') setIsRead(true);
+      
+      const savedNote = localStorage.getItem(`news_note_${currentUser.username}_${id}`);
+      if (savedNote) setNoteText(savedNote);
+    }
+  }, [currentUser, id]);
+
+  const handleToggleRead = (checked) => {
+    setIsRead(checked);
+    if (currentUser) {
+      if (checked) {
+        localStorage.setItem(`news_read_${currentUser.username}_${id}`, 'true');
+        message.success('Đã đánh dấu là đã đọc!');
+      } else {
+        localStorage.removeItem(`news_read_${currentUser.username}_${id}`);
+      }
+    }
+  };
+
+  const handleSaveNote = () => {
+    if (currentUser) {
+      if (noteText.trim()) {
+        localStorage.setItem(`news_note_${currentUser.username}_${id}`, noteText);
+        message.success('Đã lưu ghi chép!');
+      } else {
+        localStorage.removeItem(`news_note_${currentUser.username}_${id}`);
+        message.success('Đã xóa ghi chép!');
+      }
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -321,6 +359,15 @@ export default function NewsDetail() {
             />
           </div>
         )}
+
+        <div className="flex items-center gap-3 pl-4 pr-3 py-1 border-l-2 border-slate-200/80 dark:border-slate-700">
+          <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Đã đọc</span>
+          <Switch 
+            checked={isRead} 
+            onChange={handleToggleRead} 
+            className={isRead ? "bg-emerald-500" : "bg-slate-300"}
+          />
+        </div>
       </div>
       
       {dictationMode ? (
@@ -397,6 +444,29 @@ export default function NewsDetail() {
         onExtract={handleExtractVocab} 
       />
 
+      {/* Notes Section */}
+      <div className="mt-12 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 p-6 md:p-8 shadow-sm">
+        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+          <FormOutlined className="text-indigo-500" />
+          Ghi chép của bạn
+        </h3>
+        <Input.TextArea
+          value={noteText}
+          onChange={(e) => setNoteText(e.target.value)}
+          placeholder="Ghi chú lại những cấu trúc ngữ pháp, từ vựng hay ý chính của bài báo..."
+          autoSize={{ minRows: 4, maxRows: 10 }}
+          className="rounded-xl bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:border-indigo-500 dark:text-white mb-4"
+        />
+        <div className="flex justify-end">
+          <Button 
+            type="primary" 
+            onClick={handleSaveNote}
+            className="bg-indigo-600 hover:bg-indigo-700 rounded-full px-6 font-semibold"
+          >
+            Lưu ghi chép
+          </Button>
+        </div>
+      </div>
 
       
       <div className="mt-8 text-center text-slate-500">

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Card, Spin, Typography, Tag, Space, Alert, Button, message, Pagination } from 'antd';
-import { CalendarOutlined, ReadOutlined, ArrowRightOutlined, SyncOutlined } from '@ant-design/icons';
+import { CalendarOutlined, ReadOutlined, ArrowRightOutlined, SyncOutlined, CheckCircleOutlined, FormOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
 
@@ -133,7 +133,11 @@ export default function NewsList() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {news.slice((currentPage - 1) * pageSize, currentPage * pageSize).map(article => (
+              {news.slice((currentPage - 1) * pageSize, currentPage * pageSize).map(article => {
+                const isRead = currentUser && localStorage.getItem(`news_read_${currentUser.username}_${article.id}`) === 'true';
+                const hasNote = currentUser && !!localStorage.getItem(`news_note_${currentUser.username}_${article.id}`);
+
+                return (
                 <Link to={`/news/${article.id}`} key={article.id} className="group flex">
                   <div className="flex flex-col w-full bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500">
                     <div className="relative h-56 w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
@@ -150,10 +154,20 @@ export default function NewsList() {
                           <ReadOutlined className="text-5xl text-slate-400 dark:text-slate-600" />
                         </div>
                       )}
-                      <div className="absolute top-4 left-4">
-                        <span className="bg-white/90 backdrop-blur-md text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                      <div className="absolute top-4 left-4 flex flex-col gap-2">
+                        <span className="bg-white/90 backdrop-blur-md text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm w-fit">
                           N4 - N3
                         </span>
+                        {isRead && (
+                          <span className="bg-emerald-500/90 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1 w-fit">
+                            <CheckCircleOutlined /> Đã đọc
+                          </span>
+                        )}
+                        {hasNote && (
+                          <span className="bg-amber-500/90 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1 w-fit">
+                            <FormOutlined /> Có ghi chú
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -178,7 +192,7 @@ export default function NewsList() {
                     </div>
                   </div>
                 </Link>
-              ))}
+              )})}
             </div>
 
             {news.length > pageSize && (
