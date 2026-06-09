@@ -16,8 +16,41 @@ export default function NewsList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get('page')) || 1;
   const pageSize = 12;
-  const { currentUser } = useAuth();
+  const { currentUser, fetchWithAuth } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
+  const [readStatuses, setReadStatuses] = useState({});
+  const [noteStatuses, setNoteStatuses] = useState({});
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchWithAuth(`${API_BASE_URL}/progress/prefix/news_read_`)
+        .then(res => res.json())
+        .then(data => {
+           if (!Array.isArray(data)) return;
+           const map = {};
+           data.forEach(item => {
+             const newsId = item.progressKey.replace('news_read_', '');
+             const val = String(item.progressData).replace(/['"]/g, '');
+             map[newsId] = val === 'true';
+           });
+           setReadStatuses(map);
+        })
+        .catch(err => console.error(err));
+
+      fetchWithAuth(`${API_BASE_URL}/progress/prefix/news_note_`)
+        .then(res => res.json())
+        .then(data => {
+           if (!Array.isArray(data)) return;
+           const map = {};
+           data.forEach(item => {
+             const newsId = item.progressKey.replace('news_note_', '');
+             map[newsId] = !!item.progressData;
+           });
+           setNoteStatuses(map);
+        })
+        .catch(err => console.error(err));
+    }
+  }, [currentUser, fetchWithAuth]);
 
   const fetchNews = () => {
     setLoading(true);
@@ -134,41 +167,39 @@ export default function NewsList() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {news.slice((currentPage - 1) * pageSize, currentPage * pageSize).map(article => {
-                const isRead = currentUser && localStorage.getItem(`news_read_${currentUser.username}_${article.id}`) === 'true';
-                const hasNote = currentUser && !!localStorage.getItem(`news_note_${currentUser.username}_${article.id}`);
+                const isRead = currentUser && readStatuses[article.id];
+                const hasNote = currentUser && noteStatuses[article.id];
 
                 return (
                 <Link to={`/news/${article.id}`} key={article.id} className="group flex">
                   <div className="flex flex-col w-full bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500">
                     <div className="relative h-56 w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
                       {article.imageUrl ? (
-                        <div className="w-full h-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center p-2">
-                          <img
-                            alt={article.title}
-                            src={article.imageUrl}
-                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
-                          />
-                        </div>
+                        <img
+                          alt={article.title}
+                          src={article.imageUrl}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <ReadOutlined className="text-5xl text-slate-400 dark:text-slate-600" />
                         </div>
                       )}
-                      <div className="absolute top-4 left-4 flex flex-col gap-2">
+                      <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
                         <span className="bg-white/90 backdrop-blur-md text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm w-fit">
                           N4 - N3
                         </span>
-                        {isRead && (
-                          <span className="bg-emerald-500/90 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1 w-fit">
-                            <CheckCircleOutlined /> Đã đọc
-                          </span>
-                        )}
                         {hasNote && (
                           <span className="bg-amber-500/90 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1 w-fit">
                             <FormOutlined /> Có ghi chú
                           </span>
                         )}
                       </div>
+                      {isRead && (
+                        <div className="absolute top-6 -right-12 bg-emerald-500 text-white text-xs font-black tracking-widest py-1.5 px-14 transform rotate-45 shadow-lg z-10">
+                          ĐÃ ĐỌC
+                        </div>
+                      )}
                     </div>
 
                     <div className="p-6 md:p-8 flex flex-col flex-grow">

@@ -6,4 +6,5 @@ import java.util.Optional;
 
 public interface UserProgressRepository extends JpaRepository<UserProgress, Long> {
     Optional<UserProgress> findByUserIdAndProgressKey(Long userId, String progressKey);
+    java.util.List<UserProgress> findByUserIdAndProgressKeyStartingWith(Long userId, String prefix);
 }

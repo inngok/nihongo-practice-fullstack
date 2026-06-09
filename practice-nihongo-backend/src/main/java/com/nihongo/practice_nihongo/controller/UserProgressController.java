@@ -49,4 +49,23 @@ public class UserProgressController {
 
         return ResponseEntity.ok(Map.of("message", "Progress saved"));
     }
+
+    @DeleteMapping("/{key}")
+    public ResponseEntity<?> deleteProgress(@PathVariable String key, Authentication auth) {
+        if (auth == null) return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
+        User user = userRepository.findByEmail(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).body(Map.of("message", "User not found"));
+
+        progressRepository.findByUserIdAndProgressKey(user.getId(), key).ifPresent(progressRepository::delete);
+        return ResponseEntity.ok(Map.of("message", "Progress deleted"));
+    }
+
+    @GetMapping("/prefix/{prefix}")
+    public ResponseEntity<?> getProgressByPrefix(@PathVariable String prefix, Authentication auth) {
+        if (auth == null) return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
+        User user = userRepository.findByEmail(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).body(Map.of("message", "User not found"));
+
+        return ResponseEntity.ok(progressRepository.findByUserIdAndProgressKeyStartingWith(user.getId(), prefix));
+    }
 }

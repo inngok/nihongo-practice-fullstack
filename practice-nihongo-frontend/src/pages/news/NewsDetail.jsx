@@ -30,61 +30,77 @@ export default function NewsDetail() {
   const [dictationText, setDictationText] = useState('');
   const [showOriginalInDictation, setShowOriginalInDictation] = useState(false);
   const [isRead, setIsRead] = useState(false);
-  const [noteText, setNoteText] = useState('');
-  const { currentUser } = useAuth();
+  const [dictationProgress, setDictationProgress] = useState(null);
+  const { currentUser, fetchWithAuth } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
 
   useEffect(() => {
     if (currentUser && id) {
-      const readStatus = localStorage.getItem(`news_read_${currentUser.username}_${id}`);
-      if (readStatus === 'true') setIsRead(true);
-      
-      const savedNote = localStorage.getItem(`news_note_${currentUser.username}_${id}`);
-      if (savedNote) setNoteText(savedNote);
+      fetchWithAuth(`${API_BASE_URL}/progress/news_read_${id}`)
+        .then(res => res.json())
+        .then(data => {
+          const val = String(data.data).replace(/['"]/g, '');
+          if (val === 'true') setIsRead(true);
+        })
+        .catch(err => console.error(err));
+
+      fetchWithAuth(`${API_BASE_URL}/progress/news_dict_${id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.data) {
+            try {
+              setDictationProgress(JSON.parse(data.data));
+            } catch (e) { }
+          }
+        })
+        .catch(err => console.error(err));
     }
-  }, [currentUser, id]);
+  }, [currentUser, id, fetchWithAuth]);
 
   const handleToggleRead = (checked) => {
     setIsRead(checked);
     if (currentUser) {
       if (checked) {
-        localStorage.setItem(`news_read_${currentUser.username}_${id}`, 'true');
-        message.success('Đã đánh dấu là đã đọc!');
+        fetchWithAuth(`${API_BASE_URL}/progress/news_read_${id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: 'true' })
+        }).then(() => message.success('Đã đánh dấu là đã đọc!'));
       } else {
-        localStorage.removeItem(`news_read_${currentUser.username}_${id}`);
+        fetchWithAuth(`${API_BASE_URL}/progress/news_read_${id}`, {
+          method: 'DELETE'
+        });
       }
     }
   };
 
-  const handleSaveNote = () => {
-    if (currentUser) {
-      if (noteText.trim()) {
-        localStorage.setItem(`news_note_${currentUser.username}_${id}`, noteText);
-        message.success('Đã lưu ghi chép!');
-      } else {
-        localStorage.removeItem(`news_note_${currentUser.username}_${id}`);
-        message.success('Đã xóa ghi chép!');
-      }
+  const handleSaveDictationProgress = (progressData) => {
+    if (currentUser && id) {
+      fetchWithAuth(`${API_BASE_URL}/progress/news_dict_${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: JSON.stringify(progressData) })
+      }).catch(err => console.error("Lỗi lưu tiến độ chép chính tả:", err));
     }
   };
 
   useEffect(() => {
     const controller = new AbortController();
-    
+
     fetch(`${API_BASE_URL}/news/${id}`, { signal: controller.signal })
       .then(res => res.json())
       .then(data => {
         setArticle(data);
         if (data.extractedVocab) {
-            try {
-                const parsedList = JSON.parse(data.extractedVocab);
-                const uniqueList = Array.isArray(parsedList) 
-                    ? parsedList.filter((v, i, a) => a.findIndex(t => t.word === v.word) === i) 
-                    : [];
-                setVocabList(uniqueList);
-            } catch (e) {
-                console.error("Lỗi parse vocab:", e);
-            }
+          try {
+            const parsedList = JSON.parse(data.extractedVocab);
+            const uniqueList = Array.isArray(parsedList)
+              ? parsedList.filter((v, i, a) => a.findIndex(t => t.word === v.word) === i)
+              : [];
+            setVocabList(uniqueList);
+          } catch (e) {
+            console.error("Lỗi parse vocab:", e);
+          }
         }
 
         setLoading(false);
@@ -112,12 +128,12 @@ export default function NewsDetail() {
 
     const utterance = new SpeechSynthesisUtterance(article.contentRaw);
     utterance.lang = 'ja-JP';
-    utterance.rate = 0.9; 
+    utterance.rate = 0.9;
 
     utterance.onend = () => setIsPlaying(false);
     utterance.onerror = () => setIsPlaying(false);
 
-    window.speechSynthesis.cancel(); 
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
     setIsPlaying(true);
   };
@@ -130,16 +146,16 @@ export default function NewsDetail() {
         const data = await response.json();
         setArticle(data);
         if (data.extractedVocab) {
-            try {
-                const parsedList = JSON.parse(data.extractedVocab);
-                const uniqueList = Array.isArray(parsedList) 
-                    ? parsedList.filter((v, i, a) => a.findIndex(t => t.word === v.word) === i) 
-                    : [];
-                setVocabList(uniqueList);
-                message.success('Đã trích xuất từ vựng thành công!');
-            } catch (e) {
-                message.error('Lỗi khi đọc dữ liệu từ AI.');
-            }
+          try {
+            const parsedList = JSON.parse(data.extractedVocab);
+            const uniqueList = Array.isArray(parsedList)
+              ? parsedList.filter((v, i, a) => a.findIndex(t => t.word === v.word) === i)
+              : [];
+            setVocabList(uniqueList);
+            message.success('Đã trích xuất từ vựng thành công!');
+          } catch (e) {
+            message.error('Lỗi khi đọc dữ liệu từ AI.');
+          }
         }
       } else {
         message.error('Lỗi khi yêu cầu AI trích xuất!');
@@ -176,8 +192,8 @@ export default function NewsDetail() {
         const data = await response.json();
         setArticle(data);
         if (data.quizData) {
-            setQuizList(JSON.parse(data.quizData));
-            message.success('Đã tạo câu hỏi trắc nghiệm thành công!');
+          setQuizList(JSON.parse(data.quizData));
+          message.success('Đã tạo câu hỏi trắc nghiệm thành công!');
         }
       } else {
         message.error('Lỗi khi tạo trắc nghiệm!');
@@ -267,7 +283,7 @@ export default function NewsDetail() {
   return (
     <div className="max-w-4xl mx-auto p-6 pt-48 md:pt-32">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 relative z-20">
-        <Breadcrumb 
+        <Breadcrumb
           items={[
             {
               href: '/',
@@ -282,8 +298,8 @@ export default function NewsDetail() {
             },
           ]}
         />
-        <Button 
-          icon={<ArrowLeftOutlined />} 
+        <Button
+          icon={<ArrowLeftOutlined />}
           onClick={() => navigate(-1)}
           className="rounded-full font-medium text-slate-600 hover:text-indigo-600 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all hover:-translate-x-1 w-fit"
         >
@@ -293,10 +309,10 @@ export default function NewsDetail() {
 
       {article.imageUrl && (
         <div className="w-full mb-8 bg-slate-100 dark:bg-slate-900 rounded-xl overflow-hidden flex justify-center items-center p-2 shadow-md">
-          <img 
-            src={article.imageUrl} 
-            alt={article.title} 
-            className="w-full max-h-[500px] object-contain rounded-lg" 
+          <img
+            src={article.imageUrl}
+            alt={article.title}
+            className="w-full max-h-[500px] object-contain rounded-lg"
           />
         </div>
       )}
@@ -304,21 +320,21 @@ export default function NewsDetail() {
       <h1 className="font-kanji text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-8 leading-tight tracking-tight">
         {article.title}
       </h1>
-      
+
       <div className="flex flex-wrap items-center gap-4 bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-[1.25rem] border border-slate-200/60 dark:border-slate-800 w-full sm:w-fit mb-10 max-w-full backdrop-blur-sm">
         {article.audioUrl ? (
-          <audio 
-            controls 
-            src={article.audioUrl} 
+          <audio
+            controls
+            src={article.audioUrl}
             className="h-11 w-full sm:w-72 max-w-full rounded-xl"
           >
             Trình duyệt của bạn không hỗ trợ thẻ audio.
           </audio>
         ) : (
-          <Button 
+          <Button
             type={isPlaying ? "primary" : "default"}
             danger={isPlaying}
-            shape="round" 
+            shape="round"
             size="large"
             icon={isPlaying ? <PauseCircleOutlined /> : <SoundOutlined />}
             onClick={handlePlayAudio}
@@ -327,153 +343,151 @@ export default function NewsDetail() {
             {isPlaying ? "Đang đọc..." : "Nghe tự động"}
           </Button>
         )}
-        
-        <div className="flex items-center gap-3 pl-4 pr-3 py-1 border-l-2 border-slate-200/80 dark:border-slate-700">
-          <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Nghe chép</span>
-          <Switch 
-            checked={dictationMode} 
-            onChange={(checked) => {
-              setDictationMode(checked);
-              if (checked) setShowOriginalInDictation(false);
-            }} 
-            className={dictationMode ? "bg-indigo-500" : "bg-slate-300"}
-          />
-        </div>
 
-        <div className="flex items-center gap-3 pl-4 pr-3 py-1 border-l-2 border-slate-200/80 dark:border-slate-700">
-          <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Furigana</span>
-          <Switch 
-            checked={showFurigana} 
-            onChange={setShowFurigana} 
-            className={showFurigana ? "bg-indigo-500" : "bg-slate-300"}
-          />
-        </div>
 
-        {article.translation && (
-          <div className="flex items-center gap-3 pl-4 pr-3 py-1 border-l-2 border-slate-200/80 dark:border-slate-700">
-            <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Dịch nghĩa</span>
-            <Switch 
-              checked={showTranslationText} 
-              onChange={setShowTranslationText} 
-              className={showTranslationText ? "bg-indigo-500" : "bg-slate-300"}
-            />
-          </div>
+
+        {!dictationMode && (
+          <>
+            <div className="flex items-center gap-3 pl-4 pr-3 py-1 border-l-2 border-slate-200/80 dark:border-slate-700">
+              <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Furigana</span>
+              <Switch
+                checked={showFurigana}
+                onChange={setShowFurigana}
+                className={showFurigana ? "bg-indigo-500" : "bg-slate-300"}
+              />
+            </div>
+
+            {article.translation && (
+              <div className="flex items-center gap-3 pl-4 pr-3 py-1 border-l-2 border-slate-200/80 dark:border-slate-700">
+                <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Dịch nghĩa</span>
+                <Switch
+                  checked={showTranslationText}
+                  onChange={setShowTranslationText}
+                  className={showTranslationText ? "bg-indigo-500" : "bg-slate-300"}
+                />
+              </div>
+            )}
+
+
+          </>
         )}
 
-        <div className="flex items-center gap-3 pl-4 pr-3 py-1 border-l-2 border-slate-200/80 dark:border-slate-700">
-          <span className="text-[11px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Đã đọc</span>
-          <Switch 
-            checked={isRead} 
-            onChange={handleToggleRead} 
-            className={isRead ? "bg-emerald-500" : "bg-slate-300"}
-          />
-        </div>
+        {dictationMode && (
+          <div className="flex items-center gap-3 pl-4 pr-3 py-1 border-l-2 border-slate-200/80 dark:border-slate-700">
+            <Button
+              type="primary"
+              danger
+              shape="round"
+              icon={<CloseOutlined />}
+              onClick={() => setDictationMode(false)}
+              className="font-bold shadow-sm"
+            >
+              Thoát luyện nghe
+            </Button>
+          </div>
+        )}
       </div>
-      
+
       {dictationMode ? (
-        <NewsDictationArea 
-          articleContent={article.contentWithFurigana}
-          dictationText={dictationText}
-          setDictationText={setDictationText}
-          showOriginalInDictation={showOriginalInDictation}
-          setShowOriginalInDictation={setShowOriginalInDictation}
+        <NewsDictationArea
+          article={article}
+          initialProgress={dictationProgress}
+          onProgressChange={handleSaveDictationProgress}
         />
       ) : (
-      <Card 
-        className="shadow-xl shadow-slate-200/40 dark:shadow-none dark:bg-slate-800/80 dark:border-slate-700/80 rounded-[2rem] border-0 leading-loose nhk-article-content font-kanji text-xl md:text-2xl font-medium text-slate-800 dark:text-slate-200 mb-8"
-        onPointerUp={handlePointerUp}
-        onClick={handleContentClick}
-      >
-        <style>
-          {`
-            ${!showFurigana ? '.nhk-article-content rt { display: none; }' : ''}
-            .nhk-article-content p {
-              padding: 0.5rem;
-              margin-bottom: 0.5rem;
-              border-radius: 0.75rem;
-              transition: all 0.2s;
-            }
-            .nhk-article-content p:hover {
-              background-color: rgba(99, 102, 241, 0.08); /* indigo-500 with low opacity */
-              cursor: pointer;
-            }
-          `}
-        </style>
-        <div dangerouslySetInnerHTML={{ __html: article.contentWithFurigana }} />
-      </Card>
-      )}
-
-      {/* Floating Translate Popup */}
-      <NewsTranslatePopup 
-        popupPosition={popupPosition}
-        selectedText={selectedText}
-        quickTranslation={quickTranslation}
-        isQuickTranslating={isQuickTranslating}
-        onQuickTranslate={handleQuickTranslate}
-        onClose={() => { setSelectedText(''); setPopupPosition(null); }}
-      />
-
-      {(article.translation || isAdmin) && (
-        <div className="mb-12">
-          {!article.translation && isAdmin ? (
-            <Button 
-              type="primary" 
-              onClick={handleTranslate} 
-              loading={translating}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white border-none rounded-full px-6 h-10 font-bold shadow-md w-full sm:w-auto"
-            >
-              Dịch bài bằng AI
-            </Button>
-          ) : (
-            article.translation && showTranslationText && (
-              <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-[2rem] border border-indigo-100 dark:border-indigo-800/30">
-                <h3 className="text-sm font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-4">Bản dịch tiếng Việt</h3>
-                <div className="text-base md:text-lg text-slate-700 dark:text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">
-                  {article.translation}
-                </div>
-              </div>
-            )
-          )}
-        </div>
-      )}
-
-      <NewsVocabList 
-        vocabList={vocabList} 
-        isAdmin={isAdmin} 
-        extracting={extracting} 
-        onExtract={handleExtractVocab} 
-      />
-
-      {/* Notes Section */}
-      <div className="mt-12 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-200 dark:border-slate-800 p-6 md:p-8 shadow-sm">
-        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
-          <FormOutlined className="text-indigo-500" />
-          Ghi chép của bạn
-        </h3>
-        <Input.TextArea
-          value={noteText}
-          onChange={(e) => setNoteText(e.target.value)}
-          placeholder="Ghi chú lại những cấu trúc ngữ pháp, từ vựng hay ý chính của bài báo..."
-          autoSize={{ minRows: 4, maxRows: 10 }}
-          className="rounded-xl bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 focus:border-indigo-500 dark:text-white mb-4"
-        />
-        <div className="flex justify-end">
-          <Button 
-            type="primary" 
-            onClick={handleSaveNote}
-            className="bg-indigo-600 hover:bg-indigo-700 rounded-full px-6 font-semibold"
+        <>
+          <Card
+            className="shadow-xl shadow-slate-200/40 dark:shadow-none dark:bg-slate-800/80 dark:border-slate-700/80 rounded-[2rem] border-0 leading-loose nhk-article-content font-kanji text-xl md:text-2xl font-medium text-slate-800 dark:text-slate-200 mb-8"
+            onPointerUp={handlePointerUp}
+            onClick={handleContentClick}
           >
-            Lưu ghi chép
-          </Button>
-        </div>
-      </div>
+            <style>
+              {`
+                ${!showFurigana ? '.nhk-article-content rt { display: none; }' : ''}
+                .nhk-article-content p {
+                  padding: 0.5rem;
+                  margin-bottom: 0.5rem;
+                  border-radius: 0.75rem;
+                  transition: all 0.2s;
+                }
+                .nhk-article-content p:hover {
+                  background-color: rgba(99, 102, 241, 0.08); /* indigo-500 with low opacity */
+                  cursor: pointer;
+                }
+              `}
+            </style>
+            <div dangerouslySetInnerHTML={{ __html: article.contentWithFurigana }} />
+          </Card>
 
-      
-      <div className="mt-8 text-center text-slate-500">
-        <a href={article.sourceUrl} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">
-          Đọc nguồn gốc trên NHK Easy
-        </a>
-      </div>
+          {/* Floating Translate Popup */}
+          <NewsTranslatePopup
+            popupPosition={popupPosition}
+            selectedText={selectedText}
+            quickTranslation={quickTranslation}
+            isQuickTranslating={isQuickTranslating}
+            onQuickTranslate={handleQuickTranslate}
+            onClose={() => { setSelectedText(''); setPopupPosition(null); }}
+          />
+
+          {(article.translation || isAdmin) && (
+            <div className="mb-12">
+              {!article.translation && isAdmin ? (
+                <Button
+                  type="primary"
+                  onClick={handleTranslate}
+                  loading={translating}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white border-none rounded-full px-6 h-10 font-bold shadow-md w-full sm:w-auto"
+                >
+                  Dịch bài bằng AI
+                </Button>
+              ) : (
+                article.translation && showTranslationText && (
+                  <div className="p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-[2rem] border border-indigo-100 dark:border-indigo-800/30">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 mb-4">Bản dịch tiếng Việt</h3>
+                    <div className="text-base md:text-lg text-slate-700 dark:text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">
+                      {article.translation}
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-col items-center justify-center my-8 bg-slate-50 dark:bg-slate-900/30 p-6 rounded-[2rem] border border-slate-200 dark:border-slate-800">
+            <h4 className="text-slate-600 dark:text-slate-400 font-medium mb-3">Bạn đã hoàn thành bài viết này?</h4>
+            <Button 
+              size="large"
+              shape="round"
+              type={isRead ? "primary" : "default"}
+              onClick={() => handleToggleRead(!isRead)}
+              icon={<CheckCircleOutlined />}
+              className={`font-bold px-8 h-12 shadow-sm transition-all ${isRead ? 'bg-emerald-500 hover:bg-emerald-600 border-none' : 'text-slate-700 hover:text-emerald-600 hover:border-emerald-500'}`}
+            >
+              {isRead ? "Đã đánh dấu đọc xong" : "Đánh dấu đã đọc"}
+            </Button>
+          </div>
+
+          <NewsVocabList
+            vocabList={vocabList}
+            isAdmin={isAdmin}
+            extracting={extracting}
+            onExtract={handleExtractVocab}
+          />
+
+          {isAdmin && (
+            <div className="flex justify-center mt-12 mb-8">
+              <Button
+                onClick={() => setDictationMode(true)}
+                className="border-slate-800 text-slate-800 hover:!border-slate-800 hover:!bg-slate-800 hover:!text-white px-6 font-bold uppercase tracking-wider transition-colors rounded"
+              >
+                Luyện nghe chép bài báo này
+              </Button>
+            </div>
+          )}
+
+        </>
+      )}
+
     </div>
   );
 }
