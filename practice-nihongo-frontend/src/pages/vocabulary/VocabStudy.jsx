@@ -7,6 +7,7 @@ import { API_BASE_URL } from '../../config';
 import VocabListMode from './components/VocabListMode';
 import VocabFlashcardMode from './components/VocabFlashcardMode';
 import VocabQuizMode from './components/VocabQuizMode';
+import VocabMultipleChoiceMode from './components/VocabMultipleChoiceMode';
 
 export default function VocabStudy() {
   const navigate = useNavigate();
@@ -469,6 +470,7 @@ export default function VocabStudy() {
                   {[
                     { id: 'list', label: 'Danh sách' },
                     { id: 'flashcard', label: 'Flashcard' },
+                    { id: 'multiple_choice', label: 'Trắc nghiệm' },
                     { id: 'quiz', label: 'Luyện tập' }
                   ].map(m => (
                     <button
@@ -530,6 +532,15 @@ export default function VocabStudy() {
                   feedback={feedback}
                   setFeedback={setFeedback}
                   handleSubmit={handleSubmit}
+                  setShowResults={setShowResults}
+                />
+              )}
+              {activeMode === 'multiple_choice' && (
+                <VocabMultipleChoiceMode
+                  studyData={studyData}
+                  currentIndex={currentIndex}
+                  setCurrentIndex={setCurrentIndex}
+                  handleResetProgress={handleResetProgress}
                   setShowResults={setShowResults}
                 />
               )}

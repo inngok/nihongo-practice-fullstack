@@ -5,7 +5,7 @@ export default function Footer() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <footer className="w-full bg-white dark:bg-slate-950 px-6 md:px-12 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-50 dark:border-slate-900 mt-auto transition-colors duration-300">
+    <footer className="w-full bg-white dark:bg-slate-950 px-6 md:px-12 py-8 flex flex-col items-center justify-center gap-6 border-t border-slate-50 dark:border-slate-900 mt-auto transition-colors duration-300">
       <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-300 dark:text-slate-600">
         © 2026 NIHONGO
       </div>
