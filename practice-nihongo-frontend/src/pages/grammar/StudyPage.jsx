@@ -23,7 +23,8 @@ export default function StudyPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isShuffle, setIsShuffle] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLesson, setSelectedLesson] = useState('');
+  const unitParam = searchParams.get('unit');
+  const [selectedLesson, setSelectedLesson] = useState(unitParam || '');
 
   const uniqueLessons = useMemo(() => {
     const lessons = new Set();
@@ -82,6 +83,26 @@ export default function StudyPage() {
   useEffect(() => {
     fetchGrammar();
   }, [targetBookId]);
+
+  useEffect(() => {
+    if (activeData.length > 0 && targetBookId) {
+      const bookTitle = grammarData[0]?.book?.title || 'Ngữ pháp';
+      const quickAccessData = {
+        title: `Ngữ pháp ${bookTitle}${selectedLesson ? ` - Bài ${selectedLesson}` : ''}`,
+        url: `/grammar/study?bookId=${targetBookId}${selectedLesson ? `&unit=${selectedLesson}` : ''}`
+      };
+
+      localStorage.setItem('quickAccess', JSON.stringify(quickAccessData));
+      
+      if (currentUser) {
+        fetchWithAuth(`${API_BASE_URL}/progress/quickAccess`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: JSON.stringify(quickAccessData) })
+        }).catch(() => {});
+      }
+    }
+  }, [targetBookId, selectedLesson, activeData, grammarData, currentUser, fetchWithAuth]);
 
   // Sync Progress to Backend
   const progressKey = `grammar_${targetBookId}`;

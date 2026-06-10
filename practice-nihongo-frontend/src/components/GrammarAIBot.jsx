@@ -63,14 +63,14 @@ const GrammarAIBot = () => {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-4 sm:bottom-6 left-4 sm:left-6 w-12 h-12 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full flex items-center justify-center shadow-lg hover:bg-black dark:hover:bg-slate-200 transition-all z-[9999] hover:scale-105 active:scale-95 ${isOpen ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100'}`}
+        className={`fixed bottom-20 sm:bottom-24 left-4 sm:left-6 w-12 h-12 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full flex items-center justify-center shadow-lg hover:bg-black dark:hover:bg-slate-200 transition-all z-[9999] hover:scale-105 active:scale-95 ${isOpen ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100'}`}
         title="Trợ lý AI Ngữ pháp"
       >
         <MessageCircle size={24} />
       </button>
 
       {/* Chat Window */}
-      <div className={`fixed bottom-4 sm:bottom-6 left-4 sm:left-6 w-[calc(100vw-2rem)] sm:w-[400px] h-[600px] max-h-[calc(100dvh-6rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex flex-col transition-all duration-300 transform origin-bottom-left z-[9999] border border-slate-200 dark:border-slate-800 ${isOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
+      <div className={`fixed bottom-20 sm:bottom-24 left-4 sm:left-6 w-[calc(100vw-2rem)] sm:w-[400px] h-[600px] max-h-[calc(100dvh-8rem)] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex flex-col transition-all duration-300 transform origin-bottom-left z-[9999] border border-slate-200 dark:border-slate-800 ${isOpen ? 'scale-100 opacity-100' : 'scale-0 opacity-0 pointer-events-none'}`}>
         
         {/* Header */}
         <div className="bg-slate-900 dark:bg-slate-950 text-white p-4 rounded-t-2xl flex justify-between items-center shadow-md border-b border-slate-800 dark:border-slate-900">
