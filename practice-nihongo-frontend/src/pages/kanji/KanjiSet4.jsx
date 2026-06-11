@@ -39,8 +39,37 @@ export default function KanjiSet4() {
   const [typingInput, setTypingInput] = useState('');
   const [typingFeedback, setTypingFeedback] = useState(null); // 'correct' | 'incorrect' | null
   const [typingFinished, setTypingFinished] = useState(false);
+  const [vocabIndex, setVocabIndex] = useState(0);
   const typingInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+const parseExamples = (examplesStr) => {
+  if (!examplesStr) return [];
+  let parts = [];
+  if (examplesStr.includes(';')) {
+    parts = examplesStr.split(';').map(s => s.trim()).filter(Boolean);
+  } else if (examplesStr.includes('\n')) {
+    parts = examplesStr.split('\n').map(s => s.trim()).filter(Boolean);
+  } else {
+    parts = examplesStr.split('.').map(s => s.trim()).filter(Boolean);
+  }
+
+  return parts.map(s => {
+    const match = s.match(/^(.*?)\((.*?)\):\s*(.*)/);
+    if (match) {
+      return { 
+        word: match[1].trim(), 
+        reading: match[2].trim(), 
+        meaning: match[3].trim() 
+      };
+    }
+    if (s.includes(':')) {
+      const [word, ...rest] = s.split(':');
+      return { word: word.trim(), reading: '', meaning: rest.join(':').trim() };
+    }
+    return { word: s.trim(), reading: '', meaning: '' };
+  });
+};
 
   useEffect(() => {
     if (!bookId) {
@@ -125,9 +154,19 @@ export default function KanjiSet4() {
     return result;
   }, [kanjis, selectedPageFilter, searchQuery, activeMode]);
 
+  const kanjiVocabs = React.useMemo(() => {
+    let vocabs = [];
+    filteredKanjis.forEach(kanji => {
+       const examples = parseExamples(kanji.examples);
+       vocabs.push(...examples.filter(e => e.word && e.meaning));
+    });
+    return vocabs;
+  }, [filteredKanjis]);
+
   // Reset indices declarative listener
   useEffect(() => {
     setFlashcardIndex(0);
+    setVocabIndex(0);
     setIsFlipped(false);
     setTypingIndex(0);
     setTypingInput('');
@@ -139,12 +178,18 @@ export default function KanjiSet4() {
 
   // Keyboard navigation mapping
   useEffect(() => {
-    if (activeMode !== 'flashcard' || filteredKanjis.length === 0) return;
+    if ((activeMode !== 'flashcard' && activeMode !== 'vocab') || (activeMode === 'flashcard' && filteredKanjis.length === 0) || (activeMode === 'vocab' && kanjiVocabs.length === 0)) return;
 
     const keyActions = {
       'Space': (e) => { e.preventDefault(); setIsFlipped(prev => !prev); },
-      'ArrowRight': () => handleNextFlashcard(),
-      'ArrowLeft': () => handlePrevFlashcard(),
+      'ArrowRight': () => {
+        if (activeMode === 'flashcard') handleNextFlashcard();
+        else if (activeMode === 'vocab' && vocabIndex < kanjiVocabs.length - 1) { setVocabIndex(prev => prev + 1); setIsFlipped(false); }
+      },
+      'ArrowLeft': () => {
+        if (activeMode === 'flashcard') handlePrevFlashcard();
+        else if (activeMode === 'vocab' && vocabIndex > 0) { setVocabIndex(prev => prev - 1); setIsFlipped(false); }
+      },
     };
 
     const handleKeyDown = (e) => keyActions[e.code]?.(e);
@@ -354,6 +399,7 @@ export default function KanjiSet4() {
           <div className="bg-slate-50/70 dark:bg-slate-900/50 p-1.5 rounded-2xl flex flex-wrap items-center border border-slate-100/50 dark:border-slate-800/50 self-start md:self-auto shadow-inner gap-y-1">
             <button onClick={() => setActiveMode('list')} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${activeMode === 'list' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Danh sách</button>
             <button onClick={() => setActiveMode('flashcard')} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${activeMode === 'flashcard' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Flashcard</button>
+            <button onClick={() => setActiveMode('vocab')} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${activeMode === 'vocab' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Từ vựng</button>
             <button onClick={() => setActiveMode('quiz')} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${activeMode === 'quiz' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Trắc nghiệm</button>
             <button onClick={() => setActiveMode('typing')} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${activeMode === 'typing' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Gõ phím</button>
             <button onClick={() => setActiveMode('drawing')} className={`px-5 py-2 rounded-xl text-xs font-bold transition-all ${activeMode === 'drawing' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Luyện viết</button>
@@ -445,6 +491,94 @@ export default function KanjiSet4() {
               </div>
             )}
           </>
+        )}
+
+        {/* --- VIEW 6: VOCAB STUDY VIEW --- */}
+        {activeMode === 'vocab' && (
+          <div className="max-w-2xl mx-auto py-8">
+            {kanjiVocabs.length === 0 ? (
+              <div className="py-20 text-center border border-dashed border-slate-200 rounded-2xl">
+                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Không có từ vựng để ôn tập</p>
+              </div>
+            ) : (
+              <div className="space-y-10 animate-in fade-in duration-500">
+                <div className="flex justify-between items-center px-4">
+                  <span className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+                    Tiến trình: {vocabIndex + 1} / {kanjiVocabs.length}
+                  </span>
+                  <div className="flex-1 max-w-[120px] ml-4 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-black dark:bg-white transition-all duration-500"
+                      style={{ width: `${((vocabIndex + 1) / kanjiVocabs.length) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => setIsFlipped(prev => !prev)}
+                  className="w-full max-w-md h-80 mx-auto cursor-pointer relative select-none hover:-translate-y-1 transition-all"
+                  style={{ perspective: '1200px' }}
+                >
+                  <div 
+                    className="w-full h-full duration-500 ease-in-out transform relative"
+                    style={{ 
+                      transformStyle: 'preserve-3d', 
+                      transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' 
+                    }}
+                  >
+                    {/* Front Face */}
+                    <div 
+                      className="absolute inset-0 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 shadow-xl shadow-slate-100 dark:shadow-none rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center"
+                      style={{ backfaceVisibility: 'hidden' }}
+                    >
+                      <span className="absolute top-6 left-6 text-xs font-black text-slate-200 dark:text-slate-800 uppercase tracking-wider">
+                        TỪ VỰNG HÁN TỰ
+                      </span>
+                      <h2 className="text-4xl sm:text-5xl font-kanji font-bold text-slate-900 dark:text-white mb-6">
+                        {kanjiVocabs[vocabIndex].word}
+                      </h2>
+                      <p className="text-[9px] text-slate-300 dark:text-slate-700 font-bold uppercase tracking-[0.2em] animate-pulse">
+                        NHẤN ĐỂ LẬT THẺ
+                      </p>
+                    </div>
+
+                    {/* Back Face */}
+                    <div 
+                      className="absolute inset-0 bg-slate-900 dark:bg-white border border-slate-900 dark:border-white shadow-xl shadow-slate-200 dark:shadow-none rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center"
+                      style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+                    >
+                      <span className="absolute top-6 right-6 text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        Ý NGHĨA
+                      </span>
+                      <h3 className="text-2xl sm:text-3xl font-medium text-white dark:text-slate-900 mb-4">
+                        {kanjiVocabs[vocabIndex].meaning}
+                      </h3>
+                      <p className="text-sm sm:text-base text-slate-400 dark:text-slate-500 italic uppercase tracking-widest">
+                        {kanjiVocabs[vocabIndex].reading}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-center items-center gap-6 mt-8">
+                  <button 
+                    onClick={() => { if (vocabIndex > 0) { setVocabIndex(prev => prev - 1); setIsFlipped(false); } }} 
+                    disabled={vocabIndex === 0} 
+                    className="w-14 h-14 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all disabled:opacity-30"
+                  >
+                    ←
+                  </button>
+                  <button 
+                    onClick={() => { if (vocabIndex < kanjiVocabs.length - 1) { setVocabIndex(prev => prev + 1); setIsFlipped(false); } }} 
+                    className="px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold uppercase tracking-widest text-xs shadow-xl hover:scale-[1.02] transition-all disabled:opacity-30"
+                    disabled={vocabIndex === kanjiVocabs.length - 1}
+                  >
+                    Tiếp theo
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* --- VIEW 2: FLASHCARD STUDY VIEW --- */}
