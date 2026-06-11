@@ -152,8 +152,13 @@ export default function StudyMenu({
                     </div>
                   )}
                   {item.exampleSentence && (() => {
-                    const jpLines = item.exampleSentence.split('\\n').map(s => s.trim()).filter(Boolean);
-                    const vnLines = item.exampleMeaning ? item.exampleMeaning.split('\\n').map(s => s.trim()).filter(Boolean) : [];
+                    let normalizedJp = item.exampleSentence.replace(/\\n/g, '\n');
+                    normalizedJp = normalizedJp.replace(/(。|！|？)(\s*)/g, '$1\n');
+                    const jpLines = normalizedJp.split('\n').map(s => s.trim()).filter(Boolean);
+
+                    let normalizedVn = item.exampleMeaning ? item.exampleMeaning.replace(/\\n/g, '\n') : '';
+                    normalizedVn = normalizedVn.replace(/(\.|!|\?)(\s+)/g, '$1\n');
+                    const vnLines = normalizedVn.split('\n').map(s => s.trim()).filter(Boolean);
                     return (
                       <div className="space-y-2">
                         <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Ví dụ thực tế</h4>

@@ -116,8 +116,13 @@ export default function FlashcardMode({
             )}
 
             {activeData[currentIndex]?.exampleSentence && (() => {
-               const jpLines = activeData[currentIndex].exampleSentence.split('\\n').map(s => s.trim()).filter(Boolean);
-               const vnLines = activeData[currentIndex].exampleMeaning ? activeData[currentIndex].exampleMeaning.split('\\n').map(s => s.trim()).filter(Boolean) : [];
+               let normalizedJp = activeData[currentIndex].exampleSentence.replace(/\\n/g, '\n');
+               normalizedJp = normalizedJp.replace(/(。|！|？)(\s*)/g, '$1\n');
+               const jpLines = normalizedJp.split('\n').map(s => s.trim()).filter(Boolean);
+
+               let normalizedVn = activeData[currentIndex].exampleMeaning ? activeData[currentIndex].exampleMeaning.replace(/\\n/g, '\n') : '';
+               normalizedVn = normalizedVn.replace(/(\.|!|\?)(\s+)/g, '$1\n');
+               const vnLines = normalizedVn.split('\n').map(s => s.trim()).filter(Boolean);
                return (
                  <div className="bg-slate-50 dark:bg-slate-950/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-900 text-left w-full max-w-md space-y-2">
                    <span className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest block mb-1">VÍ DỤ</span>
