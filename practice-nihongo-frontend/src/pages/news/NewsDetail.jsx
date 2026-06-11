@@ -30,6 +30,7 @@ export default function NewsDetail() {
   const [dictationText, setDictationText] = useState('');
   const [showOriginalInDictation, setShowOriginalInDictation] = useState(false);
   const [isRead, setIsRead] = useState(false);
+  const [isSavingRead, setIsSavingRead] = useState(false);
   const [dictationProgress, setDictationProgress] = useState(null);
   const { currentUser, fetchWithAuth } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
@@ -57,22 +58,29 @@ export default function NewsDetail() {
     }
   }, [currentUser, id, fetchWithAuth]);
 
-  const handleToggleRead = (checked) => {
-    setIsRead(checked);
-    if (currentUser) {
+  const handleToggleRead = async (checked) => {
+    if (!currentUser) return;
+    setIsSavingRead(true);
+    try {
       if (checked) {
-        fetchWithAuth(`${API_BASE_URL}/progress/news_read_${id}`, {
+        await fetchWithAuth(`${API_BASE_URL}/progress/news_read_${id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: 'true' }),
-          keepalive: true
-        }).then(() => message.success('Đã đánh dấu là đã đọc!'));
-      } else {
-        fetchWithAuth(`${API_BASE_URL}/progress/news_read_${id}`, {
-          method: 'DELETE',
-          keepalive: true
+          body: JSON.stringify({ data: 'true' })
         });
+        message.success('Đã đánh dấu là đã đọc!');
+      } else {
+        await fetchWithAuth(`${API_BASE_URL}/progress/news_read_${id}`, {
+          method: 'DELETE'
+        });
+        message.info('Đã bỏ đánh dấu đọc!');
       }
+      setIsRead(checked);
+    } catch (error) {
+      console.error(error);
+      message.error('Chưa lưu được trạng thái, vui lòng thử lại.');
+    } finally {
+      setIsSavingRead(false);
     }
   };
 
@@ -462,7 +470,8 @@ export default function NewsDetail() {
               shape="round"
               type={isRead ? "primary" : "default"}
               onClick={() => handleToggleRead(!isRead)}
-              icon={<CheckCircleOutlined />}
+              loading={isSavingRead}
+              icon={!isSavingRead && <CheckCircleOutlined />}
               className={`font-bold px-8 h-12 shadow-sm transition-all ${isRead ? 'bg-emerald-500 hover:bg-emerald-600 border-none' : 'text-slate-700 hover:text-emerald-600 hover:border-emerald-500'}`}
             >
               {isRead ? "Đã đánh dấu đọc xong" : "Đánh dấu đã đọc"}
