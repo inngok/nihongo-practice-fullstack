@@ -147,6 +147,22 @@ export default function VocabFlashcardMode({
               <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 italic uppercase">
                 {studyData[currentIndex]?.reading}
               </p>
+
+              {(studyData[currentIndex]?.example || studyData[currentIndex]?.exampleMeaning) && (
+                <div className="mt-6 flex flex-col items-center gap-1.5 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl w-full max-w-sm animate-in fade-in">
+                  <span className="text-[9px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest block">Từ vựng / Ví dụ</span>
+                  {studyData[currentIndex]?.example && (
+                    <p className="text-base sm:text-lg font-kanji font-medium text-slate-800 dark:text-slate-200">
+                      {studyData[currentIndex]?.example}
+                    </p>
+                  )}
+                  {studyData[currentIndex]?.exampleMeaning && (
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic text-center">
+                      {studyData[currentIndex]?.exampleMeaning}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -177,6 +193,22 @@ export default function VocabFlashcardMode({
               <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 italic uppercase">
                 {studyData[currentIndex]?.reading}
               </p>
+
+              {(studyData[currentIndex]?.example || studyData[currentIndex]?.exampleMeaning) && (
+                <div className="mt-6 flex flex-col items-center gap-1.5 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl w-full max-w-sm animate-in fade-in">
+                  <span className="text-[9px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest block">Từ vựng / Ví dụ</span>
+                  {studyData[currentIndex]?.example && (
+                    <p className="text-base sm:text-lg font-kanji font-medium text-slate-800 dark:text-slate-200">
+                      {studyData[currentIndex]?.example}
+                    </p>
+                  )}
+                  {studyData[currentIndex]?.exampleMeaning && (
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic text-center">
+                      {studyData[currentIndex]?.exampleMeaning}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -194,7 +226,7 @@ export default function VocabFlashcardMode({
           <button
             onClick={() => setIsFlipped(!isFlipped)}
             className="flex-1 max-w-xs py-5 border border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:border-black dark:hover:border-white transition-all text-center"
-            title="Lật thẻ (Phím mũi tên ↓)"
+            title="Lật thẻ (Phím Space / Mũi tên ↓)"
           >
             LẬT THẺ
           </button>

@@ -50,7 +50,7 @@ export default function VocabMultipleChoiceMode({
   if (!currentItem) return null;
 
   return (
-    <div className="flex flex-col gap-8 animate-in fade-in duration-500 max-w-4xl mx-auto w-full">
+    <div className="flex flex-col gap-4 sm:gap-8 animate-in fade-in duration-500 max-w-4xl mx-auto w-full">
       {/* Progress Bar */}
       <div className="flex justify-between items-center px-4">
         <div className="flex items-center gap-4">
@@ -72,10 +72,10 @@ export default function VocabMultipleChoiceMode({
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-[3rem] p-6 sm:p-12 text-center shadow-sm">
-        <div className="mb-10 space-y-4">
+      <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-3xl sm:rounded-[3rem] p-4 sm:p-12 text-center shadow-sm">
+        <div className="mb-6 sm:mb-10 space-y-2 sm:space-y-4">
           <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">Chọn nghĩa đúng của từ sau</span>
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-black italic text-slate-900 dark:text-white select-all break-all whitespace-pre-wrap leading-tight">
+          <h2 className="text-3xl sm:text-5xl md:text-6xl font-black italic text-slate-900 dark:text-white select-all break-all whitespace-pre-wrap leading-tight">
             {currentItem.word}
           </h2>
           {currentItem.reading && (
@@ -85,7 +85,7 @@ export default function VocabMultipleChoiceMode({
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
           {options.map((option, idx) => {
             const isSelected = selectedOption?.id === option.id;
             const isCorrectOption = option.isCorrect;
@@ -107,19 +107,19 @@ export default function VocabMultipleChoiceMode({
                 key={idx}
                 disabled={!!selectedOption}
                 onClick={() => handleSelect(option)}
-                className={`relative p-5 sm:p-6 rounded-2xl border-2 transition-all duration-300 text-left flex flex-col justify-center min-h-[100px] group ${btnClass}`}
+                className={`relative p-3 sm:p-6 rounded-2xl border-2 transition-all duration-300 text-left flex flex-col justify-center min-h-[64px] sm:min-h-[100px] group ${btnClass}`}
               >
-                <div className="flex items-start gap-4 w-full">
-                  <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                <div className="flex items-center sm:items-start gap-3 sm:gap-4 w-full">
+                  <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                     selectedOption && isCorrectOption ? 'border-white dark:border-black bg-black dark:bg-white text-white dark:text-black' :
                     selectedOption && isSelected && !isCorrectOption ? 'border-rose-500 bg-rose-500 text-white' :
                     'border-slate-200 dark:border-slate-700 group-hover:border-black dark:group-hover:border-white text-transparent group-hover:text-black dark:group-hover:text-white'
                   }`}>
-                    {selectedOption && isCorrectOption ? <Check size={16} className="text-white dark:text-black" /> :
-                     selectedOption && isSelected && !isCorrectOption ? <X size={16} className="text-white" /> :
-                     <span className="text-[10px] font-black">{String.fromCharCode(65 + idx)}</span>}
+                    {selectedOption && isCorrectOption ? <Check size={14} className="text-white dark:text-black" /> :
+                     selectedOption && isSelected && !isCorrectOption ? <X size={14} className="text-white" /> :
+                     <span className="text-[9px] sm:text-[10px] font-black">{String.fromCharCode(65 + idx)}</span>}
                   </div>
-                  <span className="text-base sm:text-lg font-bold pt-1">
+                  <span className="text-sm sm:text-lg font-bold">
                     {option.meaning}
                   </span>
                 </div>
@@ -129,7 +129,7 @@ export default function VocabMultipleChoiceMode({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mt-4">
+      <div className="flex flex-row gap-3 sm:gap-4 mt-2 sm:mt-4">
         <button
           onClick={() => { 
             if (currentIndex > 0) { 
@@ -137,14 +137,14 @@ export default function VocabMultipleChoiceMode({
             } 
           }}
           disabled={currentIndex === 0}
-          className="flex-1 py-5 border border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:border-black dark:hover:border-white transition-all disabled:opacity-20"
+          className="flex-1 py-3.5 sm:py-5 border border-slate-100 dark:border-slate-800 rounded-2xl text-[10px] font-black uppercase text-slate-400 hover:border-black dark:hover:border-white transition-all disabled:opacity-20"
         >
           QUAY LẠI
         </button>
         <button
           onClick={handleNext}
           disabled={!selectedOption}
-          className={`flex-[2] py-5 rounded-2xl text-[10px] font-black uppercase transition-all shadow-2xl ${
+          className={`flex-[2] py-3.5 sm:py-5 rounded-2xl text-[10px] font-black uppercase transition-all shadow-xl sm:shadow-2xl ${
             selectedOption 
               ? 'bg-black dark:bg-white text-white dark:text-black hover:scale-[1.02]' 
               : 'bg-slate-100 dark:bg-slate-900 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-70'

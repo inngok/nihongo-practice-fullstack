@@ -4,10 +4,10 @@ import { Search, Check, X, Cpu, Loader2, Bot, ChevronRight, ChevronLeft } from '
 import vocabService from '../../api/vocabService';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
-import VocabListMode from './components/VocabListMode';
-import VocabFlashcardMode from './components/VocabFlashcardMode';
-import VocabQuizMode from './components/VocabQuizMode';
-import VocabMultipleChoiceMode from './components/VocabMultipleChoiceMode';
+const VocabListMode = React.lazy(() => import('./components/VocabListMode'));
+const VocabFlashcardMode = React.lazy(() => import('./components/VocabFlashcardMode'));
+const VocabQuizMode = React.lazy(() => import('./components/VocabQuizMode'));
+const VocabMultipleChoiceMode = React.lazy(() => import('./components/VocabMultipleChoiceMode'));
 
 export default function VocabStudy() {
   const navigate = useNavigate();
@@ -49,7 +49,7 @@ export default function VocabStudy() {
     const handleKeyDown = (e) => {
       if (showResults) return;
       
-      if (e.key === 'ArrowDown') {
+      if (e.key === 'ArrowDown' || e.code === 'Space') {
         e.preventDefault();
         setIsFlipped(prev => !prev);
         return;
@@ -490,6 +490,7 @@ export default function VocabStudy() {
 
             {/* Main Content */}
             <div className="pt-4 pb-20">
+              <React.Suspense fallback={<div className="flex justify-center p-12"><Loader2 className="animate-spin text-slate-300" size={32} /></div>}>
               {activeMode === 'list' && (
                 <VocabListMode 
                   activeData={activeData}
@@ -544,6 +545,7 @@ export default function VocabStudy() {
                   setShowResults={setShowResults}
                 />
               )}
+              </React.Suspense>
             </div>
           </>
         )}

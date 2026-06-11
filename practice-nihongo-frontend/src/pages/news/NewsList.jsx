@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Card, Spin, Typography, Tag, Space, Alert, Button, message, Pagination } from 'antd';
-import { CalendarOutlined, ReadOutlined, ArrowRightOutlined, SyncOutlined, CheckCircleOutlined, FormOutlined } from '@ant-design/icons';
+import { Card, Spin, Typography, Tag, Space, Alert, Button, message, Pagination, Input, Select } from 'antd';
+import { CalendarOutlined, ReadOutlined, ArrowRightOutlined, SyncOutlined, CheckCircleOutlined, FormOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
 
@@ -13,6 +13,8 @@ export default function NewsList() {
   const [error, setError] = useState(null);
   const [crawling, setCrawling] = useState(false);
   const [crawlingHistory, setCrawlingHistory] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get('page')) || 1;
   const pageSize = 12;
@@ -120,6 +122,16 @@ export default function NewsList() {
     </div>
   );
 
+  const filteredNews = news.filter(article => {
+    if (searchTerm && !article.title.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    
+    const isRead = currentUser && readStatuses[article.id];
+    if (filterStatus === 'unread' && isRead) return false;
+    if (filterStatus === 'read' && !isRead) return false;
+
+    return true;
+  });
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-24 pb-20 px-4 md:px-8 font-sans">
       <div className="max-w-6xl mx-auto">
@@ -158,15 +170,35 @@ export default function NewsList() {
           </div>
         </div>
 
-        {news.length === 0 ? (
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <Input 
+            prefix={<SearchOutlined className="text-slate-400 mr-1" />} 
+            placeholder="Tìm kiếm bài báo..." 
+            value={searchTerm}
+            onChange={e => { setSearchTerm(e.target.value); setSearchParams({ page: 1 }); }}
+            className="rounded-[1rem] h-12 flex-1 shadow-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+          />
+          <Select
+            value={filterStatus}
+            onChange={val => { setFilterStatus(val); setSearchParams({ page: 1 }); }}
+            className="w-full sm:w-48 h-12 rounded-[1rem] [&>.ant-select-selector]:rounded-[1rem] [&>.ant-select-selector]:h-12 [&>.ant-select-selector]:items-center shadow-sm"
+            options={[
+              { value: 'all', label: 'Tất cả bài báo' },
+              { value: 'unread', label: 'Chưa đọc' },
+              { value: 'read', label: 'Đã đọc' },
+            ]}
+          />
+        </div>
+
+        {filteredNews.length === 0 ? (
           <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
             <ReadOutlined className="text-5xl text-slate-300 dark:text-slate-700 mb-4" />
-            <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300">Chưa có bài báo nào</h3>
+            <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300">Không tìm thấy bài báo nào</h3>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {news.slice((currentPage - 1) * pageSize, currentPage * pageSize).map(article => {
+              {filteredNews.slice((currentPage - 1) * pageSize, currentPage * pageSize).map(article => {
                 const isRead = currentUser && readStatuses[article.id];
                 const hasNote = currentUser && noteStatuses[article.id];
 
@@ -196,8 +228,8 @@ export default function NewsList() {
                         )}
                       </div>
                       {isRead && (
-                        <div className="absolute top-6 -right-12 bg-emerald-500 text-white text-xs font-black tracking-widest py-1.5 px-14 transform rotate-45 shadow-lg z-10">
-                          ĐÃ ĐỌC
+                        <div className="absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-black tracking-widest py-1.5 px-3 rounded-xl shadow-md z-10 flex items-center gap-1.5">
+                          <CheckCircleOutlined /> ĐÃ ĐỌC
                         </div>
                       )}
                     </div>
@@ -226,12 +258,12 @@ export default function NewsList() {
               )})}
             </div>
 
-            {news.length > pageSize && (
+            {filteredNews.length > pageSize && (
               <div className="flex justify-center mt-12 mb-8">
                 <Pagination
                   current={currentPage}
                   pageSize={pageSize}
-                  total={news.length}
+                  total={filteredNews.length}
                   onChange={(page) => {
                     setSearchParams({ page });
                     window.scrollTo({ top: 0, behavior: 'smooth' });
