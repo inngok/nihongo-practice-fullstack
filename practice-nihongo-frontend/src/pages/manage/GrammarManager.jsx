@@ -650,6 +650,7 @@ export default function GrammarManager() {
         books={books}
         initialData={editingGrammar}
         defaultBookId={selectedBookId}
+        existingGrammars={grammars}
       />
     </div>
   );

@@ -12,7 +12,8 @@ export default function GrammarAddModal({
   onSuccess, 
   books, 
   initialData, 
-  defaultBookId 
+  defaultBookId,
+  existingGrammars = []
 }) {
   const [modalTab, setModalTab] = useState('single');
   const [bulkInput, setBulkInput] = useState('');
@@ -127,7 +128,7 @@ export default function GrammarAddModal({
 
   const handleBulkAiProcess = async () => {
     if (!bulkInput.trim()) return message.warning('Vui lòng dán nội dung cần xử lý');
-    if (!defaultBookId) return message.warning('Vui lòng chọn giáo trình trước khi nhập hàng loạt');
+    if (!formData.bookId) return message.warning('Vui lòng chọn giáo trình trước khi phân tích hàng loạt');
 
     setIsAiProcessing(true);
     const hide = message.loading('AI đang phân tích ngữ pháp hàng loạt...', 0);
@@ -142,7 +143,19 @@ export default function GrammarAddModal({
       });
       if (!res.ok) throw new Error('AI processing failed');
       const data = await res.json();
-      setPreviewData(data.map(item => ({ ...item, selected: true })));
+      
+      const mappedData = data.map(item => {
+        let isDuplicate = false;
+        if (existingGrammars && formData.bookId) {
+           isDuplicate = existingGrammars.some(g => 
+              (g.bookId?.toString() === formData.bookId.toString() || g.book?.id?.toString() === formData.bookId.toString()) && 
+              g.structure.trim() === item.structure.trim()
+           );
+        }
+        return { ...item, selected: !isDuplicate, isDuplicate };
+      });
+      
+      setPreviewData(mappedData);
       message.success('Đã phân tích xong Ngữ pháp!');
     } catch (err) {
       message.error('Lỗi khi xử lý hàng loạt: ' + err.message);
@@ -167,7 +180,7 @@ export default function GrammarAddModal({
         exampleMeaning: item.exampleMeaning,
         quizSentence: item.quizSentence,
         level: item.level || 'N3',
-        book: { id: parseInt(defaultBookId) },
+        book: { id: parseInt(formData.bookId) },
         week: formData.week ? parseInt(formData.week) : null,
         day: formData.day ? parseInt(formData.day) : null
       }));
@@ -377,13 +390,38 @@ export default function GrammarAddModal({
           <div className="flex-grow overflow-hidden flex flex-col p-8 gap-8">
             <div className="flex flex-col md:flex-row gap-8 flex-grow overflow-hidden">
               <div className="w-full md:w-1/3 flex flex-col gap-4">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Nội dung thô (Raw Text)</label>
+                <div className="flex gap-4">
+                  <div className="flex-1 space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Giáo trình</label>
+                    <select
+                      name="bookId"
+                      value={formData.bookId}
+                      onChange={handleInputChange}
+                      className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs outline-none"
+                    >
+                      <option value="">-- Chọn --</option>
+                      {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
+                    </select>
+                  </div>
+                  <div className="w-16 space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tuần</label>
+                    <input type="number" min="1" name="week" value={formData.week} onChange={handleInputChange} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs outline-none" />
+                  </div>
+                  <div className="w-16 space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ngày</label>
+                    <input type="number" min="1" name="day" value={formData.day} onChange={handleInputChange} className="w-full px-2 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs outline-none" />
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-2 flex-grow">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Nội dung thô (Raw Text)</label>
                 <textarea
                   value={bulkInput}
                   onChange={(e) => setBulkInput(e.target.value)}
                   placeholder="Ví dụ: &#10;1. ~たことがある&#10;2. ~ほうがいい&#10;3. ~なければならない"
                   className="flex-grow w-full p-6 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-black/10 focus:border-black text-slate-900 dark:text-white outline-none transition-all resize-none rounded-3xl text-sm leading-relaxed"
                 ></textarea>
+                </div>
                 <button
                   onClick={handleBulkAiProcess}
                   disabled={isAiProcessing || !bulkInput.trim()}
@@ -430,7 +468,12 @@ export default function GrammarAddModal({
                               }} className="w-4 h-4 rounded border-slate-300 accent-black dark:accent-white" />
                             </td>
                             <td className="p-4">
-                              <div className="font-bold text-slate-900 dark:text-white text-base">{item.structure}</div>
+                              <div className="flex items-center gap-2">
+                                <div className="font-bold text-slate-900 dark:text-white text-base">{item.structure}</div>
+                                {item.isDuplicate && (
+                                  <span className="text-[8px] font-black uppercase bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded border border-rose-200">Đã có</span>
+                                )}
+                              </div>
                               <div className="text-black dark:text-white font-black uppercase tracking-widest text-[10px] opacity-50">{item.level}</div>
                             </td>
                             <td className="p-4">
@@ -458,7 +501,7 @@ export default function GrammarAddModal({
             <div className="flex justify-between items-center pt-4 border-t border-slate-100 dark:border-slate-800">
               <div className="flex gap-4">
                 <button onClick={onClose} className="px-8 py-3 font-black text-[11px] uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">HỦY</button>
-                <button onClick={handleSaveBulk} disabled={previewData.length === 0 || !defaultBookId || isSaving} className="px-10 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-xl disabled:opacity-30">
+                <button onClick={handleSaveBulk} disabled={previewData.length === 0 || !formData.bookId || isSaving} className="px-10 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-xl disabled:opacity-30">
                   {isSaving ? 'ĐANG LƯU...' : `LƯU (${previewData.filter(i => i.selected).length} cấu trúc)`}
                 </button>
               </div>
