@@ -156,7 +156,7 @@ public class AiService {
                     "\nReturn the response strictly as a JSON object with the following keys:\n" +
                     "{\n" +
                     "  \"meaning\": \"(Vietnamese meaning)\",\n" +
-                    "  \"explanation\": \"(CRITICAL: Put the conjugation formula here, e.g. 'Cấu trúc: N + に囲まれている', then write the Vietnamese explanation of usage)\",\n" +
+                    "  \"explanation\": \"(CRITICAL: Put the conjugation formula exactly starting with 'Cấu trúc: ', then add a newline \\n, then write the explanation starting with 'Giải thích: '. Example: 'Cấu trúc: N + に囲まれている\\nGiải thích: Dùng để chỉ...')\",\n" +
                     "  \"exampleSentence\": \"(natural Japanese example sentence(s), separated by \\n if multiple)\",\n" +
                     "  \"exampleMeaning\": \"(Vietnamese translation(s) of the example sentence(s), separated by \\n if multiple)\",\n" +
                     "  \"quizSentence\": \"(You MUST copy the exampleSentence exactly, but replace the exact conjugated grammar word/phrase with '_____'. Even if the grammar changes form in the sentence, find it and replace it with '_____'. Example: if grammar is 'に囲まれる' and sentence is '山々に囲まれていて', output '山々に_____いて'. There MUST be exactly one '_____' per sentence. Separate multiple sentences by \\n.)\"\n" +
@@ -274,7 +274,7 @@ public class AiService {
                "6. For Grammar, the \"quizSentence\" MUST be exactly the \"exampleSentence\", but you MUST replace the conjugated grammar point with '_____'. Even if the grammar changes form (e.g., に囲まれて instead of に囲まれる), you MUST find that part in the sentence and replace it with '_____'. For example, if the sentence is '山々に囲まれていて' and grammar is 'に囲まれる', output '山々に_____いて'. There MUST be exactly one '_____' in the string.\n" +
                "7. For Grammar, if explanation is missing, provide a short, clear explanation in Vietnamese about how to use the structure.\n" +
                "8. For Kanji, the \"examples\" field MUST contain 3-5 high-quality vocabulary entries. Each entry MUST follow this exact format: \"Word (Reading): Vietnamese meaning\". Separate each entry with a semicolon (;). Example: \"地形 (ちけい): địa hình; 形成 (けいせい): hình thành;\".\n" +
-               "9. CRITICAL FOR GRAMMAR: The \"structure\" field MUST ONLY contain the Japanese grammar point using a tilde '〜' (e.g. '〜に囲まれている', '〜を占める'). DO NOT include conjugation formulas (like 'N +' or 'V-ru +') in the \"structure\" field. All conjugation formulas MUST be moved to the beginning of the \"explanation\" field (e.g. 'Cấu trúc: N + に囲まれている. ...').\n" +
+               "9. CRITICAL FOR GRAMMAR: The \"structure\" field MUST ONLY contain the Japanese grammar point using a tilde '〜' (e.g. '〜に囲まれている', '〜を占める'). DO NOT include conjugation formulas (like 'N +' or 'V-ru +') in the \"structure\" field. All conjugation formulas MUST be placed at the very beginning of the \"explanation\" field, starting with 'Cấu trúc: '. Then, YOU MUST insert a newline character (\\n), and start the actual usage explanation with 'Giải thích: '.\n" +
                "10. Ensure the JSON is valid, properly escaped, and encoded in UTF-8.\n" +
                "11. CRITICAL: You MUST extract and parse EVERY SINGLE item from the input data. DO NOT omit, summarize, or skip ANY words, grammar points, or kanji. The output array MUST contain an entry for every distinct item found in the input.";
     }

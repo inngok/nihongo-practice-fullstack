@@ -110,7 +110,7 @@ export default function FlashcardMode({
             </h3>
 
             {activeData[currentIndex]?.explanation && (
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
+              <p className="text-sm font-medium text-slate-600 dark:text-slate-400 max-w-md mb-6 leading-relaxed whitespace-pre-line">
                 {activeData[currentIndex]?.explanation}
               </p>
             )}

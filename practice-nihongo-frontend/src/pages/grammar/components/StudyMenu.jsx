@@ -148,7 +148,7 @@ export default function StudyMenu({
                   {item.explanation && (
                     <div className="space-y-1">
                       <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Cách dùng & Giải thích</h4>
-                      <p className="text-sm md:text-[15px] font-medium text-slate-700 dark:text-slate-300 leading-relaxed">{item.explanation}</p>
+                      <p className="text-sm md:text-[15px] font-medium text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">{item.explanation}</p>
                     </div>
                   )}
                   {item.exampleSentence && (() => {
