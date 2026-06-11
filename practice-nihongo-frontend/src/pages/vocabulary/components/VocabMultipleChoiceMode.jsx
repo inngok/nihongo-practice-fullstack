@@ -113,7 +113,7 @@ export default function VocabMultipleChoiceMode({
                   <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                     selectedOption && isCorrectOption ? 'border-white dark:border-black bg-black dark:bg-white text-white dark:text-black' :
                     selectedOption && isSelected && !isCorrectOption ? 'border-rose-500 bg-rose-500 text-white' :
-                    'border-slate-200 dark:border-slate-700 group-hover:border-black dark:group-hover:border-white text-transparent group-hover:text-black dark:group-hover:text-white'
+                    'border-slate-200 dark:border-slate-700 group-hover:border-black dark:group-hover:border-white text-slate-400 dark:text-slate-500 group-hover:text-black dark:group-hover:text-white'
                   }`}>
                     {selectedOption && isCorrectOption ? <Check size={14} className="text-white dark:text-black" /> :
                      selectedOption && isSelected && !isCorrectOption ? <X size={14} className="text-white" /> :

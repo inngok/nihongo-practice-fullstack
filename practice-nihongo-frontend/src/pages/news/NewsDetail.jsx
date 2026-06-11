@@ -36,7 +36,7 @@ export default function NewsDetail() {
 
   useEffect(() => {
     if (currentUser && id) {
-      fetchWithAuth(`${API_BASE_URL}/progress/news_read_${id}`)
+      fetchWithAuth(`${API_BASE_URL}/progress/news_read_${id}?t=${Date.now()}`)
         .then(res => res.json())
         .then(data => {
           const val = String(data.data).replace(/['"]/g, '');
@@ -64,11 +64,13 @@ export default function NewsDetail() {
         fetchWithAuth(`${API_BASE_URL}/progress/news_read_${id}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: 'true' })
+          body: JSON.stringify({ data: 'true' }),
+          keepalive: true
         }).then(() => message.success('Đã đánh dấu là đã đọc!'));
       } else {
         fetchWithAuth(`${API_BASE_URL}/progress/news_read_${id}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          keepalive: true
         });
       }
     }

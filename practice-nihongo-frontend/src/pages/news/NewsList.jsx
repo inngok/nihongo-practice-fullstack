@@ -25,7 +25,7 @@ export default function NewsList() {
 
   useEffect(() => {
     if (currentUser) {
-      fetchWithAuth(`${API_BASE_URL}/progress/prefix/news_read_`)
+      fetchWithAuth(`${API_BASE_URL}/progress/prefix/news_read_?t=${Date.now()}`)
         .then(res => res.json())
         .then(data => {
            if (!Array.isArray(data)) return;
@@ -39,7 +39,7 @@ export default function NewsList() {
         })
         .catch(err => console.error(err));
 
-      fetchWithAuth(`${API_BASE_URL}/progress/prefix/news_note_`)
+      fetchWithAuth(`${API_BASE_URL}/progress/prefix/news_note_?t=${Date.now()}`)
         .then(res => res.json())
         .then(data => {
            if (!Array.isArray(data)) return;

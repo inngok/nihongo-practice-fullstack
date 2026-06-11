@@ -148,21 +148,7 @@ export default function VocabFlashcardMode({
                 {studyData[currentIndex]?.reading}
               </p>
 
-              {(studyData[currentIndex]?.example || studyData[currentIndex]?.exampleMeaning) && (
-                <div className="mt-6 flex flex-col items-center gap-1.5 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl w-full max-w-sm animate-in fade-in">
-                  <span className="text-[9px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest block">Từ vựng / Ví dụ</span>
-                  {studyData[currentIndex]?.example && (
-                    <p className="text-base sm:text-lg font-kanji font-medium text-slate-800 dark:text-slate-200">
-                      {studyData[currentIndex]?.example}
-                    </p>
-                  )}
-                  {studyData[currentIndex]?.exampleMeaning && (
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic text-center">
-                      {studyData[currentIndex]?.exampleMeaning}
-                    </p>
-                  )}
-                </div>
-              )}
+
             </div>
           </div>
         </div>
@@ -172,7 +158,7 @@ export default function VocabFlashcardMode({
           onClick={() => setIsFlipped(!isFlipped)}
           className="perspective h-[380px] sm:h-[450px] cursor-pointer group"
         >
-          <div key={currentIndex} className={`relative w-full h-full transition-all duration-700 preserve-3d shadow-2xl rounded-[3rem] ${isFlipped ? 'rotate-y-180' : 'hover:scale-[1.01]'}`}>
+          <div key={currentIndex} className={`relative w-full h-full transition-all duration-700 preserve-3d shadow-2xl rounded-[3rem] ${isFlipped ? 'rotate-y-180' : 'hover:-translate-y-1 hover:shadow-3xl'}`}>
             {/* Front Face */}
             <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] flex flex-col items-center justify-center p-6 sm:p-12 text-center">
               <h2 className={`font-medium mb-6 sm:mb-8 select-all break-all whitespace-pre-wrap leading-tight ${showVietnameseFirst ? 'text-2xl sm:text-3xl md:text-5xl italic text-slate-900 dark:text-white' : 'text-4xl sm:text-5xl md:text-7xl font-kanji text-slate-900 dark:text-white'}`}>
@@ -194,21 +180,7 @@ export default function VocabFlashcardMode({
                 {studyData[currentIndex]?.reading}
               </p>
 
-              {(studyData[currentIndex]?.example || studyData[currentIndex]?.exampleMeaning) && (
-                <div className="mt-6 flex flex-col items-center gap-1.5 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl w-full max-w-sm animate-in fade-in">
-                  <span className="text-[9px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-widest block">Từ vựng / Ví dụ</span>
-                  {studyData[currentIndex]?.example && (
-                    <p className="text-base sm:text-lg font-kanji font-medium text-slate-800 dark:text-slate-200">
-                      {studyData[currentIndex]?.example}
-                    </p>
-                  )}
-                  {studyData[currentIndex]?.exampleMeaning && (
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic text-center">
-                      {studyData[currentIndex]?.exampleMeaning}
-                    </p>
-                  )}
-                </div>
-              )}
+
             </div>
           </div>
         </div>
