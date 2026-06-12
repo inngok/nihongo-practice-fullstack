@@ -1,6 +1,7 @@
 package com.nihongo.practice_nihongo.service;
 
 import com.nihongo.practice_nihongo.model.RefreshToken;
+import com.nihongo.practice_nihongo.model.User;
 import com.nihongo.practice_nihongo.repository.RefreshTokenRepository;
 import com.nihongo.practice_nihongo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,13 +24,16 @@ public class RefreshTokenService {
 
     @Transactional
     public RefreshToken createRefreshToken(Long userId) {
-        RefreshToken refreshToken = new RefreshToken();
+        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Delete existing tokens for the user to prevent unique constraint violations
+        refreshTokenRepository.deleteByUser(user);
+        refreshTokenRepository.flush(); // Force DELETE to execute before INSERT
 
-        refreshToken.setUser(userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found")));
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setUser(user);
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
         refreshToken.setToken(UUID.randomUUID().toString());
-
-        // Note: We no longer delete all tokens for the user here to support multi-device login.
         
         refreshToken = refreshTokenRepository.save(refreshToken);
         return refreshToken;

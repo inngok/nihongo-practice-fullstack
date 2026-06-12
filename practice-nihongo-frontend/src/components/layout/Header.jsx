@@ -171,14 +171,9 @@ export default function Header() {
                 </div>
               </Dropdown>
             ) : (
-              <>
-                <Link to="/login" className="text-slate-400 hover:text-black transition-colors text-[10px] font-black uppercase tracking-widest py-1 px-2">
-                  Đăng nhập
-                </Link>
-                <Link to="/register" className="bg-black text-white px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors text-[10px] font-black uppercase tracking-widest">
-                  Đăng ký
-                </Link>
-              </>
+              <Link to="/login" className="bg-black text-white px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors text-[10px] font-black uppercase tracking-widest">
+                Đăng nhập
+              </Link>
             )}
           </div>
         </div>
@@ -260,14 +255,9 @@ export default function Header() {
             </div>
           </Dropdown>
         ) : (
-          <>
-            <Link to="/login" className="text-slate-400 hover:text-black dark:hover:text-white transition-colors">
-              Đăng nhập
-            </Link>
-            <Link to="/register" className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors">
-              Đăng ký
-            </Link>
-          </>
+          <Link to="/login" className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors">
+            Đăng nhập
+          </Link>
         )}
       </div>
     </header>

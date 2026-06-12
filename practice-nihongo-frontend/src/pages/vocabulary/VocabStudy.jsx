@@ -446,20 +446,20 @@ export default function VocabStudy() {
               <div className="flex items-center gap-6">
                 <div className="hidden md:flex items-center gap-6">
                   <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">XÁO TRỘN</span>
+                    <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest whitespace-nowrap">XÁO TRỘN</span>
                     <button
                       onClick={() => setIsShuffle(!isShuffle)}
-                      className={`relative w-11 h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+                      className={`relative shrink-0 w-11 h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
                     >
                       <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 ${isShuffle ? 'left-6 bg-white dark:bg-black' : 'left-1 bg-white dark:bg-slate-400'}`} />
                     </button>
                   </div>
                   {activeMode === 'flashcard' && (
                     <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">VIỆT → NHẬT</span>
+                      <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest whitespace-nowrap">VIỆT → NHẬT</span>
                       <button
                         onClick={() => { setShowVietnameseFirst(!showVietnameseFirst); setIsFlipped(false); }}
-                        className={`relative w-11 h-6 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+                        className={`relative shrink-0 w-11 h-6 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
                       >
                         <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'left-6 bg-white dark:bg-black' : 'left-1 bg-white dark:bg-slate-400'}`} />
                       </button>
@@ -476,7 +476,7 @@ export default function VocabStudy() {
                     <button
                       key={m.id}
                       onClick={() => setActiveMode(m.id)}
-                      className={`flex-1 sm:flex-none px-2 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[9px] sm:text-[10px] font-black tracking-widest transition-all text-center ${activeMode === m.id
+                      className={`flex-1 sm:flex-none px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[9px] sm:text-[10px] font-black tracking-widest uppercase transition-all whitespace-nowrap text-center ${activeMode === m.id
                         ? 'bg-black text-white dark:bg-white dark:text-black shadow-xl'
                         : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
                         }`}

@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../../config';
 export default function Home() {
   const [quickAccess, setQuickAccess] = useState(null);
   const { currentUser, fetchWithAuth } = useAuth();
+  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
 
   useEffect(() => {
     // 1. Try local storage first for instant display
@@ -113,14 +114,16 @@ export default function Home() {
             Phân biệt Ngữ pháp
           </span>
         </Link>
-        <Link
-          to="/ai-chat"
-          className="group px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-[2rem] hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
-        >
-          <span className="text-[10px] md:text-[11px] font-black tracking-[0.3em] uppercase text-slate-500 dark:text-slate-400 group-hover:text-white dark:group-hover:text-black transition-colors">
-            Đàm thoại AI
-          </span>
-        </Link>
+        {isAdmin && (
+          <Link
+            to="/ai-chat"
+            className="group px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-[2rem] hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
+          >
+            <span className="text-[10px] md:text-[11px] font-black tracking-[0.3em] uppercase text-slate-500 dark:text-slate-400 group-hover:text-white dark:group-hover:text-black transition-colors">
+              Đàm thoại AI
+            </span>
+          </Link>
+        )}
         <Link
           to="/exam-jlpt"
           className="group px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-[2rem] hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
