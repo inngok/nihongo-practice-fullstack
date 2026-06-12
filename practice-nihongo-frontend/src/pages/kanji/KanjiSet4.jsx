@@ -8,7 +8,10 @@ import { message, Modal } from 'antd';
 import { HeartOutlined, HeartFilled } from '@ant-design/icons';
 import KanjiCanvas from './KanjiCanvas';
 import DetailedKanjiCard from './components/DetailedKanjiCard';
-
+import KanjiVocabView from './components/KanjiVocabView';
+import KanjiFlashcardView from './components/KanjiFlashcardView';
+import KanjiQuizView from './components/KanjiQuizView';
+import KanjiTypingView from './components/KanjiTypingView';
 
 export default function KanjiSet4() {
   const navigate = useNavigate();
@@ -495,288 +498,58 @@ const parseExamples = (examplesStr) => {
 
         {/* --- VIEW 6: VOCAB STUDY VIEW --- */}
         {activeMode === 'vocab' && (
-          <div className="max-w-2xl mx-auto py-8">
-            {kanjiVocabs.length === 0 ? (
-              <div className="py-20 text-center border border-dashed border-slate-200 rounded-2xl">
-                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Không có từ vựng để ôn tập</p>
-              </div>
-            ) : (
-              <div className="space-y-10 animate-in fade-in duration-500">
-                <div className="flex justify-between items-center px-4">
-                  <span className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
-                    Tiến trình: {vocabIndex + 1} / {kanjiVocabs.length}
-                  </span>
-                  <div className="flex-1 max-w-[120px] ml-4 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-black dark:bg-white transition-all duration-500"
-                      style={{ width: `${((vocabIndex + 1) / kanjiVocabs.length) * 100}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div 
-                  onClick={() => setIsFlipped(prev => !prev)}
-                  className="w-full max-w-md h-80 mx-auto cursor-pointer relative select-none hover:-translate-y-1 transition-all"
-                  style={{ perspective: '1200px' }}
-                >
-                  <div 
-                    className="w-full h-full duration-500 ease-in-out transform relative"
-                    style={{ 
-                      transformStyle: 'preserve-3d', 
-                      transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' 
-                    }}
-                  >
-                    {/* Front Face */}
-                    <div 
-                      className="absolute inset-0 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 shadow-xl shadow-slate-100 dark:shadow-none rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center"
-                      style={{ backfaceVisibility: 'hidden' }}
-                    >
-                      <span className="absolute top-6 left-6 text-xs font-black text-slate-200 dark:text-slate-800 uppercase tracking-wider">
-                        TỪ VỰNG HÁN TỰ
-                      </span>
-                      <h2 className="text-4xl sm:text-5xl font-kanji font-bold text-slate-900 dark:text-white mb-6">
-                        {kanjiVocabs[vocabIndex].word}
-                      </h2>
-                      <p className="text-[9px] text-slate-300 dark:text-slate-700 font-bold uppercase tracking-[0.2em] animate-pulse">
-                        NHẤN ĐỂ LẬT THẺ
-                      </p>
-                    </div>
-
-                    {/* Back Face */}
-                    <div 
-                      className="absolute inset-0 bg-slate-900 dark:bg-white border border-slate-900 dark:border-white shadow-xl shadow-slate-200 dark:shadow-none rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center"
-                      style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-                    >
-                      <span className="absolute top-6 right-6 text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                        Ý NGHĨA
-                      </span>
-                      <h3 className="text-2xl sm:text-3xl font-medium text-white dark:text-slate-900 mb-4">
-                        {kanjiVocabs[vocabIndex].meaning}
-                      </h3>
-                      <p className="text-sm sm:text-base text-slate-400 dark:text-slate-500 italic uppercase tracking-widest">
-                        {kanjiVocabs[vocabIndex].reading}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-center items-center gap-6 mt-8">
-                  <button 
-                    onClick={() => { if (vocabIndex > 0) { setVocabIndex(prev => prev - 1); setIsFlipped(false); } }} 
-                    disabled={vocabIndex === 0} 
-                    className="w-14 h-14 rounded-full border border-slate-200 dark:border-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all disabled:opacity-30"
-                  >
-                    ←
-                  </button>
-                  <button 
-                    onClick={() => { if (vocabIndex < kanjiVocabs.length - 1) { setVocabIndex(prev => prev + 1); setIsFlipped(false); } }} 
-                    className="px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold uppercase tracking-widest text-xs shadow-xl hover:scale-[1.02] transition-all disabled:opacity-30"
-                    disabled={vocabIndex === kanjiVocabs.length - 1}
-                  >
-                    Tiếp theo
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <KanjiVocabView
+            kanjiVocabs={kanjiVocabs}
+            vocabIndex={vocabIndex}
+            setVocabIndex={setVocabIndex}
+            isFlipped={isFlipped}
+            setIsFlipped={setIsFlipped}
+          />
         )}
+
 
         {/* --- VIEW 2: FLASHCARD STUDY VIEW --- */}
         {activeMode === 'flashcard' && (
-          <div className="max-w-2xl mx-auto py-8">
-            {filteredKanjis.length === 0 ? (
-              <div className="py-20 text-center border border-dashed border-slate-200 rounded-2xl">
-                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Không có từ để ôn tập</p>
-              </div>
-            ) : (
-              <div className="space-y-10">
-                <div 
-                  onClick={() => setIsFlipped(prev => !prev)}
-                  className="w-full max-w-md h-80 mx-auto cursor-pointer relative select-none"
-                  style={{ perspective: '1200px' }}
-                >
-                  <div 
-                    className="w-full h-full duration-500 ease-in-out transform relative"
-                    style={{ 
-                      transformStyle: 'preserve-3d', 
-                      transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' 
-                    }}
-                  >
-                    {/* Front Face */}
-                    <div 
-                      className="absolute inset-0 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 shadow-xl shadow-slate-100 dark:shadow-none rounded-[2.5rem] flex flex-col items-center justify-center p-8"
-                      style={{ backfaceVisibility: 'hidden' }}
-                    >
-                      <span className="absolute top-6 left-6 text-xs font-black text-slate-200 dark:text-slate-800 uppercase tracking-wider">
-                        KANJI
-                      </span>
-                      <span className="text-8xl font-kanji font-bold text-slate-900 dark:text-white tracking-tight">{filteredKanjis[flashcardIndex].character}</span>
-                      <p className="text-[9px] text-slate-300 dark:text-slate-700 font-bold uppercase tracking-[0.2em] mt-10">
-                        Chạm để lật thẻ
-                      </p>
-                    </div>
-
-                    {/* Back Face */}
-                    <div 
-                      className="absolute inset-0 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 shadow-xl shadow-slate-100 dark:shadow-none rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center"
-                      style={{ 
-                        backfaceVisibility: 'hidden', 
-                        transform: 'rotateY(180deg)' 
-                      }}
-                    >
-                      <span className="text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block mb-1">
-                        ÂM HÁN VIỆT
-                      </span>
-                      <h3 className="text-4xl font-bold text-slate-950 dark:text-white uppercase tracking-wide leading-none mb-4">
-                        {filteredKanjis[flashcardIndex].hanviet || 'CHƯA CÓ'}
-                      </h3>
-                      
-                      <div className="space-y-1.5 mb-6">
-                        <span className="text-[9px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest block">Ý NGHĨA</span>
-                        <p className="text-base text-slate-600 dark:text-slate-300 font-bold italic leading-relaxed">
-                          {filteredKanjis[flashcardIndex].meaning || 'Chưa cập nhật'}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 w-full bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 text-left text-xs">
-                        <div>
-                          <span className="font-black text-[9px] text-slate-400 dark:text-slate-600 uppercase tracking-widest block mb-0.5">Onyomi</span>
-                          <span className="font-kanji font-bold text-slate-800 dark:text-slate-200">{filteredKanjis[flashcardIndex].onyomi || '—'}</span>
-                        </div>
-                        <div>
-                          <span className="font-black text-[9px] text-slate-400 dark:text-slate-600 uppercase tracking-widest block mb-0.5">Kunyomi</span>
-                          <span className="font-kanji font-bold text-slate-800 dark:text-slate-200">{filteredKanjis[flashcardIndex].kunyomi || '—'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between max-w-md mx-auto">
-                  <button onClick={handlePrevFlashcard} className="border border-black dark:border-white text-black dark:text-white hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black px-5 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all">Trước</button>
-                  <span className="text-xs font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">Thẻ {flashcardIndex + 1} / {filteredKanjis.length}</span>
-                  <button onClick={handleNextFlashcard} className="border border-black dark:border-white text-black dark:text-white hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black px-5 py-2.5 text-[10px] font-bold uppercase tracking-widest transition-all">Sau</button>
-                </div>
-              </div>
-            )}
-          </div>
+          <KanjiFlashcardView
+            filteredKanjis={filteredKanjis}
+            flashcardIndex={flashcardIndex}
+            isFlipped={isFlipped}
+            setIsFlipped={setIsFlipped}
+            handlePrevFlashcard={handlePrevFlashcard}
+            handleNextFlashcard={handleNextFlashcard}
+          />
         )}
 
         {/* --- VIEW 3: TRẮC NGHIỆM --- */}
         {activeMode === 'quiz' && (
-          <div className="max-w-2xl mx-auto py-8">
-            {quizQuestions.length === 0 ? (
-              <div className="py-20 text-center border border-dashed border-slate-200 rounded-2xl">
-                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Cần tối thiểu 4 từ để học trắc nghiệm</p>
-              </div>
-            ) : quizFinished ? (
-              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-10 md:p-12 text-center space-y-6 max-w-md mx-auto shadow-sm">
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">KẾT QUẢ ĐẠT ĐƯỢC</h3>
-                <div className="w-24 h-24 bg-white dark:bg-slate-950 rounded-full flex items-center justify-center mx-auto shadow-inner border border-slate-100 dark:border-slate-800">
-                  <span className="text-3xl font-black text-slate-800 dark:text-slate-200">{quizScore}/{quizQuestions.length}</span>
-                </div>
-                <p className="text-xs font-bold text-slate-400 dark:text-slate-600 uppercase tracking-wider">Bạn đã xuất sắc trả lời đúng {Math.round((quizScore / quizQuestions.length) * 100)}% số câu hỏi!</p>
-                <button onClick={generateQuiz} className="bg-black dark:bg-white text-white dark:text-black hover:opacity-80 w-full py-4 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center justify-center">Luyện tập lại</button>
-              </div>
-            ) : (
-              <div className="space-y-8 max-w-md mx-auto">
-                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  <span>Câu hỏi {quizIndex + 1} / {quizQuestions.length}</span>
-                  <span className="text-slate-900 dark:text-white font-black underline decoration-slate-300">Đúng: {quizScore}</span>
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-[2.5rem] p-8 text-center shadow-lg shadow-slate-100 dark:shadow-none">
-                  <span className="text-[10px] font-black text-slate-200 dark:text-slate-800 uppercase tracking-wider block mb-2">Hỏi chữ Hán</span>
-                  <span className="text-7xl font-kanji font-bold text-slate-950 dark:text-white block">{quizQuestions[quizIndex]?.kanji.character}</span>
-                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest mt-6">Chữ Hán trên có âm Hán Việt là gì?</p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3.5">
-                  {quizQuestions[quizIndex]?.options.map((option, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleSelectQuizOption(option)}
-                      disabled={quizSelectedOption !== null}
-                      className={`w-full py-4 px-6 rounded-2xl text-xs font-bold transition-all text-center ${getQuizOptionClass(option)}`}
-                    >
-                      <span className="uppercase tracking-wider">{option}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <KanjiQuizView
+            quizQuestions={quizQuestions}
+            quizFinished={quizFinished}
+            quizScore={quizScore}
+            quizIndex={quizIndex}
+            generateQuiz={generateQuiz}
+            handleSelectQuizOption={handleSelectQuizOption}
+            quizSelectedOption={quizSelectedOption}
+            getQuizOptionClass={getQuizOptionClass}
+          />
         )}
 
         {/* --- VIEW 4: GÕ PHÍM --- */}
         {activeMode === 'typing' && (
-          <div className="max-w-xl mx-auto py-8">
-            {filteredKanjis.length === 0 ? (
-              <div className="py-20 text-center border border-dashed border-slate-200 rounded-2xl">
-                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Không có từ để luyện gõ phím</p>
-              </div>
-            ) : typingFinished ? (
-              <div className="bg-slate-50 border border-slate-100 rounded-[2.5rem] p-10 md:p-12 text-center space-y-6 max-w-md mx-auto shadow-sm">
-                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight">HOÀN THÀNH LUYỆN GÕ</h3>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider leading-relaxed">Quá xuất sắc! Bạn đã luyện gõ thành công toàn bộ danh sách {filteredKanjis.length} chữ Hán tự bài này!</p>
-                <button
-                  onClick={() => {
-                    setTypingIndex(0);
-                    setTypingInput('');
-                    setTypingFeedback(null);
-                    setTypingFinished(false);
-                    setTimeout(() => typingInputRef.current?.focus(), 50);
-                  }}
-                  className="bg-black text-white hover:bg-slate-800 w-full py-4 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center justify-center"
-                >
-                  Luyện tập lại từ đầu
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-8 max-w-md mx-auto">
-                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
-                  <span>Chữ thứ {typingIndex + 1} / {filteredKanjis.length}</span>
-                  <span className="text-indigo-500">Nhập đúng âm Hán Việt</span>
-                </div>
-
-                <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-[2.5rem] p-8 text-center shadow-lg shadow-slate-100 dark:shadow-none flex flex-col items-center">
-                  <span className="text-8xl font-kanji font-bold text-slate-950 dark:text-white block mb-4 select-none">{filteredKanjis[typingIndex]?.character}</span>
-                  <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block mb-1">Ý nghĩa gợi ý</span>
-                  <p className="text-base text-slate-500 dark:text-slate-400 font-bold italic leading-none">{filteredKanjis[typingIndex]?.meaning || '—'}</p>
-                </div>
-
-                <form onSubmit={handleTypingSubmit} className="space-y-4">
-                  <input
-                    ref={typingInputRef}
-                    type="text"
-                    placeholder="Gõ âm Hán Việt chữ này... (ví dụ: NHAT)"
-                    value={typingInput}
-                    onChange={(e) => setTypingInput(e.target.value)}
-                    disabled={typingFeedback === 'correct'}
-                    autoFocus
-                    className={`w-full py-4 px-5 rounded-2xl outline-none border transition-all text-sm font-black text-center uppercase tracking-widest ${
-                      typingFeedback === 'correct'
-                        ? 'bg-slate-900 text-white dark:bg-white dark:text-black border-slate-900 dark:border-white shadow-xl scale-[0.98]'
-                        : typingFeedback === 'incorrect'
-                        ? 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 opacity-70'
-                        : 'bg-slate-50 dark:bg-slate-900 border-slate-150 dark:border-slate-800 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-slate-100 dark:focus:ring-slate-800 text-slate-900 dark:text-white'
-                    }`}
-                  />
-
-                  <div className="flex gap-3">
-                    <button type="button" onClick={handleSkipTyping} className="flex-1 py-3.5 border border-slate-200 dark:border-slate-800 hover:border-black dark:hover:border-white rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all text-slate-400 dark:text-slate-600 hover:text-black dark:hover:text-white">Bỏ qua & xem kết quả</button>
-                    <button type="submit" disabled={typingFeedback === 'correct'} className="flex-1 py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all active:scale-95">Xác nhận kết quả</button>
-                  </div>
-                </form>
-
-                {typingFeedback === 'incorrect' && (
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-center">
-                    <p className="text-xs text-slate-600 dark:text-slate-400 font-bold leading-relaxed">❌ Nhập chưa chính xác! Gợi ý đáp án đúng: <span className="uppercase text-sm font-black text-slate-900 dark:text-white tracking-wider underline">{filteredKanjis[typingIndex]?.hanviet}</span></p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <KanjiTypingView
+            filteredKanjis={filteredKanjis}
+            typingFinished={typingFinished}
+            typingIndex={typingIndex}
+            setTypingIndex={setTypingIndex}
+            typingInput={typingInput}
+            setTypingInput={setTypingInput}
+            typingFeedback={typingFeedback}
+            setTypingFeedback={setTypingFeedback}
+            setTypingFinished={setTypingFinished}
+            typingInputRef={typingInputRef}
+            handleTypingSubmit={handleTypingSubmit}
+            handleSkipTyping={handleSkipTyping}
+          />
         )}
 
         {/* --- VIEW 5: LUYỆN VIẾT (KANJI CANVAS DRAWING VIEW) --- */}

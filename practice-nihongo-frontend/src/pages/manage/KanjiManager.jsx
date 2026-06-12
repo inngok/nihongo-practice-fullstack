@@ -319,6 +319,30 @@ export default function KanjiManager() {
   };
 
 
+  const handleDeleteAll = () => {
+    const bookTitle = selectedBookId
+      ? books.find(b => b.id.toString() === selectedBookId.toString())?.title || 'sách này'
+      : 'tất cả hệ thống';
+
+    Modal.confirm({
+      title: 'Xác nhận Xóa Hàng Loạt ⚠️',
+      content: `Bạn có chắc chắn muốn xóa toàn bộ Hán tự thuộc ${bookTitle}? Hành động này KHÔNG THỂ khôi phục!`,
+      okText: 'Tôi đồng ý, Xóa tất cả',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await kanjiService.deleteAll(selectedBookId);
+          fetchData();
+          messageApi.success('Đã xóa sạch toàn bộ Hán tự thành công!');
+        } catch (err) {
+          messageApi.error('Gặp lỗi khi xóa hàng loạt: ' + err.message);
+          console.error(err);
+        }
+      }
+    });
+  };
+
   const handleDelete = (id) => {
     Modal.confirm({
       title: 'Xác nhận xóa',

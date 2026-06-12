@@ -25,7 +25,7 @@ export default function NewsList() {
 
   useEffect(() => {
     if (currentUser) {
-      fetchWithAuth(`${API_BASE_URL}/progress/prefix/news_read_?t=${Date.now()}`)
+      fetchWithAuth(`${API_BASE_URL}/progress/by-prefix?prefix=news_read_&t=${Date.now()}`)
         .then(res => res.json())
         .then(data => {
            if (!Array.isArray(data)) return;
@@ -39,7 +39,7 @@ export default function NewsList() {
         })
         .catch(err => console.error(err));
 
-      fetchWithAuth(`${API_BASE_URL}/progress/prefix/news_note_?t=${Date.now()}`)
+      fetchWithAuth(`${API_BASE_URL}/progress/by-prefix?prefix=news_note_&t=${Date.now()}`)
         .then(res => res.json())
         .then(data => {
            if (!Array.isArray(data)) return;
@@ -228,8 +228,8 @@ export default function NewsList() {
                         )}
                       </div>
                       {isRead && (
-                        <div className="absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-black tracking-widest py-1.5 px-3 rounded-xl shadow-md z-10 flex items-center gap-1.5">
-                          <CheckCircleOutlined /> ĐÃ ĐỌC
+                        <div className="absolute top-6 right-[-36px] w-[150px] bg-emerald-500 text-white text-[10px] font-black tracking-widest py-1.5 text-center shadow-lg rotate-45 flex items-center justify-center gap-1 z-10 pointer-events-none">
+                          <CheckCircleOutlined className="text-[10px]" /> ĐÃ ĐỌC
                         </div>
                       )}
                     </div>

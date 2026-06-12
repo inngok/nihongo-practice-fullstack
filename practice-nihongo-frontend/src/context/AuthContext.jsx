@@ -1,9 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { message } from 'antd';
 
 import { API_BASE_URL } from '../config';
 
 const AuthContext = createContext();
+
+// Singleton refresh lock — đảm bảo chỉ có 1 refresh request chạy tại một thời điểm
+// Đặt ngoài component để persist giữa các renders
+let refreshingPromise = null;
 
 export const useAuth = () => {
   return useContext(AuthContext);
@@ -203,43 +207,60 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const refreshAccessToken = async () => {
-    try {
-      const refreshToken = localStorage.getItem('nihongo_refresh_token');
-      if (!refreshToken) throw new Error("No refresh token available");
-
-      const response = await fetch(`${API_URL}/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      if (!response.ok) {
-        if (response.status >= 400 && response.status < 500) {
-          logout();
-          throw new Error("Refresh token expired");
-        } else {
-          throw new Error(`Server returned error status: ${response.status}`);
-        }
-      }
-
-      const data = await response.json();
-      localStorage.setItem('nihongo_token', data.accessToken);
-      return data.accessToken;
-    } catch (error) {
-      if (error.message === "Refresh token expired" || error.message === "No refresh token available") {
-        logout();
-        messageApi.warning({
-          content: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!',
-          duration: 4,
-          style: { marginTop: '10vh' }
-        });
-      }
-      throw error;
+  const refreshAccessToken = useCallback(async () => {
+    // Nếu đang có refresh request rồi, chờ nó thay vì gọi thêm
+    if (refreshingPromise) {
+      return refreshingPromise;
     }
-  };
 
-  const fetchWithAuth = async (url, options = {}) => {
+    refreshingPromise = (async () => {
+      try {
+        const refreshToken = localStorage.getItem('nihongo_refresh_token');
+        if (!refreshToken) throw new Error("No refresh token available");
+
+        const response = await fetch(`${API_URL}/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
+        });
+
+        if (!response.ok) {
+          if (response.status >= 400 && response.status < 500) {
+            logout();
+            throw new Error("Refresh token expired");
+          } else {
+            throw new Error(`Server returned error status: ${response.status}`);
+          }
+        }
+
+        const data = await response.json();
+        localStorage.setItem('nihongo_token', data.accessToken);
+        // Nếu backend trả về refreshToken mới (rotation), lưu lại
+        if (data.refreshToken) {
+          localStorage.setItem('nihongo_refresh_token', data.refreshToken);
+        }
+        return data.accessToken;
+      } catch (error) {
+        if (error.message === "Refresh token expired" || error.message === "No refresh token available") {
+          logout();
+          messageApi.warning({
+            content: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!',
+            duration: 4,
+            style: { marginTop: '10vh' }
+          });
+        }
+        throw error;
+      } finally {
+        // Reset lock sau khi xong dù thành công hay thất bại
+        refreshingPromise = null;
+      }
+    })();
+
+    return refreshingPromise;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const fetchWithAuth = useCallback(async (url, options = {}) => {
     let token = localStorage.getItem('nihongo_token');
 
     const headers = {
@@ -261,7 +282,8 @@ export const AuthProvider = ({ children }) => {
     }
 
     return response;
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshAccessToken]);
 
   const value = {
     currentUser,

@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Service
 public class RefreshTokenService {
-    private final Long refreshTokenDurationMs = 604800000L; // 7 days
+    private final Long refreshTokenDurationMs = 2592000000L; // 30 days
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
@@ -29,12 +29,15 @@ public class RefreshTokenService {
         refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
         refreshToken.setToken(UUID.randomUUID().toString());
 
-        // Remove old tokens for the user to keep the table clean
-        refreshTokenRepository.deleteByUser(refreshToken.getUser());
-        refreshTokenRepository.flush(); // Ensure deletion happens before insertion
-
+        // Note: We no longer delete all tokens for the user here to support multi-device login.
+        
         refreshToken = refreshTokenRepository.save(refreshToken);
         return refreshToken;
+    }
+
+    @Transactional
+    public void deleteToken(RefreshToken token) {
+        refreshTokenRepository.delete(token);
     }
 
     public Optional<RefreshToken> findByToken(String token) {

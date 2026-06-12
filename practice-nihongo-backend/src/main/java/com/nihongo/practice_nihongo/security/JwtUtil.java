@@ -19,7 +19,7 @@ public class JwtUtil {
     private final String secretString = "antigravity_nihongo_secret_key_fixed_minimum_256_bits_for_security_hs256";
     private final Key key = Keys.hmacShaKeyFor(secretString.getBytes());
 
-    private final long jwtExpirationMs = 1800000; 
+    private final long jwtExpirationMs = 86400000; 
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);

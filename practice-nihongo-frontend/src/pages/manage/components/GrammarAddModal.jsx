@@ -152,7 +152,8 @@ export default function GrammarAddModal({
               g.structure.trim() === item.structure.trim()
            );
         }
-        return { ...item, selected: !isDuplicate, isDuplicate };
+        // Mỗi item được khởi tạo với day riêng (default = formData.day hiện tại)
+        return { ...item, selected: !isDuplicate, isDuplicate, day: formData.day || 1 };
       });
       
       setPreviewData(mappedData);
@@ -182,7 +183,8 @@ export default function GrammarAddModal({
         level: item.level || 'N3',
         book: { id: parseInt(formData.bookId) },
         week: formData.week ? parseInt(formData.week) : null,
-        day: formData.day ? parseInt(formData.day) : null
+        // Dùng day của từng item, không dùng formData.day chung
+        day: item.day ? parseInt(item.day) : null
       }));
 
       for (const item of payload) {
@@ -455,6 +457,7 @@ export default function GrammarAddModal({
                           <th className="p-4 font-bold text-slate-500 uppercase tracking-wider text-center">Cấu trúc</th>
                           <th className="p-4 font-bold text-slate-500 uppercase tracking-wider text-center">Ý nghĩa</th>
                           <th className="p-4 font-bold text-slate-500 uppercase tracking-wider text-center">Ví dụ</th>
+                          <th className="p-4 w-20 font-bold text-slate-500 uppercase tracking-wider text-center">Ngày</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -483,6 +486,20 @@ export default function GrammarAddModal({
                             <td className="p-4">
                               <div className="text-slate-700 dark:text-slate-300 line-clamp-1">{item.exampleSentence}</div>
                               <div className="text-slate-400 text-[10px] line-clamp-1 italic">{item.exampleMeaning}</div>
+                            </td>
+                            <td className="p-4 text-center">
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.day ?? 1}
+                                onChange={(e) => {
+                                  const newData = [...previewData];
+                                  const val = parseInt(e.target.value);
+                                  newData[idx] = { ...newData[idx], day: isNaN(val) || val < 1 ? 1 : val };
+                                  setPreviewData(newData);
+                                }}
+                                className="w-14 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-center outline-none focus:border-black dark:focus:border-white font-bold transition-colors"
+                              />
                             </td>
                           </tr>
                         ))}

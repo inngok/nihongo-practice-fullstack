@@ -179,8 +179,23 @@ export default function KanjiAddModal({
       });
       if (!res.ok) throw new Error('AI processing failed');
       const data = await res.json();
-      setPreviewData(data.map(item => ({ ...item, selected: true })));
-      messageApi.success('Đã phân tích xong Hán tự!');
+      const weekInt = formData.week ? parseInt(formData.week) : null;
+      const bookIdInt = parseInt(selectedBookId);
+      const mappedData = data.map(item => {
+        const isDuplicate = kanjis?.some(k =>
+          k.character?.trim() === item.character?.trim() &&
+          (k.book?.id === bookIdInt || k.bookId === bookIdInt) &&
+          (weekInt === null || k.week === weekInt)
+        ) ?? false;
+        return { ...item, selected: !isDuplicate, isDuplicate };
+      });
+      setPreviewData(mappedData);
+      const dupCount = mappedData.filter(i => i.isDuplicate).length;
+      if (dupCount > 0) {
+        messageApi.warning(`Đã phân tích xong! Phát hiện ${dupCount} chữ Hán đã tồn tại (bỏ chọn sẵn).`);
+      } else {
+        messageApi.success('Đã phân tích xong Hán tự!');
+      }
     } catch (err) {
       messageApi.error('Lỗi khi xử lý hàng loạt: ' + err.message);
     } finally {
@@ -445,7 +460,7 @@ export default function KanjiAddModal({
                       </thead>
                       <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                         {previewData.map((item, idx) => (
-                          <tr key={idx} className="hover:bg-white dark:hover:bg-slate-900 transition-colors">
+                          <tr key={idx} className={`hover:bg-white dark:hover:bg-slate-900 transition-colors ${item.isDuplicate ? 'bg-rose-50/60 dark:bg-rose-950/20' : ''}`}>
                             <td className="p-4 text-center">
                               <input type="checkbox" checked={item.selected} onChange={() => {
                                 const newData = [...previewData];
@@ -454,7 +469,12 @@ export default function KanjiAddModal({
                               }} className="w-4 h-4 rounded border-slate-300 accent-black dark:accent-white" />
                             </td>
                             <td className="p-4 text-center">
-                              <div className="font-bold text-slate-900 dark:text-white text-2xl">{item.character}</div>
+                              <div className="flex items-center justify-center gap-2">
+                                <div className="font-bold text-slate-900 dark:text-white text-2xl">{item.character}</div>
+                                {item.isDuplicate && (
+                                  <span className="text-[8px] font-black uppercase bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded border border-rose-200 leading-tight">Đã có</span>
+                                )}
+                              </div>
                               <div className="text-slate-400 italic text-[10px]">{item.meaning}</div>
                             </td>
                             <td className="p-4 text-center font-black text-black dark:text-white uppercase tracking-widest">{item.hanviet}</td>
@@ -491,7 +511,9 @@ export default function KanjiAddModal({
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Bài (Week):</span>
                   <input
                     type="number"
+                    name="week"
                     min="1"
+                    placeholder="--"
                     value={formData.week}
                     onChange={handleInputChange}
                     className="w-12 bg-transparent outline-none text-xs font-bold text-center text-slate-700 dark:text-slate-300"
@@ -502,7 +524,9 @@ export default function KanjiAddModal({
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Ngày (Day):</span>
                   <input
                     type="number"
+                    name="day"
                     min="1"
+                    placeholder="--"
                     value={formData.day}
                     onChange={handleInputChange}
                     className="w-12 bg-transparent outline-none text-xs font-bold text-center text-slate-700 dark:text-slate-300"

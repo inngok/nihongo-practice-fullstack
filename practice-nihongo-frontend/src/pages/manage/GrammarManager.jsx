@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import grammarService from '../../api/grammarService';
 import bookService from '../../api/bookService';
-import { Modal, message, Select, Pagination } from 'antd';
+import { Modal, message, Pagination } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, FilterOutlined, ThunderboltOutlined, SearchOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
@@ -72,6 +72,13 @@ export default function GrammarManager() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
   const [bulkUpdateData, setBulkUpdateData] = useState({ week: '', day: '', bookId: '' });
+
+  // Drag-and-drop reorder state
+  const [draggedId, setDraggedId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
+  const [manualOrder, setManualOrder] = useState([]); // array of IDs in display order
+  const [hasUnsavedOrder, setHasUnsavedOrder] = useState(false);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -185,6 +192,23 @@ export default function GrammarManager() {
     return result;
   }, [grammars, selectedBookId, selectedLesson, showDuplicatesOnly]);
 
+  // Apply manual order to filtered grammars
+  const orderedGrammars = React.useMemo(() => {
+    if (manualOrder.length === 0) return filteredGrammars;
+    const idToGrammar = Object.fromEntries(filteredGrammars.map(g => [g.id, g]));
+    const ordered = manualOrder.map(id => idToGrammar[id]).filter(Boolean);
+    // append any items not yet in manualOrder (e.g. newly loaded)
+    const inOrder = new Set(manualOrder);
+    const rest = filteredGrammars.filter(g => !inOrder.has(g.id));
+    return [...ordered, ...rest];
+  }, [manualOrder, filteredGrammars]);
+
+  // Reset manual order when filters change
+  React.useEffect(() => {
+    setManualOrder(filteredGrammars.map(g => g.id));
+    setHasUnsavedOrder(false);
+  }, [filteredGrammars.length, selectedBookId, selectedLesson, searchTerm, showDuplicatesOnly]);
+
   const uniqueLessons = React.useMemo(() => {
     let data = grammars || [];
     if (selectedBookId && selectedBookId !== "") {
@@ -234,6 +258,62 @@ export default function GrammarManager() {
     setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
+  };
+
+  // --- Drag and Drop Handlers ---
+  const handleDragStart = (e, id) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+  };
+
+  const handleDragOver = (e, id) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (id !== draggedId) setDragOverId(id);
+  };
+
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+    setManualOrder(prev => {
+      const arr = [...prev];
+      const fromIdx = arr.indexOf(draggedId);
+      const toIdx = arr.indexOf(targetId);
+      if (fromIdx === -1 || toIdx === -1) return prev;
+      arr.splice(fromIdx, 1);
+      arr.splice(toIdx, 0, draggedId);
+      return arr;
+    });
+    setHasUnsavedOrder(true);
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
+  const handleSaveOrder = async () => {
+    setIsSavingOrder(true);
+    try {
+      await Promise.all(
+        manualOrder.map((id, index) =>
+          grammarService.update(id, { sortOrder: index + 1 })
+        )
+      );
+      messageApi.success('Đã lưu thứ tự thành công!');
+      setHasUnsavedOrder(false);
+    } catch (err) {
+      messageApi.error('Lỗi khi lưu thứ tự!');
+    } finally {
+      setIsSavingOrder(false);
+    }
   };
 
   const handleBulkDelete = () => {
@@ -418,76 +498,74 @@ export default function GrammarManager() {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center gap-4 mb-8 p-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl">
-          <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 min-w-[120px]">
-            <FilterOutlined className="text-sm" />
-            <span className="text-sm font-semibold">Bộ lọc nhanh:</span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative">
+        <div className="flex flex-col gap-3 mb-8 p-5 bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-2xl">
+          {/* Row 1: Search + Duplicate controls */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[200px] max-w-xs">
+              <SearchOutlined className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 text-xs" />
               <input
                 type="text"
-                placeholder="Tìm kiếm cấu trúc, ý nghĩa..."
+                placeholder="Tìm cấu trúc, ý nghĩa..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                className="pl-9 pr-4 py-2 w-64 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200 dark:focus:ring-slate-700 transition-all text-slate-700 dark:text-slate-200 placeholder-slate-400"
+                className="w-full pl-8 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:border-black dark:focus:border-white transition-all text-slate-700 dark:text-slate-200 placeholder:text-slate-300 dark:placeholder:text-slate-600"
               />
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                <SearchOutlined />
-              </div>
             </div>
+
             <button
               onClick={() => { setShowDuplicatesOnly(!showDuplicatesOnly); setCurrentPage(1); }}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors border ${showDuplicatesOnly ? 'bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-900/30 dark:border-rose-800' : 'bg-transparent border-slate-200 text-slate-500 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800'}`}
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border whitespace-nowrap ${
+                showDuplicatesOnly
+                  ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:border-slate-400 dark:hover:border-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+              }`}
             >
-              Chỉ hiện bản trùng
+              {showDuplicatesOnly ? '✓ ' : ''}Chỉ hiện trùng
             </button>
+
             <button
               onClick={handleCleanDuplicates}
               disabled={isCleaning}
-              className="px-4 py-2 rounded-xl text-sm font-bold transition-colors border bg-rose-500 text-white hover:bg-rose-600 border-rose-500 shadow-sm"
+              className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:border-rose-300 dark:hover:border-rose-800 hover:text-rose-500 dark:hover:text-rose-400 disabled:opacity-40 whitespace-nowrap"
             >
-              {isCleaning ? 'Đang dọn dẹp...' : 'Dọn dẹp bản trùng'}
+              {isCleaning ? 'Đang dọn...' : '⌫ Dọn bản trùng'}
             </button>
           </div>
 
-          <Select
-            value={selectedBookId}
-            onChange={(value) => { setSelectedBookId(value); setSelectedLesson(''); setCurrentPage(1); }}
-            placeholder="Tất cả giáo trình"
-            className="w-72 custom-select text-sm font-semibold"
-            variant="borderless"
-            classNames={{
-              popup: 'custom-select-popup'
-            }}
-            options={[
-              { value: '', label: 'Tất cả giáo trình' },
-              ...books.map(b => ({ value: b.id.toString(), label: b.title }))
-            ]}
-          />
-          <Select
-            value={selectedLesson}
-            onChange={(value) => { setSelectedLesson(value); setCurrentPage(1); }}
-            placeholder="Tất cả bài"
-            className="w-40 custom-select text-sm font-semibold"
-            variant="borderless"
-            classNames={{
-              popup: 'custom-select-popup'
-            }}
-            options={[
-              { value: '', label: 'Tất cả bài' },
-              ...uniqueLessons.map(l => ({ value: l.toString(), label: `Bài ${l}` }))
-            ]}
-          />
-          {(selectedBookId || selectedLesson || showDuplicatesOnly || searchTerm) && (
-            <button
-              onClick={() => { setSelectedBookId(''); setSelectedLesson(''); setShowDuplicatesOnly(false); setSearchTerm(''); }}
-              className="px-3 py-1.5 text-sm font-semibold text-slate-400 hover:text-red-500 transition-colors"
+          {/* Row 2: Book + Lesson selects */}
+          <div className="flex flex-wrap items-center gap-2">
+            <FilterOutlined className="text-slate-300 dark:text-slate-700 text-[11px]" />
+            <select
+              value={selectedBookId}
+              onChange={(e) => { setSelectedBookId(e.target.value); setSelectedLesson(''); setCurrentPage(1); }}
+              className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:border-black dark:focus:border-white transition-all cursor-pointer"
             >
-              Xóa lọc
-            </button>
-          )}
+              <option value="">Tất cả giáo trình</option>
+              {books.map(b => <option key={b.id} value={b.id.toString()}>{b.title}</option>)}
+            </select>
+
+            <select
+              value={selectedLesson}
+              onChange={(e) => { setSelectedLesson(e.target.value); setCurrentPage(1); }}
+              className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:border-black dark:focus:border-white transition-all cursor-pointer"
+            >
+              <option value="">Tất cả bài</option>
+              {uniqueLessons.map(l => <option key={l} value={l.toString()}>Bài {l}</option>)}
+            </select>
+
+            {(selectedBookId || selectedLesson || showDuplicatesOnly || searchTerm) && (
+              <button
+                onClick={() => { setSelectedBookId(''); setSelectedLesson(''); setShowDuplicatesOnly(false); setSearchTerm(''); }}
+                className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-300 dark:text-slate-700 hover:text-red-400 dark:hover:text-red-400 transition-colors"
+              >
+                ✕ Xóa lọc
+              </button>
+            )}
+
+            <span className="ml-auto text-[10px] font-black text-slate-300 dark:text-slate-700 uppercase tracking-widest">
+              {filteredGrammars.length} cấu trúc
+            </span>
+          </div>
         </div>
 
         {loading ? (
@@ -499,11 +577,14 @@ export default function GrammarManager() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+                  <th className="px-4 py-4 w-8 text-center">
+                    <span className="text-[9px] font-black text-slate-200 dark:text-slate-800 uppercase tracking-widest">#</span>
+                  </th>
                   <th className="px-6 py-4 w-10">
                     <input
                       type="checkbox"
                       onChange={handleSelectAll}
-                      checked={selectedIds.length === filteredGrammars.length && filteredGrammars.length > 0}
+                      checked={selectedIds.length === orderedGrammars.length && orderedGrammars.length > 0}
                       className="w-4 h-4 rounded border-slate-200 dark:border-slate-800 text-black dark:text-white focus:ring-0 cursor-pointer"
                     />
                   </th>
@@ -516,9 +597,32 @@ export default function GrammarManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-850">
-                {filteredGrammars.length > 0 ? (
-                  filteredGrammars.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((item) => (
-                    <tr key={item.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors group ${selectedIds.includes(item.id) ? 'bg-slate-50/80 dark:bg-slate-850/50' : ''}`}>
+                {orderedGrammars.length > 0 ? (
+                  orderedGrammars.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((item) => (
+                    <tr
+                      key={item.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, item.id)}
+                      onDragOver={(e) => handleDragOver(e, item.id)}
+                      onDrop={(e) => handleDrop(e, item.id)}
+                      onDragEnd={handleDragEnd}
+                      className={`transition-colors group ${
+                        draggedId === item.id ? 'opacity-40' : ''
+                      } ${
+                        dragOverId === item.id ? 'border-t-2 border-black dark:border-white bg-slate-50/80 dark:bg-slate-850/50' : ''
+                      } ${
+                        selectedIds.includes(item.id) ? 'bg-slate-50/80 dark:bg-slate-850/50' : 'hover:bg-slate-50/50 dark:hover:bg-slate-850/30'
+                      }`}
+                    >
+                      {/* Drag Handle */}
+                      <td className="px-4 py-5 text-center w-8">
+                        <span
+                          className="cursor-grab active:cursor-grabbing text-slate-200 dark:text-slate-700 hover:text-slate-400 dark:hover:text-slate-500 transition-colors select-none text-base leading-none"
+                          title="Kéo để sắp xếp thứ tự"
+                        >
+                          ⠿
+                        </span>
+                      </td>
                       <td className="px-6 py-5">
                         <input
                           type="checkbox"
@@ -582,7 +686,7 @@ export default function GrammarManager() {
               </tbody>
             </table>
 
-            {filteredGrammars.length > 0 && (
+            {orderedGrammars.length > 0 && (
               <div className="flex justify-end p-6 border-t border-slate-100 dark:border-slate-800">
                 <Pagination
                   current={currentPage}
@@ -595,8 +699,32 @@ export default function GrammarManager() {
               </div>
             )}
           </div>
+
         )}
       </div>
+
+      {/* Floating Save Order Bar */}
+      {hasUnsavedOrder && (
+        <div className="fixed bottom-10 right-10 z-[500] animate-in slide-in-from-bottom-5 duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-4">
+            <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Chưa lưu thứ tự</span>
+            <button
+              onClick={() => { setManualOrder(filteredGrammars.map(g => g.id)); setHasUnsavedOrder(false); }}
+              className="text-[10px] font-black uppercase tracking-widest text-slate-300 dark:text-slate-700 hover:text-slate-500 transition-colors"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handleSaveOrder}
+              disabled={isSavingOrder}
+              className="px-5 py-2 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:opacity-80 transition-all disabled:opacity-50"
+            >
+              {isSavingOrder ? 'Đang lưu...' : 'Lưu thứ tự'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Floating Bulk Actions Bar */}
       {selectedIds.length > 0 && (
