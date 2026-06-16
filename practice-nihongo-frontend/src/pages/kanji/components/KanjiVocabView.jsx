@@ -56,7 +56,7 @@ export default function KanjiVocabView({
                 </span>
 
                 {/* Main vocab word */}
-                <h2 className="text-5xl sm:text-6xl font-kanji font-bold text-slate-900 dark:text-white mb-4 leading-none">
+                <h2 className="text-7xl sm:text-8xl font-kanji font-bold text-slate-900 dark:text-white mb-4 leading-none">
                   {kanjiVocabs[vocabIndex].word}
                 </h2>
 

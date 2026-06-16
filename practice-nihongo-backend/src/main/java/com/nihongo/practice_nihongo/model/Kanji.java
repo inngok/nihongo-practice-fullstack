@@ -24,6 +24,7 @@ public class Kanji {
     private Integer week;
     private Integer day;
     private Integer page;
+    private Integer sortOrder;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "book_id")
@@ -66,6 +67,8 @@ public class Kanji {
     public void setDay(Integer day) { this.day = day; }
     public Integer getPage() { return page; }
     public void setPage(Integer page) { this.page = page; }
+    public Integer getSortOrder() { return sortOrder; }
+    public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
     public Book getBook() { return book; }
     public void setBook(Book book) { this.book = book; }
 

@@ -76,6 +76,13 @@ export default function KanjiManager() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
+  // Drag-and-drop reorder state
+  const [draggedId, setDraggedId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
+  const [manualOrder, setManualOrder] = useState([]); 
+  const [hasUnsavedOrder, setHasUnsavedOrder] = useState(false);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
+
 
 
   useEffect(() => {
@@ -159,6 +166,22 @@ export default function KanjiManager() {
     return result;
   }, [kanjis, selectedBookId, selectedLesson, showDuplicatesOnly]);
 
+  // Apply manual order to filtered kanjis
+  const orderedKanjis = React.useMemo(() => {
+    if (manualOrder.length === 0) return filteredKanjis;
+    const idToKanji = Object.fromEntries(filteredKanjis.map(k => [k.id, k]));
+    const ordered = manualOrder.map(id => idToKanji[id]).filter(Boolean);
+    const inOrder = new Set(manualOrder);
+    const rest = filteredKanjis.filter(k => !inOrder.has(k.id));
+    return [...ordered, ...rest];
+  }, [manualOrder, filteredKanjis]);
+
+  // Reset manual order when filters change
+  React.useEffect(() => {
+    setManualOrder(filteredKanjis.map(k => k.id));
+    setHasUnsavedOrder(false);
+  }, [filteredKanjis.length, selectedBookId, selectedLesson, showDuplicatesOnly]);
+
   const uniqueLessons = React.useMemo(() => {
     let data = kanjis || [];
     if (selectedBookId && selectedBookId !== "") {
@@ -201,6 +224,62 @@ export default function KanjiManager() {
       setSelectedIds(filteredKanjis.map(k => k.id));
     } else {
       setSelectedIds([]);
+    }
+  };
+
+  // --- Drag and Drop Handlers ---
+  const handleDragStart = (e, id) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', id);
+  };
+
+  const handleDragOver = (e, id) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (id !== draggedId) setDragOverId(id);
+  };
+
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) {
+      setDraggedId(null);
+      setDragOverId(null);
+      return;
+    }
+    setManualOrder(prev => {
+      const arr = [...prev];
+      const fromIdx = arr.indexOf(draggedId);
+      const toIdx = arr.indexOf(targetId);
+      if (fromIdx === -1 || toIdx === -1) return prev;
+      arr.splice(fromIdx, 1);
+      arr.splice(toIdx, 0, draggedId);
+      return arr;
+    });
+    setHasUnsavedOrder(true);
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
+  const handleSaveOrder = async () => {
+    setIsSavingOrder(true);
+    try {
+      await Promise.all(
+        manualOrder.map((id, index) =>
+          kanjiService.update(id, { sortOrder: index + 1 })
+        )
+      );
+      messageApi.success('Đã lưu thứ tự thành công!');
+      setHasUnsavedOrder(false);
+    } catch (err) {
+      messageApi.error('Lỗi khi lưu thứ tự!');
+    } finally {
+      setIsSavingOrder(false);
     }
   };
 
@@ -473,11 +552,14 @@ export default function KanjiManager() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+                  <th className="px-4 py-4 w-8 text-center">
+                    <span className="text-[9px] font-black text-slate-200 dark:text-slate-800 uppercase tracking-widest">#</span>
+                  </th>
                   <th className="px-6 py-4 w-10">
                     <input
                       type="checkbox"
                       onChange={handleSelectAll}
-                      checked={selectedIds.length === filteredKanjis.length && filteredKanjis.length > 0}
+                      checked={selectedIds.length === orderedKanjis.length && orderedKanjis.length > 0}
                       className="w-4 h-4 rounded border-slate-200 dark:border-slate-800 text-black dark:text-white focus:ring-0 cursor-pointer"
                     />
                   </th>
@@ -491,8 +573,28 @@ export default function KanjiManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-850">
-                {filteredKanjis.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((item) => (
-                  <tr key={item.id} className={`hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors group ${selectedIds.includes(item.id) ? 'bg-slate-50/80 dark:bg-slate-850/50' : ''}`}>
+                {orderedKanjis.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((item) => (
+                  <tr 
+                    key={item.id} 
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, item.id)}
+                    onDragOver={(e) => handleDragOver(e, item.id)}
+                    onDrop={(e) => handleDrop(e, item.id)}
+                    onDragEnd={handleDragEnd}
+                    className={`hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors group ${
+                        draggedId === item.id ? 'opacity-40' : ''
+                      } ${
+                        dragOverId === item.id ? 'border-t-2 border-black dark:border-white bg-slate-50/80 dark:bg-slate-850/50' : ''
+                      } ${selectedIds.includes(item.id) ? 'bg-slate-50/80 dark:bg-slate-850/50' : ''}`}>
+                    {/* Drag Handle */}
+                    <td className="px-4 py-5 text-center w-8">
+                      <span
+                        className="cursor-grab active:cursor-grabbing text-slate-200 dark:text-slate-700 hover:text-slate-400 dark:hover:text-slate-500 transition-colors select-none text-base leading-none"
+                        title="Kéo để sắp xếp thứ tự"
+                      >
+                        ⠿
+                      </span>
+                    </td>
                     <td className="px-6 py-5">
                       <input
                         type="checkbox"
@@ -557,7 +659,7 @@ export default function KanjiManager() {
               <Pagination
                 current={currentPage}
                 pageSize={pageSize}
-                total={filteredKanjis.length}
+                total={orderedKanjis.length}
                 onChange={(page, size) => { setCurrentPage(page); setPageSize(size); }}
                 showSizeChanger
                 showTotal={(total) => `Tổng số ${total} Hán tự`}
@@ -566,6 +668,29 @@ export default function KanjiManager() {
           </div>
         )}
       </div>
+
+      {/* Floating Save Order Bar */}
+      {hasUnsavedOrder && (
+        <div className="fixed bottom-10 right-10 z-[500] animate-in slide-in-from-bottom-5 duration-300">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-4">
+            <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Chưa lưu thứ tự</span>
+            <button
+              onClick={() => { setManualOrder(filteredKanjis.map(g => g.id)); setHasUnsavedOrder(false); }}
+              className="text-[10px] font-black uppercase tracking-widest text-slate-300 dark:text-slate-700 hover:text-slate-500 transition-colors"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={handleSaveOrder}
+              disabled={isSavingOrder}
+              className="px-5 py-2 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:opacity-80 transition-all disabled:opacity-50"
+            >
+              {isSavingOrder ? 'Đang lưu...' : 'Lưu thứ tự'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Floating Bulk Actions Bar */}
       {selectedIds.length > 0 && (
