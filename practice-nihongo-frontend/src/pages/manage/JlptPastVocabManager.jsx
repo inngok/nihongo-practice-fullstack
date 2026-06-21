@@ -18,6 +18,17 @@ export default function JlptPastVocabManager() {
     const file = e.target.files[0];
     if (!file) return;
 
+    // Tự động nhận diện Tháng & Năm từ tên file
+    const fileStr = file.name.toLowerCase();
+    const yearMatch = fileStr.match(/20\d{2}/);
+    if (yearMatch) setExamYear(yearMatch[0]);
+
+    if (/(\bt12\b|\bthang ?12\b|\btháng ?12\b|\b12\b|_12_|-12-|12-|-12|_12)/.test(fileStr)) {
+       setExamMonth('12');
+    } else if (/(\bt0?7\b|\bthang ?0?7\b|\btháng ?0?7\b|\b0?7\b|_0?7_|-0?7-|0?7-|-0?7|_0?7)/.test(fileStr)) {
+       setExamMonth('7');
+    }
+
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
@@ -31,15 +42,24 @@ export default function JlptPastVocabManager() {
           return messageApi.warning('File không có dữ liệu');
         }
 
-        // Standardize headers to support Vietnamese & English forms (e.g. from the uploaded image)
-        const normalizedData = data.map(item => {
-            const word = item.word || item['Từ vựng'] || item.Từ_vựng || item.Tuvung || item.character || item.Word || item.KANJI || item.Kanji || '';
-            const kanji = item.kanji || item['Hán tự'] || item.Hán_tự || item.Hantu || item['CÁCH ĐỌC'] || item['Cách đọc'] || item.reading || item.Reading || '';
-            const meaning = item.meaning || item['Nghĩa tiếng Việt'] || item.Nghĩa || item.Nghia || item['Ý NGHĨA'] || item['Ý nghĩa'] || item.Meaning || '';
+        // Standardize headers to support Vietnamese & English forms & trailing spaces
+        const normalizedData = data.map(rawItem => {
+            const item = {};
+            for (let k in rawItem) {
+               item[k.trim().toLowerCase()] = rawItem[k];
+            }
+            
+            const word = item['từ vựng'] || item['tuvung'] || item['character'] || item['word'] || item['kanji'] || item['từ'] || '';
+            const kanji = item['hán tự'] || item['hantu'] || item['cách đọc'] || item['reading'] || item['âm đọc'] || item['cách_đọc'] || '';
+            const meaning = item['ý nghĩa'] || item['nghĩa tiếng việt'] || item['nghĩa'] || item['meaning'] || item['nghia'] || '';
+            
+            // Nếu word (Kanji) trống nhưng có cách đọc (từ chỉ có Hiragana), lấy luôn cách đọc làm word
+            const finalWord = String(word).trim() || String(kanji).trim();
+            const finalKanji = String(kanji).trim();
             
             return { 
-                word: String(word).trim(), 
-                kanji: String(kanji).trim(), 
+                word: finalWord, 
+                kanji: finalKanji, 
                 meaning: String(meaning).trim() 
             };
         }).filter(item => item.word);

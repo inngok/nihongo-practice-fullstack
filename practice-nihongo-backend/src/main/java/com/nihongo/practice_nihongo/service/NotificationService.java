@@ -72,4 +72,19 @@ public class NotificationService {
         }
         emitters.removeAll(deadEmitters);
     }
+
+    public void broadcastDataChanged(String entityType) {
+        log.info("Broadcasting DATA_CHANGED for {}", entityType);
+        List<SseEmitter> deadEmitters = new ArrayList<>();
+        for (SseEmitter emitter : emitters) {
+            try {
+                emitter.send(SseEmitter.event()
+                        .name("DATA_CHANGED")
+                        .data(entityType));
+            } catch (IOException e) {
+                deadEmitters.add(emitter);
+            }
+        }
+        emitters.removeAll(deadEmitters);
+    }
 }

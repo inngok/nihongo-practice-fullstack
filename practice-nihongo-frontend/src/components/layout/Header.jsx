@@ -14,7 +14,7 @@ export default function Header() {
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
 
   const notificationDropdown = (
-    <div className="w-[340px] md:w-[400px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-3xl shadow-2xl p-4 flex flex-col gap-3">
+    <div className="w-[300px] sm:w-[340px] md:w-[400px] -mr-2 sm:mr-0 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-3xl shadow-2xl p-3 sm:p-4 flex flex-col gap-3">
       <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
         <span className="font-extrabold text-sm text-slate-900 dark:text-slate-50 uppercase tracking-wider">
           Thông báo ({unreadCount})
@@ -54,16 +54,16 @@ export default function Header() {
                   navigate(`/news/${notif.id}`);
                 }
               }}
-              className={`flex gap-3.5 items-center p-3 rounded-2xl cursor-pointer transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-850/80 border border-transparent ${!notif.read ? 'bg-slate-100/40 dark:bg-slate-800/40 border-slate-200/50 dark:border-slate-800/40 shadow-sm' : ''}`}
+              className={`flex gap-2.5 sm:gap-3.5 items-center p-2.5 sm:p-3 rounded-2xl cursor-pointer transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-850/80 border border-transparent ${!notif.read ? 'bg-slate-100/40 dark:bg-slate-800/40 border-slate-200/50 dark:border-slate-800/40 shadow-sm' : ''}`}
             >
               {notif.imageUrl ? (
                 <img 
                   src={notif.imageUrl} 
                   alt="" 
-                  className="w-12 h-12 object-cover rounded-xl shrink-0 border border-slate-100 dark:border-slate-800/40"
+                  className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-xl shrink-0 border border-slate-100 dark:border-slate-800/40"
                 />
               ) : (
-                <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50 flex items-center justify-center rounded-xl shrink-0 text-lg">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50 flex items-center justify-center rounded-xl shrink-0 text-base sm:text-lg">
                   📰
                 </div>
               )}
@@ -94,7 +94,7 @@ export default function Header() {
           <div className="md:hidden">
             <Dropdown dropdownRender={() => notificationDropdown} trigger={['click']} placement="bottomRight">
               <div className="relative w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer text-slate-650 dark:text-slate-350 transition-all select-none shadow-sm">
-                <Badge count={unreadCount} size="small" offset={[2, -2]}>
+                <Badge count={unreadCount} size="small" offset={[2, -2]} overflowCount={10}>
                   <BellOutlined className="text-base" />
                 </Badge>
               </div>
@@ -171,14 +171,9 @@ export default function Header() {
                 </div>
               </Dropdown>
             ) : (
-              <>
-                <Link to="/login" className="text-slate-400 hover:text-black transition-colors text-[10px] font-black uppercase tracking-widest py-1 px-2">
-                  Đăng nhập
-                </Link>
-                <Link to="/register" className="bg-black text-white px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors text-[10px] font-black uppercase tracking-widest">
-                  Đăng ký
-                </Link>
-              </>
+              <Link to="/login" className="bg-black text-white px-3 py-1.5 rounded-lg hover:bg-slate-800 transition-colors text-[10px] font-black uppercase tracking-widest">
+                Đăng nhập
+              </Link>
             )}
           </div>
         </div>
@@ -210,7 +205,7 @@ export default function Header() {
       <div className="hidden md:flex flex-1 items-center justify-end gap-4 text-xs font-bold uppercase tracking-widest">
         <Dropdown dropdownRender={() => notificationDropdown} trigger={['click']} placement="bottomRight">
           <div className="relative w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer text-slate-655 dark:text-slate-355 transition-all select-none shadow-sm">
-            <Badge count={unreadCount} size="small" offset={[2, -2]}>
+            <Badge count={unreadCount} size="small" offset={[2, -2]} overflowCount={10}>
               <BellOutlined className="text-base" />
             </Badge>
           </div>
@@ -260,14 +255,9 @@ export default function Header() {
             </div>
           </Dropdown>
         ) : (
-          <>
-            <Link to="/login" className="text-slate-400 hover:text-black dark:hover:text-white transition-colors">
-              Đăng nhập
-            </Link>
-            <Link to="/register" className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors">
-              Đăng ký
-            </Link>
-          </>
+          <Link to="/login" className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors">
+            Đăng nhập
+          </Link>
         )}
       </div>
     </header>

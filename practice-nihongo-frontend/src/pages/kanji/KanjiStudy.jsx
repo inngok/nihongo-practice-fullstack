@@ -24,6 +24,14 @@ export default function KanjiStudy() {
     }
   }, [bookId]);
 
+  useEffect(() => {
+    const handleDataChanged = () => {
+      if (bookId) fetchKanji();
+    };
+    window.addEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
+    return () => window.removeEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
+  }, [bookId]);
+
   const fetchKanji = async () => {
     try {
       setLoading(true);

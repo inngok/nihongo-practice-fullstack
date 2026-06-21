@@ -100,12 +100,19 @@ public class AuthController {
 
         return refreshTokenService.findByToken(requestRefreshToken)
                 .map(refreshTokenService::verifyExpiration)
-                .map(RefreshToken::getUser)
-                .map(user -> {
+                .map(oldToken -> {
+                    User user = oldToken.getUser();
+                    
+                    // Xóa token cũ đã được sử dụng
+                    refreshTokenService.deleteToken(oldToken);
+
+                    // Tạo access token mới
                     UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
                     String token = jwtUtil.generateToken(userDetails);
-                    return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
+                    // Tạo refresh token mới (rotation)
+                    RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user.getId());
+                    return ResponseEntity.ok(new TokenRefreshResponse(token, newRefreshToken.getToken()));
                 })
-                .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
+                .orElse(ResponseEntity.status(401).body(null));
     }
 }

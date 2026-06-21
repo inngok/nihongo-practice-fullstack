@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Card, Spin, Typography, Tag, Space, Alert, Button, message, Pagination } from 'antd';
-import { CalendarOutlined, ReadOutlined, ArrowRightOutlined, SyncOutlined } from '@ant-design/icons';
+import { Card, Spin, Typography, Tag, Space, Alert, Button, message, Pagination, Input, Select, Dropdown, DatePicker } from 'antd';
+import { CalendarOutlined, ReadOutlined, ArrowRightOutlined, SyncOutlined, CheckCircleOutlined, FormOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
 
@@ -13,11 +13,48 @@ export default function NewsList() {
   const [error, setError] = useState(null);
   const [crawling, setCrawling] = useState(false);
   const [crawlingHistory, setCrawlingHistory] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterDate, setFilterDate] = useState(null);
+  const [filterMonth, setFilterMonth] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get('page')) || 1;
   const pageSize = 12;
-  const { currentUser } = useAuth();
+  const { currentUser, fetchWithAuth } = useAuth();
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
+  const [readStatuses, setReadStatuses] = useState({});
+  const [noteStatuses, setNoteStatuses] = useState({});
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchWithAuth(`${API_BASE_URL}/progress/by-prefix?prefix=news_read_&t=${Date.now()}`)
+        .then(res => res.json())
+        .then(data => {
+           if (!Array.isArray(data)) return;
+           const map = {};
+           data.forEach(item => {
+             const newsId = item.progressKey.replace('news_read_', '');
+             const val = String(item.progressData).replace(/['"]/g, '');
+             map[newsId] = val === 'true';
+           });
+           setReadStatuses(map);
+        })
+        .catch(err => console.error(err));
+
+      fetchWithAuth(`${API_BASE_URL}/progress/by-prefix?prefix=news_note_&t=${Date.now()}`)
+        .then(res => res.json())
+        .then(data => {
+           if (!Array.isArray(data)) return;
+           const map = {};
+           data.forEach(item => {
+             const newsId = item.progressKey.replace('news_note_', '');
+             map[newsId] = !!item.progressData;
+           });
+           setNoteStatuses(map);
+        })
+        .catch(err => console.error(err));
+    }
+  }, [currentUser, fetchWithAuth]);
 
   const fetchNews = () => {
     setLoading(true);
@@ -57,12 +94,12 @@ export default function NewsList() {
     }
   };
 
-  const handleCrawlHistory = async () => {
+  const handleCrawlHistory = async (pages) => {
     setCrawlingHistory(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/news/crawl-history?pages=5`, { method: 'POST' });
+      const response = await fetch(`${API_BASE_URL}/news/crawl-history?pages=${pages}`, { method: 'POST' });
       if (response.ok) {
-        message.success('Đang lấy 5 trang báo cũ chạy ngầm. Quá trình này có thể tốn vài phút!');
+        message.success(`Đang lấy ${pages} trang báo cũ chạy ngầm. Quá trình này có thể tốn vài phút!`);
       } else {
         message.error('Lỗi khi yêu cầu lấy báo cũ!');
       }
@@ -72,6 +109,13 @@ export default function NewsList() {
       setCrawlingHistory(false);
     }
   };
+
+  const historyItems = [
+    { key: '1', label: 'Lấy 1 trang (~1 ngày)' },
+    { key: '5', label: 'Lấy 5 trang (~5 ngày)' },
+    { key: '30', label: 'Lấy 30 trang (~1 tháng)' },
+    { key: '60', label: 'Lấy 60 trang (~2 tháng)' },
+  ];
 
 
 
@@ -86,6 +130,30 @@ export default function NewsList() {
       <Alert type="error" message={error} description="Đã có lỗi xảy ra khi kết nối máy chủ." showIcon />
     </div>
   );
+
+  const filteredNews = news.filter(article => {
+    if (searchTerm && !article.title.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    
+    if (filterDate) {
+      const articleDate = new Date(article.publishedAt);
+      const articleDateStr = `${articleDate.getFullYear()}-${String(articleDate.getMonth() + 1).padStart(2, '0')}-${String(articleDate.getDate()).padStart(2, '0')}`;
+      const targetDateStr = filterDate.format('YYYY-MM-DD');
+      if (articleDateStr !== targetDateStr) return false;
+    }
+
+    if (filterMonth) {
+      const articleDate = new Date(article.publishedAt);
+      const articleMonthStr = `${articleDate.getFullYear()}-${String(articleDate.getMonth() + 1).padStart(2, '0')}`;
+      const targetMonthStr = filterMonth.format('YYYY-MM');
+      if (articleMonthStr !== targetMonthStr) return false;
+    }
+
+    const isRead = currentUser && readStatuses[article.id];
+    if (filterStatus === 'unread' && isRead) return false;
+    if (filterStatus === 'read' && !isRead) return false;
+
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-24 pb-20 px-4 md:px-8 font-sans">
@@ -102,15 +170,23 @@ export default function NewsList() {
           <div className="mt-4 md:mt-0 flex flex-col sm:flex-row gap-2 w-full md:w-auto">
             {isAdmin && (
               <>
-                <Button
-                  type="default"
-                  icon={<SyncOutlined spin={crawlingHistory} />}
-                  onClick={handleCrawlHistory}
-                  loading={crawlingHistory}
-                  className="rounded-full px-6 h-10 font-bold border-slate-300 text-slate-700 hover:text-indigo-600 hover:border-indigo-600 shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto"
+                <Dropdown
+                  menu={{
+                    items: historyItems,
+                    onClick: (e) => handleCrawlHistory(parseInt(e.key))
+                  }}
+                  disabled={crawlingHistory}
+                  placement="bottomRight"
                 >
-                  Lấy báo cũ (5 trang)
-                </Button>
+                  <Button
+                    type="default"
+                    icon={<SyncOutlined spin={crawlingHistory} />}
+                    loading={crawlingHistory}
+                    className="rounded-full px-6 h-10 font-bold border-slate-300 text-slate-700 hover:text-indigo-600 hover:border-indigo-600 shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto"
+                  >
+                    Lấy báo cũ...
+                  </Button>
+                </Dropdown>
                 <Button
                   type="primary"
                   icon={<SyncOutlined spin={crawling} />}
@@ -125,36 +201,81 @@ export default function NewsList() {
           </div>
         </div>
 
-        {news.length === 0 ? (
+        <div className="flex flex-col sm:flex-row gap-4 mb-8 flex-wrap">
+          <Input 
+            prefix={<SearchOutlined className="text-slate-400 mr-1" />} 
+            placeholder="Tìm kiếm bài báo..." 
+            value={searchTerm}
+            onChange={e => { setSearchTerm(e.target.value); setSearchParams({ page: 1 }); }}
+            className="rounded-[1rem] h-12 flex-1 shadow-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white min-w-[200px]"
+          />
+          <DatePicker
+            placeholder="Chọn ngày"
+            value={filterDate}
+            onChange={val => { setFilterDate(val); setFilterMonth(null); setSearchParams({ page: 1 }); }}
+            className="w-full sm:w-36 h-12 rounded-[1rem] shadow-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900"
+          />
+          <DatePicker
+            picker="month"
+            placeholder="Chọn tháng"
+            value={filterMonth}
+            onChange={val => { setFilterMonth(val); setFilterDate(null); setSearchParams({ page: 1 }); }}
+            className="w-full sm:w-36 h-12 rounded-[1rem] shadow-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900"
+          />
+          <Select
+            value={filterStatus}
+            onChange={val => { setFilterStatus(val); setSearchParams({ page: 1 }); }}
+            className="w-full sm:w-40 h-12 rounded-[1rem] [&>.ant-select-selector]:rounded-[1rem] [&>.ant-select-selector]:h-12 [&>.ant-select-selector]:items-center shadow-sm"
+            options={[
+              { value: 'all', label: 'Tất cả bài báo' },
+              { value: 'unread', label: 'Chưa đọc' },
+              { value: 'read', label: 'Đã đọc' },
+            ]}
+          />
+        </div>
+
+        {filteredNews.length === 0 ? (
           <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
             <ReadOutlined className="text-5xl text-slate-300 dark:text-slate-700 mb-4" />
-            <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300">Chưa có bài báo nào</h3>
+            <h3 className="text-xl font-bold text-slate-700 dark:text-slate-300">Không tìm thấy bài báo nào</h3>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {news.slice((currentPage - 1) * pageSize, currentPage * pageSize).map(article => (
+              {filteredNews.slice((currentPage - 1) * pageSize, currentPage * pageSize).map(article => {
+                const isRead = currentUser && readStatuses[article.id];
+                const hasNote = currentUser && noteStatuses[article.id];
+
+                return (
                 <Link to={`/news/${article.id}`} key={article.id} className="group flex">
                   <div className="flex flex-col w-full bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 overflow-hidden hover:shadow-[0_20px_50px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 transition-all duration-500">
                     <div className="relative h-56 w-full overflow-hidden bg-slate-200 dark:bg-slate-800">
                       {article.imageUrl ? (
-                        <div className="w-full h-full bg-slate-100 dark:bg-slate-900 flex items-center justify-center p-2">
-                          <img
-                            alt={article.title}
-                            src={article.imageUrl}
-                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
-                          />
-                        </div>
+                        <img
+                          alt={article.title}
+                          src={article.imageUrl}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <ReadOutlined className="text-5xl text-slate-400 dark:text-slate-600" />
                         </div>
                       )}
-                      <div className="absolute top-4 left-4">
-                        <span className="bg-white/90 backdrop-blur-md text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                      <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
+                        <span className="bg-white/90 backdrop-blur-md text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm w-fit">
                           N4 - N3
                         </span>
+                        {hasNote && (
+                          <span className="bg-amber-500/90 backdrop-blur-md text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1 w-fit">
+                            <FormOutlined /> Có ghi chú
+                          </span>
+                        )}
                       </div>
+                      {isRead && (
+                        <div className="absolute top-6 right-[-36px] w-[150px] bg-emerald-500 text-white text-[10px] font-black tracking-widest py-1.5 text-center shadow-lg rotate-45 flex items-center justify-center gap-1 z-10 pointer-events-none">
+                          <CheckCircleOutlined className="text-[10px]" /> ĐÃ ĐỌC
+                        </div>
+                      )}
                     </div>
 
                     <div className="p-6 md:p-8 flex flex-col flex-grow">
@@ -178,15 +299,15 @@ export default function NewsList() {
                     </div>
                   </div>
                 </Link>
-              ))}
+              )})}
             </div>
 
-            {news.length > pageSize && (
+            {filteredNews.length > pageSize && (
               <div className="flex justify-center mt-12 mb-8">
                 <Pagination
                   current={currentPage}
                   pageSize={pageSize}
-                  total={news.length}
+                  total={filteredNews.length}
                   onChange={(page) => {
                     setSearchParams({ page });
                     window.scrollTo({ top: 0, behavior: 'smooth' });

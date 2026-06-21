@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -48,5 +49,38 @@ public class UserProgressController {
         progressRepository.save(progress);
 
         return ResponseEntity.ok(Map.of("message", "Progress saved"));
+    }
+
+    @DeleteMapping("/{key}")
+    public ResponseEntity<?> deleteProgress(@PathVariable String key, Authentication auth) {
+        if (auth == null) return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
+        User user = userRepository.findByEmail(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).body(Map.of("message", "User not found"));
+
+        progressRepository.findByUserIdAndProgressKey(user.getId(), key).ifPresent(progressRepository::delete);
+        return ResponseEntity.ok(Map.of("message", "Progress deleted"));
+    }
+
+    // Dùng RequestParam thay PathVariable để tránh Spring suffix stripping (trailing _ hoặc . bị cắt)
+    @GetMapping("/by-prefix")
+    public ResponseEntity<?> getProgressByPrefix(@RequestParam String prefix, Authentication auth) {
+        if (auth == null) return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
+        User user = userRepository.findByEmail(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).body(Map.of("message", "User not found"));
+
+        List<UserProgress> result = progressRepository.findByUserIdAndProgressKeyStartingWith(user.getId(), prefix);
+        return ResponseEntity.ok(result);
+    }
+
+    // Giữ lại endpoint cũ để backward compat (redirect sang by-prefix)
+    @GetMapping("/prefix/{prefix}")
+    public ResponseEntity<?> getProgressByPrefixLegacy(@PathVariable String prefix, Authentication auth) {
+        if (auth == null) return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
+        User user = userRepository.findByEmail(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).body(Map.of("message", "User not found"));
+
+        // prefix ở đây có thể bị Spring cắt trailing _, nên thêm _ lại nếu cần
+        List<UserProgress> result = progressRepository.findByUserIdAndProgressKeyStartingWith(user.getId(), prefix);
+        return ResponseEntity.ok(result);
     }
 }

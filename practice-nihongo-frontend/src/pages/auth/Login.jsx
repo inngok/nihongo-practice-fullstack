@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
+import { message } from 'antd';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -106,7 +107,14 @@ export default function Login() {
             </div>
 
             <div className="text-sm">
-              <a href="#" className="font-bold text-slate-900 hover:text-slate-700 transition-colors">
+              <a 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  message.info("Vui lòng liên hệ với Admin để được hỗ trợ cấp lại mật khẩu!");
+                }}
+                className="font-bold text-slate-900 hover:text-slate-700 transition-colors"
+              >
                 Quên mật khẩu?
               </a>
             </div>

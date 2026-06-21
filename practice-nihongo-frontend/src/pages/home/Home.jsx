@@ -1,7 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 
 export default function Home() {
+  const [quickAccess, setQuickAccess] = useState(null);
+  const { currentUser, fetchWithAuth } = useAuth();
+  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
+
+  useEffect(() => {
+    // 1. Try local storage first for instant display
+    try {
+      const saved = localStorage.getItem('quickAccess');
+      if (saved) {
+        setQuickAccess(JSON.parse(saved));
+      }
+    } catch (e) {}
+
+    // 2. Sync from backend to support cross-device
+    if (currentUser) {
+      fetchWithAuth(`${API_BASE_URL}/progress/quickAccess`)
+        .then(res => res.json())
+        .then(resData => {
+          if (resData.data) {
+            try {
+              const parsed = JSON.parse(resData.data);
+              setQuickAccess(parsed);
+              localStorage.setItem('quickAccess', resData.data);
+            } catch(e) {}
+          }
+        }).catch(() => {});
+    }
+  }, [currentUser, fetchWithAuth]);
+
   return (
     <div className="w-full h-full flex-grow bg-white dark:bg-slate-950 flex flex-col items-center justify-center pt-32 pb-16 md:py-24 px-4 md:px-6 font-sans relative overflow-hidden transition-colors duration-300">
 
@@ -83,14 +114,16 @@ export default function Home() {
             Phân biệt Ngữ pháp
           </span>
         </Link>
-        <Link
-          to="/ai-chat"
-          className="group px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-[2rem] hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
-        >
-          <span className="text-[10px] md:text-[11px] font-black tracking-[0.3em] uppercase text-slate-500 dark:text-slate-400 group-hover:text-white dark:group-hover:text-black transition-colors">
-            Đàm thoại AI
-          </span>
-        </Link>
+        {isAdmin && (
+          <Link
+            to="/ai-chat"
+            className="group px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-[2rem] hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
+          >
+            <span className="text-[10px] md:text-[11px] font-black tracking-[0.3em] uppercase text-slate-500 dark:text-slate-400 group-hover:text-white dark:group-hover:text-black transition-colors">
+              Đàm thoại AI
+            </span>
+          </Link>
+        )}
         <Link
           to="/exam-jlpt"
           className="group px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-[2rem] hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
@@ -108,6 +141,28 @@ export default function Home() {
           </span>
         </Link>
       </div>
+
+      {/* Quick Access Floating Button */}
+      {quickAccess && (
+        <div className="fixed bottom-24 right-6 md:bottom-16 md:right-10 z-[100] animate-[fade-in_0.5s_ease-out,slide-in-from-bottom-4_0.5s_ease-out]">
+          <Link
+            to={quickAccess.url}
+            className="group flex items-center gap-4 bg-white dark:bg-slate-950 border-2 border-black dark:border-white py-2.5 pl-6 pr-2.5 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:scale-105 hover:-translate-y-1 transition-all duration-300"
+          >
+            <div className="flex flex-col">
+              <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-0.5">
+                TIẾP TỤC HỌC
+              </span>
+              <span className="text-[13px] font-bold text-black dark:text-white line-clamp-1 max-w-[160px] md:max-w-[200px]">
+                {quickAccess.title}
+              </span>
+            </div>
+            <div className="w-9 h-9 rounded-full bg-black dark:bg-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <span className="text-white dark:text-black text-[14px] font-black leading-none">→</span>
+            </div>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

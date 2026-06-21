@@ -32,6 +32,7 @@ public class Grammar {
 
     private Integer week;
     private Integer day;
+    private Integer sortOrder;
 
     @ManyToOne
     @JoinColumn(name = "book_id")
@@ -42,7 +43,7 @@ public class Grammar {
 
     public Grammar() {}
 
-    public Grammar(Long id, String structure, String meaning, String explanation, String exampleSentence, String exampleMeaning, String quizSentence, String level, Integer week, Integer day, Book book, Boolean publish) {
+    public Grammar(Long id, String structure, String meaning, String explanation, String exampleSentence, String exampleMeaning, String quizSentence, String level, Integer week, Integer day, Integer sortOrder, Book book, Boolean publish) {
         this.id = id;
         this.structure = structure;
         this.meaning = meaning;
@@ -53,6 +54,7 @@ public class Grammar {
         this.level = level;
         this.week = week;
         this.day = day;
+        this.sortOrder = sortOrder;
         this.book = book;
         this.publish = publish != null ? publish : true;
     }
@@ -78,6 +80,8 @@ public class Grammar {
     public void setWeek(Integer week) { this.week = week; }
     public Integer getDay() { return day; }
     public void setDay(Integer day) { this.day = day; }
+    public Integer getSortOrder() { return sortOrder; }
+    public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
     public Book getBook() { return book; }
     public void setBook(Book book) { this.book = book; }
     public Boolean getPublish() { return publish; }
@@ -94,6 +98,7 @@ public class Grammar {
         private String level;
         private Integer week;
         private Integer day;
+        private Integer sortOrder;
         private Book book;
         private Boolean publish = true;
 
@@ -107,11 +112,12 @@ public class Grammar {
         public GrammarBuilder level(String level) { this.level = level; return this; }
         public GrammarBuilder week(Integer week) { this.week = week; return this; }
         public GrammarBuilder day(Integer day) { this.day = day; return this; }
+        public GrammarBuilder sortOrder(Integer sortOrder) { this.sortOrder = sortOrder; return this; }
         public GrammarBuilder book(Book book) { this.book = book; return this; }
         public GrammarBuilder publish(Boolean publish) { this.publish = publish; return this; }
 
         public Grammar build() {
-            return new Grammar(id, structure, meaning, explanation, exampleSentence, exampleMeaning, quizSentence, level, week, day, book, publish);
+            return new Grammar(id, structure, meaning, explanation, exampleSentence, exampleMeaning, quizSentence, level, week, day, sortOrder, book, publish);
         }
     }
 

@@ -6,8 +6,10 @@ import com.nihongo.practice_nihongo.repository.KanjiRepository;
 import com.nihongo.practice_nihongo.repository.BookRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Sort;
 
 
 @Service
@@ -22,15 +24,24 @@ public class KanjiService {
     }
 
     public List<Kanji> getAllKanjis() {
-        return kanjiRepository.findAll();
+        Sort sort = Sort.by(Sort.Order.asc("book.id"), Sort.Order.asc("week"), Sort.Order.asc("day"), Sort.Order.asc("sortOrder"));
+        return kanjiRepository.findAll(sort);
     }
 
     public List<Kanji> getKanjisByBook(Long bookId) {
-        return kanjiRepository.findByBookId(bookId);
+        List<Kanji> list = kanjiRepository.findByBookId(bookId);
+        list.sort(Comparator.comparing(Kanji::getWeek, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Kanji::getDay, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Kanji::getSortOrder, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Kanji::getId, Comparator.nullsLast(Comparator.naturalOrder())));
+        return list;
     }
 
     public List<Kanji> getKanjisByBookWeekDay(Long bookId, Integer week, Integer day) {
-        return kanjiRepository.findByBookIdAndWeekAndDay(bookId, week, day);
+        List<Kanji> list = kanjiRepository.findByBookIdAndWeekAndDay(bookId, week, day);
+        list.sort(Comparator.comparing(Kanji::getSortOrder, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(Kanji::getId, Comparator.nullsLast(Comparator.naturalOrder())));
+        return list;
     }
 
     public Kanji getKanjiById(Long id) {
@@ -47,59 +58,53 @@ public class KanjiService {
 
     public List<Kanji> createKanjisBulk(List<Kanji> kanjis) {
         for (Kanji kanji : kanjis) {
-            Optional<Kanji> existingOpt = kanjiRepository.findByCharacter(kanji.getCharacter());
-            if (existingOpt.isPresent()) {
-                Kanji existing = existingOpt.get();
-                existing.setHanviet(kanji.getHanviet());
-                existing.setMeaning(kanji.getMeaning());
-                if (kanji.getKunyomi() != null) existing.setKunyomi(kanji.getKunyomi());
-                if (kanji.getOnyomi() != null) existing.setOnyomi(kanji.getOnyomi());
-                if (kanji.getExamples() != null) existing.setExamples(kanji.getExamples());
-                if (kanji.getWeek() != null) existing.setWeek(kanji.getWeek());
-                if (kanji.getDay() != null) existing.setDay(kanji.getDay());
-                if (kanji.getPage() != null) existing.setPage(kanji.getPage());
-                
-                if (kanji.getBook() != null && kanji.getBook().getId() != null) {
-                    Book book = bookRepository.findById(kanji.getBook().getId()).orElse(null);
-                    existing.setBook(book);
-                }
-        
+            kanjiRepository.findByCharacter(kanji.getCharacter()).ifPresentOrElse(existing -> {
+                Optional.ofNullable(kanji.getHanviet()).ifPresent(existing::setHanviet);
+                Optional.ofNullable(kanji.getMeaning()).ifPresent(existing::setMeaning);
+                Optional.ofNullable(kanji.getKunyomi()).ifPresent(existing::setKunyomi);
+                Optional.ofNullable(kanji.getOnyomi()).ifPresent(existing::setOnyomi);
+                Optional.ofNullable(kanji.getExamples()).ifPresent(existing::setExamples);
+                Optional.ofNullable(kanji.getWeek()).ifPresent(existing::setWeek);
+                Optional.ofNullable(kanji.getDay()).ifPresent(existing::setDay);
+                Optional.ofNullable(kanji.getPage()).ifPresent(existing::setPage);
+
+                Optional.ofNullable(kanji.getBook())
+                        .map(Book::getId)
+                        .flatMap(bookRepository::findById)
+                        .ifPresent(existing::setBook);
+
                 kanji.setId(existing.getId());
                 kanji.setBook(existing.getBook());
-            } else {
-                if (kanji.getBook() != null && kanji.getBook().getId() != null) {
-                    Book book = bookRepository.findById(kanji.getBook().getId()).orElse(null);
-                    kanji.setBook(book);
-                }
-            }
+            }, () -> {
+                Optional.ofNullable(kanji.getBook())
+                        .map(Book::getId)
+                        .flatMap(bookRepository::findById)
+                        .ifPresent(kanji::setBook);
+            });
         }
         return kanjiRepository.saveAll(kanjis);
     }
 
     public Kanji updateKanji(Long id, Kanji kanji) {
-        Optional<Kanji> existingOpt = kanjiRepository.findById(id);
-        if (existingOpt.isPresent()) {
-            Kanji existing = existingOpt.get();
-            
-            // Only update fields that are provided
-            if (kanji.getCharacter() != null) existing.setCharacter(kanji.getCharacter());
-            if (kanji.getHanviet() != null) existing.setHanviet(kanji.getHanviet());
-            if (kanji.getKunyomi() != null) existing.setKunyomi(kanji.getKunyomi());
-            if (kanji.getOnyomi() != null) existing.setOnyomi(kanji.getOnyomi());
-            if (kanji.getMeaning() != null) existing.setMeaning(kanji.getMeaning());
-            if (kanji.getExamples() != null) existing.setExamples(kanji.getExamples());
-            if (kanji.getWeek() != null) existing.setWeek(kanji.getWeek());
-            if (kanji.getDay() != null) existing.setDay(kanji.getDay());
-            if (kanji.getPage() != null) existing.setPage(kanji.getPage());
-            
-            if (kanji.getBook() != null && kanji.getBook().getId() != null) {
-                Book book = bookRepository.findById(kanji.getBook().getId()).orElse(null);
-                existing.setBook(book);
-            }
-            
+        return kanjiRepository.findById(id).map(existing -> {
+            Optional.ofNullable(kanji.getCharacter()).ifPresent(existing::setCharacter);
+            Optional.ofNullable(kanji.getHanviet()).ifPresent(existing::setHanviet);
+            Optional.ofNullable(kanji.getKunyomi()).ifPresent(existing::setKunyomi);
+            Optional.ofNullable(kanji.getOnyomi()).ifPresent(existing::setOnyomi);
+            Optional.ofNullable(kanji.getMeaning()).ifPresent(existing::setMeaning);
+            Optional.ofNullable(kanji.getExamples()).ifPresent(existing::setExamples);
+            Optional.ofNullable(kanji.getWeek()).ifPresent(existing::setWeek);
+            Optional.ofNullable(kanji.getDay()).ifPresent(existing::setDay);
+            Optional.ofNullable(kanji.getPage()).ifPresent(existing::setPage);
+            Optional.ofNullable(kanji.getSortOrder()).ifPresent(existing::setSortOrder);
+
+            Optional.ofNullable(kanji.getBook())
+                    .map(Book::getId)
+                    .flatMap(bookRepository::findById)
+                    .ifPresent(existing::setBook);
+
             return kanjiRepository.save(existing);
-        }
-        return null;
+        }).orElse(null);
     }
 
     public void deleteKanji(Long id) {

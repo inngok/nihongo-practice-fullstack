@@ -5,6 +5,7 @@ import com.nihongo.practice_nihongo.repository.GrammarRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Sort;
 import java.util.List;
 
 @Service
@@ -14,7 +15,8 @@ public class GrammarService {
     private GrammarRepository grammarRepository;
 
     public List<Grammar> getAllGrammars() {
-        return grammarRepository.findAll();
+        Sort sort = Sort.by(Sort.Order.asc("book.id"), Sort.Order.asc("week"), Sort.Order.asc("day"), Sort.Order.asc("sortOrder"));
+        return grammarRepository.findAll(sort);
     }
 
     public Grammar createGrammar(Grammar grammar) {
@@ -37,9 +39,11 @@ public class GrammarService {
         if (grammarDetails.getBook() != null) grammar.setBook(grammarDetails.getBook());
         if (grammarDetails.getWeek() != null) grammar.setWeek(grammarDetails.getWeek());
         if (grammarDetails.getDay() != null) grammar.setDay(grammarDetails.getDay());
+        if (grammarDetails.getSortOrder() != null) grammar.setSortOrder(grammarDetails.getSortOrder());
         
         return grammarRepository.save(grammar);
     }
+
 
     public void deleteGrammar(Long id) {
         Grammar grammar = getGrammarById(id);
