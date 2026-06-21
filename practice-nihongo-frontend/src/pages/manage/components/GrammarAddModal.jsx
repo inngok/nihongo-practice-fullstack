@@ -178,14 +178,19 @@ export default function GrammarAddModal({
       
       const mappedData = data.map(item => {
         let isDuplicate = false;
+        let existingId = null;
         if (existingGrammars && formData.bookId) {
-           isDuplicate = existingGrammars.some(g => 
+           const existing = existingGrammars.find(g => 
               (g.bookId?.toString() === formData.bookId.toString() || g.book?.id?.toString() === formData.bookId.toString()) && 
               g.structure.trim() === item.structure.trim()
            );
+           if (existing) {
+             isDuplicate = true;
+             existingId = existing.id;
+           }
         }
         // Mỗi item được khởi tạo với day riêng (default = formData.day hiện tại)
-        return { ...item, selected: !isDuplicate, isDuplicate, day: formData.day || 1 };
+        return { ...item, selected: !isDuplicate, isDuplicate, existingId, day: formData.day || 1 };
       });
       
       setPreviewData(mappedData);
@@ -202,35 +207,67 @@ export default function GrammarAddModal({
     const itemsToSave = previewData.filter(item => item.selected);
     if (itemsToSave.length === 0) return message.warning('Không có cấu trúc nào được chọn');
 
-    setIsSaving(true);
-    const hide = message.loading(`Đang lưu ${itemsToSave.length} cấu trúc ngữ pháp...`, 0);
-    try {
-      const payload = itemsToSave.map(item => ({
-        structure: item.structure,
-        meaning: item.meaning,
-        explanation: item.explanation,
-        exampleSentence: item.exampleSentence,
-        exampleMeaning: item.exampleMeaning,
-        quizSentence: item.quizSentence,
-        level: item.level || 'N3',
-        book: { id: parseInt(formData.bookId) },
-        week: formData.week ? parseInt(formData.week) : null,
-        // Dùng day của từng item, không dùng formData.day chung
-        day: item.day ? parseInt(item.day) : null
-      }));
+    const duplicates = itemsToSave.filter(i => i.isDuplicate);
+    const newItems = itemsToSave.filter(i => !i.isDuplicate);
 
-      for (const item of payload) {
-        await grammarService.create(item);
+    const saveProcess = async (actionType) => {
+      setIsSaving(true);
+      const hide = message.loading(`Đang lưu cấu trúc ngữ pháp...`, 0);
+      try {
+        const createPayload = (item) => ({
+          structure: item.structure,
+          meaning: item.meaning,
+          explanation: item.explanation,
+          exampleSentence: item.exampleSentence,
+          exampleMeaning: item.exampleMeaning,
+          quizSentence: item.quizSentence,
+          level: item.level || 'N3',
+          book: { id: parseInt(formData.bookId) },
+          week: formData.week ? parseInt(formData.week) : null,
+          day: item.day ? parseInt(item.day) : null
+        });
+
+        for (const item of newItems) {
+          await grammarService.create(createPayload(item));
+        }
+
+        if (actionType === 'OVERWRITE') {
+          for (const dup of duplicates) {
+            await grammarService.update(dup.existingId, createPayload(dup));
+          }
+        } else if (actionType === 'ADD_NEW') {
+          for (const dup of duplicates) {
+            await grammarService.create(createPayload(dup));
+          }
+        }
+
+        message.success(`Đã lưu thành công!`);
+        onSuccess();
+        onClose();
+      } catch (err) {
+        message.error('Lỗi khi lưu dữ liệu: ' + err.message);
+      } finally {
+        setIsSaving(false);
+        hide();
       }
+    };
 
-      message.success(`Đã lưu thành công ${itemsToSave.length} cấu trúc!`);
-      onSuccess();
-      onClose();
-    } catch (err) {
-      message.error('Lỗi khi lưu dữ liệu: ' + err.message);
-    } finally {
-      setIsSaving(false);
-      hide();
+    if (duplicates.length > 0) {
+      Modal.confirm({
+        zIndex: 100000,
+        width: 500,
+        title: 'Phát hiện Ngữ pháp trùng lặp',
+        content: `Có ${duplicates.length} cấu trúc ngữ pháp đã tồn tại trong giáo trình này. Bạn muốn làm gì với những cấu trúc này?`,
+        footer: () => (
+          <div className="flex justify-end gap-2 mt-6">
+            <button onClick={() => { Modal.destroyAll(); saveProcess('SKIP'); }} className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Giữ cái cũ (Skip)</button>
+            <button onClick={() => { Modal.destroyAll(); saveProcess('ADD_NEW'); }} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold transition-colors">Vẫn thêm (Trùng lặp)</button>
+            <button onClick={() => { Modal.destroyAll(); saveProcess('OVERWRITE'); }} className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 rounded-lg text-xs font-bold transition-opacity">Ghi đè (Overwrite)</button>
+          </div>
+        )
+      });
+    } else {
+      saveProcess('ADD_NEW');
     }
   };
 
@@ -248,6 +285,46 @@ export default function GrammarAddModal({
       book: formData.bookId ? { id: parseInt(formData.bookId) } : null
     };
     delete payload.bookId;
+
+    if (!initialData) {
+      const exists = existingGrammars.find(g => 
+        (g.bookId?.toString() === formData.bookId.toString() || g.book?.id?.toString() === formData.bookId.toString()) && 
+        g.structure.trim() === formData.structure.trim()
+      );
+      if (exists) {
+        Modal.confirm({
+          zIndex: 100000,
+          title: 'Ngữ pháp đã tồn tại',
+          content: 'Cấu trúc này đã có trong bài. Bạn muốn làm gì?',
+          footer: () => (
+            <div className="flex justify-end gap-2 mt-6">
+              <button onClick={() => Modal.destroyAll()} className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Hủy</button>
+              <button onClick={async () => {
+                Modal.destroyAll();
+                try {
+                  await grammarService.create(payload);
+                  onSuccess();
+                  message.success('Đã thêm mới!');
+                } catch(err) {
+                  message.error('Đã có lỗi xảy ra!');
+                }
+              }} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold transition-colors">Vẫn thêm (Cho phép trùng)</button>
+              <button onClick={async () => {
+                Modal.destroyAll();
+                try {
+                  await grammarService.update(exists.id, payload);
+                  onSuccess();
+                  message.success('Đã ghi đè thành công!');
+                } catch(err) {
+                  message.error('Đã có lỗi xảy ra!');
+                }
+              }} className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 rounded-lg text-xs font-bold transition-opacity">Ghi đè</button>
+            </div>
+          )
+        });
+        return;
+      }
+    }
 
     setIsSaving(true);
     try {
@@ -296,7 +373,7 @@ export default function GrammarAddModal({
         </div>
 
         {modalTab === 'single' ? (
-          <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto hide-scrollbar">
+          <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto no-scrollbar">
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-2">
                 <div className="flex justify-between items-center px-1">

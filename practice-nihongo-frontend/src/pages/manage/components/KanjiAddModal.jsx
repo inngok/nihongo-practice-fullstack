@@ -130,19 +130,34 @@ export default function KanjiAddModal({
       );
       if (exists) {
         Modal.confirm({
+          zIndex: 100000,
           title: 'Hán tự đã tồn tại',
-          content: 'Chữ Hán này đã có trong bài. Bạn muốn ghi đè dữ liệu mới không?',
-          okText: 'Ghi đè',
-          cancelText: 'Hủy',
-          onOk: async () => {
-            try {
-              await kanjiService.update(exists.id, payload);
-              onSuccess();
-              messageApi.success('Đã ghi đè thành công!');
-            } catch (err) {
-              messageApi.error('Đã có lỗi xảy ra!');
-            }
-          }
+          content: 'Chữ Hán này đã có trong bài. Bạn muốn làm gì?',
+          footer: () => (
+            <div className="flex justify-end gap-2 mt-6">
+              <button onClick={() => Modal.destroyAll()} className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Hủy</button>
+              <button onClick={async () => {
+                Modal.destroyAll();
+                try {
+                  await kanjiService.create(payload);
+                  onSuccess();
+                  messageApi.success('Đã thêm mới!');
+                } catch(err) {
+                  messageApi.error('Đã có lỗi xảy ra!');
+                }
+              }} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold transition-colors">Vẫn thêm (Cho phép trùng)</button>
+              <button onClick={async () => {
+                Modal.destroyAll();
+                try {
+                  await kanjiService.update(exists.id, payload);
+                  onSuccess();
+                  messageApi.success('Đã ghi đè thành công!');
+                } catch(err) {
+                  messageApi.error('Đã có lỗi xảy ra!');
+                }
+              }} className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 rounded-lg text-xs font-bold transition-opacity">Ghi đè</button>
+            </div>
+          )
         });
         return;
       }
@@ -227,7 +242,7 @@ export default function KanjiAddModal({
       }
     });
 
-    const saveProcess = async (shouldOverwrite) => {
+    const saveProcess = async (actionType) => {
       const hide = messageApi.loading(`Đang lưu chữ Hán...`, 0);
       try {
         for (const item of newItems) {
@@ -239,9 +254,19 @@ export default function KanjiAddModal({
           });
         }
 
-        if (shouldOverwrite) {
+        if (actionType === 'OVERWRITE') {
           for (const dup of duplicates) {
             await kanjiService.update(dup.existingId, {
+              ...dup,
+              book: { id: bookIdInt },
+              week: weekInt,
+              day: formData.day ? parseInt(formData.day) : null
+            });
+          }
+        } else if (actionType === 'ADD_NEW') {
+          for (const dup of duplicates) {
+            delete dup.existingId;
+            await kanjiService.create({
               ...dup,
               book: { id: bookIdInt },
               week: weekInt,
@@ -261,15 +286,20 @@ export default function KanjiAddModal({
 
     if (duplicates.length > 0) {
       Modal.confirm({
+        zIndex: 100000,
+        width: 500,
         title: 'Phát hiện Hán tự trùng lặp',
-        content: `Có ${duplicates.length} Hán tự đã tồn tại trong bài học này. Bạn muốn ghi đè dữ liệu mới hay giữ lại chữ cũ?`,
-        okText: 'Ghi đè (Overwrite)',
-        cancelText: 'Giữ cái cũ (Skip)',
-        onOk: () => saveProcess(true),
-        onCancel: () => saveProcess(false)
+        content: `Có ${duplicates.length} Hán tự đã tồn tại trong bài học này. Bạn muốn làm gì với những chữ này?`,
+        footer: () => (
+          <div className="flex justify-end gap-2 mt-6">
+            <button onClick={() => { Modal.destroyAll(); saveProcess('SKIP'); }} className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">Giữ cái cũ (Skip)</button>
+            <button onClick={() => { Modal.destroyAll(); saveProcess('ADD_NEW'); }} className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-bold transition-colors">Vẫn thêm (Trùng lặp)</button>
+            <button onClick={() => { Modal.destroyAll(); saveProcess('OVERWRITE'); }} className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black hover:opacity-80 rounded-lg text-xs font-bold transition-opacity">Ghi đè (Overwrite)</button>
+          </div>
+        )
       });
     } else {
-      saveProcess(false);
+      saveProcess('ADD_NEW');
     }
   };
 
@@ -303,7 +333,7 @@ export default function KanjiAddModal({
         </div>
 
         {modalTab === 'single' ? (
-          <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto hide-scrollbar">
+          <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto no-scrollbar">
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-2">
                 <div className="flex justify-between items-center px-1">
