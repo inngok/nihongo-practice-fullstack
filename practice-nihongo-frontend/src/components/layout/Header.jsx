@@ -94,7 +94,7 @@ export default function Header() {
           <div className="md:hidden">
             <Dropdown dropdownRender={() => notificationDropdown} trigger={['click']} placement="bottomRight">
               <div className="relative w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer text-slate-650 dark:text-slate-350 transition-all select-none shadow-sm">
-                <Badge count={unreadCount} size="small" offset={[2, -2]}>
+                <Badge count={unreadCount} size="small" offset={[2, -2]} overflowCount={10}>
                   <BellOutlined className="text-base" />
                 </Badge>
               </div>
@@ -205,7 +205,7 @@ export default function Header() {
       <div className="hidden md:flex flex-1 items-center justify-end gap-4 text-xs font-bold uppercase tracking-widest">
         <Dropdown dropdownRender={() => notificationDropdown} trigger={['click']} placement="bottomRight">
           <div className="relative w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer text-slate-655 dark:text-slate-355 transition-all select-none shadow-sm">
-            <Badge count={unreadCount} size="small" offset={[2, -2]}>
+            <Badge count={unreadCount} size="small" offset={[2, -2]} overflowCount={10}>
               <BellOutlined className="text-base" />
             </Badge>
           </div>

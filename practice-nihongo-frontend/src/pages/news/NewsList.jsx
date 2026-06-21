@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Card, Spin, Typography, Tag, Space, Alert, Button, message, Pagination, Input, Select, Dropdown } from 'antd';
+import { Card, Spin, Typography, Tag, Space, Alert, Button, message, Pagination, Input, Select, Dropdown, DatePicker } from 'antd';
 import { CalendarOutlined, ReadOutlined, ArrowRightOutlined, SyncOutlined, CheckCircleOutlined, FormOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
@@ -15,6 +15,8 @@ export default function NewsList() {
   const [crawlingHistory, setCrawlingHistory] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterDate, setFilterDate] = useState(null);
+  const [filterMonth, setFilterMonth] = useState(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const currentPage = parseInt(searchParams.get('page')) || 1;
   const pageSize = 12;
@@ -132,6 +134,20 @@ export default function NewsList() {
   const filteredNews = news.filter(article => {
     if (searchTerm && !article.title.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     
+    if (filterDate) {
+      const articleDate = new Date(article.publishedAt);
+      const articleDateStr = `${articleDate.getFullYear()}-${String(articleDate.getMonth() + 1).padStart(2, '0')}-${String(articleDate.getDate()).padStart(2, '0')}`;
+      const targetDateStr = filterDate.format('YYYY-MM-DD');
+      if (articleDateStr !== targetDateStr) return false;
+    }
+
+    if (filterMonth) {
+      const articleDate = new Date(article.publishedAt);
+      const articleMonthStr = `${articleDate.getFullYear()}-${String(articleDate.getMonth() + 1).padStart(2, '0')}`;
+      const targetMonthStr = filterMonth.format('YYYY-MM');
+      if (articleMonthStr !== targetMonthStr) return false;
+    }
+
     const isRead = currentUser && readStatuses[article.id];
     if (filterStatus === 'unread' && isRead) return false;
     if (filterStatus === 'read' && !isRead) return false;
@@ -185,18 +201,31 @@ export default function NewsList() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 mb-8 flex-wrap">
           <Input 
             prefix={<SearchOutlined className="text-slate-400 mr-1" />} 
             placeholder="Tìm kiếm bài báo..." 
             value={searchTerm}
             onChange={e => { setSearchTerm(e.target.value); setSearchParams({ page: 1 }); }}
-            className="rounded-[1rem] h-12 flex-1 shadow-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+            className="rounded-[1rem] h-12 flex-1 shadow-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white min-w-[200px]"
+          />
+          <DatePicker
+            placeholder="Chọn ngày"
+            value={filterDate}
+            onChange={val => { setFilterDate(val); setFilterMonth(null); setSearchParams({ page: 1 }); }}
+            className="w-full sm:w-36 h-12 rounded-[1rem] shadow-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900"
+          />
+          <DatePicker
+            picker="month"
+            placeholder="Chọn tháng"
+            value={filterMonth}
+            onChange={val => { setFilterMonth(val); setFilterDate(null); setSearchParams({ page: 1 }); }}
+            className="w-full sm:w-36 h-12 rounded-[1rem] shadow-sm border-slate-200 dark:border-slate-800 dark:bg-slate-900"
           />
           <Select
             value={filterStatus}
             onChange={val => { setFilterStatus(val); setSearchParams({ page: 1 }); }}
-            className="w-full sm:w-48 h-12 rounded-[1rem] [&>.ant-select-selector]:rounded-[1rem] [&>.ant-select-selector]:h-12 [&>.ant-select-selector]:items-center shadow-sm"
+            className="w-full sm:w-40 h-12 rounded-[1rem] [&>.ant-select-selector]:rounded-[1rem] [&>.ant-select-selector]:h-12 [&>.ant-select-selector]:items-center shadow-sm"
             options={[
               { value: 'all', label: 'Tất cả bài báo' },
               { value: 'unread', label: 'Chưa đọc' },
