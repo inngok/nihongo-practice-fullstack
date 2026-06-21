@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Card, Spin, Typography, Tag, Space, Alert, Button, message, Pagination, Input, Select } from 'antd';
+import { Card, Spin, Typography, Tag, Space, Alert, Button, message, Pagination, Input, Select, Dropdown } from 'antd';
 import { CalendarOutlined, ReadOutlined, ArrowRightOutlined, SyncOutlined, CheckCircleOutlined, FormOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config';
@@ -92,12 +92,12 @@ export default function NewsList() {
     }
   };
 
-  const handleCrawlHistory = async () => {
+  const handleCrawlHistory = async (pages) => {
     setCrawlingHistory(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/news/crawl-history?pages=5`, { method: 'POST' });
+      const response = await fetch(`${API_BASE_URL}/news/crawl-history?pages=${pages}`, { method: 'POST' });
       if (response.ok) {
-        message.success('Đang lấy 5 trang báo cũ chạy ngầm. Quá trình này có thể tốn vài phút!');
+        message.success(`Đang lấy ${pages} trang báo cũ chạy ngầm. Quá trình này có thể tốn vài phút!`);
       } else {
         message.error('Lỗi khi yêu cầu lấy báo cũ!');
       }
@@ -107,6 +107,13 @@ export default function NewsList() {
       setCrawlingHistory(false);
     }
   };
+
+  const historyItems = [
+    { key: '1', label: 'Lấy 1 trang (~1 ngày)' },
+    { key: '5', label: 'Lấy 5 trang (~5 ngày)' },
+    { key: '30', label: 'Lấy 30 trang (~1 tháng)' },
+    { key: '60', label: 'Lấy 60 trang (~2 tháng)' },
+  ];
 
 
 
@@ -147,15 +154,23 @@ export default function NewsList() {
           <div className="mt-4 md:mt-0 flex flex-col sm:flex-row gap-2 w-full md:w-auto">
             {isAdmin && (
               <>
-                <Button
-                  type="default"
-                  icon={<SyncOutlined spin={crawlingHistory} />}
-                  onClick={handleCrawlHistory}
-                  loading={crawlingHistory}
-                  className="rounded-full px-6 h-10 font-bold border-slate-300 text-slate-700 hover:text-indigo-600 hover:border-indigo-600 shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto"
+                <Dropdown
+                  menu={{
+                    items: historyItems,
+                    onClick: (e) => handleCrawlHistory(parseInt(e.key))
+                  }}
+                  disabled={crawlingHistory}
+                  placement="bottomRight"
                 >
-                  Lấy báo cũ (5 trang)
-                </Button>
+                  <Button
+                    type="default"
+                    icon={<SyncOutlined spin={crawlingHistory} />}
+                    loading={crawlingHistory}
+                    className="rounded-full px-6 h-10 font-bold border-slate-300 text-slate-700 hover:text-indigo-600 hover:border-indigo-600 shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto"
+                  >
+                    Lấy báo cũ...
+                  </Button>
+                </Dropdown>
                 <Button
                   type="primary"
                   icon={<SyncOutlined spin={crawling} />}
