@@ -23,43 +23,39 @@ jobs:
           cd practice-nihongo-backend
           mvn clean package -DskipTests
 
-      - name: Copy JAR to EC2
+      - name: Copy JAR to VPS
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
           source: "practice-nihongo-backend/target/*.jar"
-          target: "~/pracice-nihongo/"
-          # Removed strip_components to preserve the 'target' directory structure for Dockerfile
+          target: "~/nihongo-practice-fullstack/"
 
-      - name: Copy Docker files to EC2
+      - name: Copy Docker files to VPS
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
           source: "docker-compose.yml,practice-nihongo-backend/Dockerfile"
-          target: "~/pracice-nihongo/"
+          target: "~/nihongo-practice-fullstack/"
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
           script: |
-            cd ~/pracice-nihongo
+            cd ~/nihongo-practice-fullstack
             
             # Stop current services
-            sudo docker compose down || true
+            docker-compose down || true
             
             # Deep clean Docker to free up space and clear corrupted cache
-            sudo docker system prune -af || true
-            sudo docker builder prune -af || true
+            docker system prune -af || true
+            docker builder prune -af || true
             
-            # Stop any leftover standalone Java processes from previous manual runs
-            sudo pkill -9 java || true
-            
-            # Start the application and database with a fresh Docker build
-            sudo docker compose up -d --build
+            # Start the application and database
+            docker-compose up -d --build
