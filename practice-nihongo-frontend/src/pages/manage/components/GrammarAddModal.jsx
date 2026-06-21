@@ -22,6 +22,29 @@ export default function GrammarAddModal({
   const [isSaving, setIsSaving] = useState(false);
   const { fetchWithAuth } = useAuth();
   
+  const splitExamples = (jp, vn) => {
+    if (!jp && !vn) return [{ sentence: '', meaning: '' }];
+    const sentences = (jp || '').split('\n');
+    const meanings = (vn || '').split('\n');
+    const len = Math.max(sentences.length, meanings.length);
+    const list = [];
+    for (let i = 0; i < len; i++) {
+      list.push({
+        sentence: sentences[i] || '',
+        meaning: meanings[i] || ''
+      });
+    }
+    return list;
+  };
+
+  const splitQuiz = (quiz) => {
+    if (!quiz) return [''];
+    return quiz.split('\n');
+  };
+
+  const [examplesList, setExamplesList] = useState([{ sentence: '', meaning: '' }]);
+  const [quizList, setQuizList] = useState(['']);
+
   const [formData, setFormData] = useState({
     structure: '',
     meaning: '',
@@ -43,30 +66,28 @@ export default function GrammarAddModal({
           structure: initialData.structure,
           meaning: initialData.meaning,
           explanation: initialData.explanation,
-          exampleSentence: initialData.exampleSentence,
-          exampleMeaning: initialData.exampleMeaning,
-          quizSentence: initialData.quizSentence || '',
           level: initialData.level,
           bookId: initialData.book?.id || '',
           week: initialData.week || 1,
           day: initialData.day || 1,
           publish: initialData.publish !== false
         });
+        setExamplesList(splitExamples(initialData.exampleSentence, initialData.exampleMeaning));
+        setQuizList(splitQuiz(initialData.quizSentence));
         setModalTab('single');
       } else {
         setFormData({
           structure: '',
           meaning: '',
           explanation: '',
-          exampleSentence: '',
-          exampleMeaning: '',
-          quizSentence: '',
           level: 'N3',
           bookId: defaultBookId || '',
           week: 1,
           day: 1,
           publish: true
         });
+        setExamplesList([{ sentence: '', meaning: '' }]);
+        setQuizList(['']);
         setModalTab('single');
       }
       setBulkInput('');
@@ -109,12 +130,23 @@ export default function GrammarAddModal({
 
       setFormData(prev => ({
         ...prev,
-        meaning: data.meaning || prev.meaning,
-        explanation: data.explanation || prev.explanation,
-        exampleSentence: data.exampleSentence || prev.exampleSentence,
-        exampleMeaning: data.exampleMeaning || prev.exampleMeaning,
-        quizSentence: data.quizSentence || prev.quizSentence
+        meaning: prev.meaning ? prev.meaning : (data.meaning || ''),
+        explanation: prev.explanation ? prev.explanation : (data.explanation || '')
       }));
+
+      setExamplesList(prevList => {
+         const isPrevEmpty = prevList.length === 1 && !prevList[0].sentence && !prevList[0].meaning;
+         if (isPrevEmpty && (data.exampleSentence || data.exampleMeaning)) {
+             return splitExamples(data.exampleSentence, data.exampleMeaning);
+         }
+         return prevList;
+      });
+
+      setQuizList(prev => {
+          const isPrevEmpty = prev.length === 1 && !prev[0];
+          if (isPrevEmpty && data.quizSentence) return splitQuiz(data.quizSentence);
+          return prev;
+      });
 
       message.success('AI đã điền xong!');
     } catch (err) {
@@ -204,8 +236,15 @@ export default function GrammarAddModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const exampleSentence = examplesList.map(e => e.sentence).join('\n').trim();
+    const exampleMeaning = examplesList.map(e => e.meaning).join('\n').trim();
+    const quizSentence = quizList.filter(q => q.trim() !== '').join('\n').trim();
+
     const payload = {
       ...formData,
+      exampleSentence,
+      exampleMeaning,
+      quizSentence,
       book: formData.bookId ? { id: parseInt(formData.bookId) } : null
     };
     delete payload.bookId;
@@ -302,41 +341,88 @@ export default function GrammarAddModal({
               ></textarea>
             </div>
 
-            <div className="grid grid-cols-2 gap-8">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Ví dụ (JP)</label>
-                <input
-                  type="text"
-                  name="exampleSentence"
-                  value={formData.exampleSentence}
-                  onChange={handleInputChange}
-                  placeholder="..."
-                  className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Dịch nghĩa</label>
-                <input
-                  type="text"
-                  name="exampleMeaning"
-                  value={formData.exampleMeaning}
-                  onChange={handleInputChange}
-                  placeholder="..."
-                  className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700"
-                />
-              </div>
+            <div className="space-y-4 border-l-2 border-slate-100 dark:border-slate-800 pl-4 py-2">
+              {examplesList.map((ex, index) => (
+                <div key={index} className="grid grid-cols-2 gap-8 relative group">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Ví dụ {index + 1} (JP)</label>
+                    <input
+                      type="text"
+                      value={ex.sentence}
+                      onChange={e => {
+                        const newList = [...examplesList];
+                        newList[index].sentence = e.target.value;
+                        setExamplesList(newList);
+                      }}
+                      placeholder="..."
+                      className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Dịch nghĩa {index + 1}</label>
+                      {examplesList.length > 1 && (
+                        <button type="button" onClick={() => {
+                          const newList = examplesList.filter((_, i) => i !== index);
+                          setExamplesList(newList);
+                        }} className="text-[9px] font-black uppercase tracking-widest text-red-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">Xóa</button>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      value={ex.meaning}
+                      onChange={e => {
+                        const newList = [...examplesList];
+                        newList[index].meaning = e.target.value;
+                        setExamplesList(newList);
+                      }}
+                      placeholder="..."
+                      className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700"
+                    />
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setExamplesList([...examplesList, { sentence: '', meaning: '' }])}
+                className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.1em] text-blue-500 hover:text-blue-600 transition-colors pt-2"
+              >
+                + THÊM VÍ DỤ
+              </button>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Câu hỏi Trắc nghiệm (Đục lỗ bằng '_____')</label>
-              <input
-                type="text"
-                name="quizSentence"
-                value={formData.quizSentence}
-                onChange={handleInputChange}
-                placeholder="Ví dụ: 山々に_____いて (dùng 5 dấu gạch dưới)"
-                className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700"
-              />
+            <div className="space-y-4 border-l-2 border-slate-100 dark:border-slate-800 pl-4 py-2">
+              {quizList.map((quiz, index) => (
+                <div key={index} className="space-y-2 relative group">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Câu hỏi Trắc nghiệm {index + 1} (Đục lỗ bằng '_____')</label>
+                    {quizList.length > 1 && (
+                      <button type="button" onClick={() => {
+                        const newList = quizList.filter((_, i) => i !== index);
+                        setQuizList(newList);
+                      }} className="text-[9px] font-black uppercase tracking-widest text-red-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">Xóa</button>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    value={quiz}
+                    onChange={e => {
+                      const newList = [...quizList];
+                      newList[index] = e.target.value;
+                      setQuizList(newList);
+                    }}
+                    placeholder="Ví dụ: 山々に_____いて (dùng 5 dấu gạch dưới)"
+                    className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700"
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setQuizList([...quizList, ''])}
+                className="flex items-center gap-1 text-[10px] font-black uppercase tracking-[0.1em] text-blue-500 hover:text-blue-600 transition-colors pt-2"
+              >
+                + THÊM CÂU HỎI
+              </button>
             </div>
 
             <div className="space-y-2">

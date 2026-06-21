@@ -145,6 +145,15 @@ export function NotificationProvider({ children }) {
       });
     });
 
+    eventSource.addEventListener('DATA_CHANGED', (event) => {
+      // Fire a custom global event so any component can listen and refetch data
+      window.dispatchEvent(new CustomEvent('GLOBAL_DATA_CHANGED', { detail: event.data }));
+      // Optionally fire the BroadcastChannel if needed for multi-tab
+      const channel = new BroadcastChannel('nihongo-sync-channel');
+      channel.postMessage({ type: 'DATA_CHANGED', payload: event.data });
+      channel.close();
+    });
+
     eventSource.onerror = (err) => {
       console.warn('SSE connection interrupted, retrying...', err);
     };

@@ -83,8 +83,15 @@ export default function VocabManager() {
     fetchData();
     if (bookIdParam) setSelectedBookId(bookIdParam);
     const channel = new BroadcastChannel('nihongo-sync-channel');
-    channel.onmessage = (e) => e.data?.type === 'BOOKS_UPDATED' && fetchData();
-    return () => channel.close();
+    channel.onmessage = (e) => (e.data?.type === 'BOOKS_UPDATED' || e.data?.type === 'DATA_CHANGED') && fetchData();
+    
+    const handleGlobalDataChanged = () => fetchData();
+    window.addEventListener('GLOBAL_DATA_CHANGED', handleGlobalDataChanged);
+    
+    return () => {
+      channel.close();
+      window.removeEventListener('GLOBAL_DATA_CHANGED', handleGlobalDataChanged);
+    };
   }, [bookIdParam]);
 
   const filteredVocabs = React.useMemo(() => {

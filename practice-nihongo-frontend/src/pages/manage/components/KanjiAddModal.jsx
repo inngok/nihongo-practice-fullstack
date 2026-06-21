@@ -96,10 +96,10 @@ export default function KanjiAddModal({
 
       setFormData(prev => ({
         ...prev,
-        hanviet: data.hanviet || prev.hanviet,
-        meaning: data.meaning || prev.meaning,
-        onyomi: data.onyomi || prev.onyomi,
-        kunyomi: data.kunyomi || prev.kunyomi
+        hanviet: prev.hanviet ? prev.hanviet : (data.hanviet || ''),
+        meaning: prev.meaning ? prev.meaning : (data.meaning || ''),
+        onyomi: prev.onyomi ? prev.onyomi : (data.onyomi || ''),
+        kunyomi: prev.kunyomi ? prev.kunyomi : (data.kunyomi || '')
       }));
 
       messageApi.success('AI đã điền xong!');

@@ -105,6 +105,14 @@ export default function VocabStudy() {
     }
   }, [bookId]);
 
+  useEffect(() => {
+    const handleDataChanged = () => {
+      if (bookId) fetchVocab();
+    };
+    window.addEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
+    return () => window.removeEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
+  }, [bookId]);
+
   const fetchVocab = async () => {
     try {
       setLoading(true);

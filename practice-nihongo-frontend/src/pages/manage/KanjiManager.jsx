@@ -96,18 +96,22 @@ export default function KanjiManager() {
     try {
       channel = new BroadcastChannel('nihongo-sync-channel');
       channel.onmessage = (event) => {
-        if (event.data && event.data.type === 'BOOKS_UPDATED') {
+        if (event.data && (event.data.type === 'BOOKS_UPDATED' || event.data.type === 'DATA_CHANGED')) {
           fetchData();
         }
       };
     } catch (err) {
       console.warn('BroadcastChannel failed to initialize:', err);
     }
+    
+    const handleGlobalDataChanged = () => fetchData();
+    window.addEventListener('GLOBAL_DATA_CHANGED', handleGlobalDataChanged);
 
     return () => {
       if (channel) {
         channel.close();
       }
+      window.removeEventListener('GLOBAL_DATA_CHANGED', handleGlobalDataChanged);
     };
   }, [bookIdParam]);
 

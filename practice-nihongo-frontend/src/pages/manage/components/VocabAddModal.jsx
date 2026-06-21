@@ -72,7 +72,13 @@ export default function VocabAddModal({
     try {
       const res = await fetchWithAuth(`${API_BASE_URL}/ai/generate-vocab?word=${encodeURIComponent(formData.word)}`);
       const data = await res.json();
-      setFormData(p => ({ ...p, reading: data.reading || p.reading, meaning: data.meaning || p.meaning, example: data.example || p.example, exampleMeaning: data.exampleMeaning || p.exampleMeaning }));
+      setFormData(p => ({ 
+        ...p, 
+        reading: p.reading ? p.reading : (data.reading || ''), 
+        meaning: p.meaning ? p.meaning : (data.meaning || ''), 
+        example: p.example ? p.example : (data.example || ''), 
+        exampleMeaning: p.exampleMeaning ? p.exampleMeaning : (data.exampleMeaning || '') 
+      }));
       messageApi.success({ content: 'AI hoàn tất!', key: 'ai_fill' });
     } catch (err) {
       messageApi.error({ content: 'Lỗi AI!', key: 'ai_fill' });

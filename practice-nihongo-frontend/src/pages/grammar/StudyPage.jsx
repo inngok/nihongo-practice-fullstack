@@ -85,6 +85,12 @@ export default function StudyPage() {
   }, [targetBookId]);
 
   useEffect(() => {
+    const handleDataChanged = () => fetchGrammar();
+    window.addEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
+    return () => window.removeEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
+  }, [targetBookId]);
+
+  useEffect(() => {
     if (activeData.length > 0 && targetBookId) {
       const bookTitle = grammarData[0]?.book?.title || 'Ngữ pháp';
       const quickAccessData = {
