@@ -258,7 +258,7 @@ public class AiService {
         if (typeUpper.contains("KANJI")) {
             schema = "[{\"character\": \"...\", \"kunyomi\": \"...\", \"onyomi\": \"...\", \"hanviet\": \"...\", \"meaning\": \"...\", \"examples\": \"...\", \"week\": null, \"day\": null, \"page\": null}]";
         } else if (typeUpper.contains("GRAMMAR")) {
-            schema = "[{\"structure\": \"...\", \"meaning\": \"...\", \"explanation\": \"...\", \"exampleSentence\": \"...\", \"exampleMeaning\": \"...\", \"quizSentence\": \"...\", \"level\": \"N3\", \"week\": null, \"day\": null}]";
+            schema = "[{\"structure\": \"...\", \"meaning\": \"...\", \"explanation\": \"...\", \"exampleSentence\": \"...\", \"exampleMeaning\": \"...\", \"quizSentence\": \"...\", \"level\": null, \"week\": null, \"day\": null}]";
         } else {
             schema = "[{\"word\": \"...\", \"reading\": \"...\", \"meaning\": \"...\", \"example\": \"...\", \"exampleMeaning\": \"...\", \"week\": null, \"day\": null, \"page\": null}]";
         }

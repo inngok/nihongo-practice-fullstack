@@ -37,6 +37,8 @@ export default function Grammar() {
     return books.filter(book => {
       if (!isAdmin && book.publishGrammar === false) return false;
       
+      if (isAdmin) return true;
+
       if (!currentUser) return true;
       const bookLevel = (book.levelLabel || '').toUpperCase();
       const bookTitle = (book.title || '').toUpperCase();

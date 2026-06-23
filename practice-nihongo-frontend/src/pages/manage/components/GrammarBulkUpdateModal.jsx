@@ -10,6 +10,8 @@ export default function GrammarBulkUpdateModal({
   books,
   selectedCount
 }) {
+  const levels = ['N1', 'N2', 'N3', 'N4', 'N5'];
+
   return (
     <Modal
       title={<span className="text-[11px] font-semibold uppercase tracking-widest text-slate-900 dark:text-white">CẬP NHẬT HÀNG LOẠT ({selectedCount})</span>}
@@ -61,6 +63,19 @@ export default function GrammarBulkUpdateModal({
                 placeholder="VD: 1, 2..."
                 className="w-full px-1 py-2 bg-transparent border-b border-slate-100 dark:border-slate-800 outline-none focus:border-black dark:focus:border-white transition-all text-sm font-medium"
               />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Cấp độ (Level)</label>
+              <select
+                value={bulkUpdateData.level || ''}
+                onChange={(e) => setBulkUpdateData(prev => ({ ...prev, level: e.target.value }))}
+                className="w-full px-1 py-2 bg-transparent border-b border-slate-100 dark:border-slate-800 outline-none focus:border-black dark:focus:border-white transition-all text-sm font-medium"
+              >
+                <option value="">-- Giữ nguyên --</option>
+                {levels.map(l => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

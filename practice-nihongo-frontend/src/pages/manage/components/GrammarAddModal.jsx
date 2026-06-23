@@ -221,7 +221,7 @@ export default function GrammarAddModal({
           exampleSentence: item.exampleSentence,
           exampleMeaning: item.exampleMeaning,
           quizSentence: item.quizSentence,
-          level: item.level || 'N3',
+          level: item.level && item.level !== 'N3' ? item.level : (formData.bookId ? books.find(b => b.id.toString() === formData.bookId.toString())?.levelLabel || 'N3' : 'N3'),
           book: { id: parseInt(formData.bookId) },
           week: formData.week ? parseInt(formData.week) : null,
           day: item.day ? parseInt(item.day) : null

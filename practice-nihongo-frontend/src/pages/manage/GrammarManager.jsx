@@ -346,6 +346,7 @@ export default function GrammarManager() {
         grammarService.update(id, {
           week: bulkUpdateData.week || undefined,
           day: bulkUpdateData.day || undefined,
+          level: bulkUpdateData.level || undefined,
           book: bulkUpdateData.bookId ? { id: parseInt(bulkUpdateData.bookId) } : undefined
         })
       ));
