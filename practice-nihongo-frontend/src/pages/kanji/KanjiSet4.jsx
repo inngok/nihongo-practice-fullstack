@@ -276,8 +276,7 @@ const parseExamples = (examplesStr) => {
             <button onClick={() => setActiveMode('list')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'list' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Danh sách</button>
             <button onClick={() => setActiveMode('flashcard')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'flashcard' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Flashcard</button>
             <button onClick={() => setActiveMode('vocab')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'vocab' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Từ vựng</button>
-            <button onClick={() => setActiveMode('quiz')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'quiz' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Trắc nghiệm HT</button>
-            <button onClick={() => setActiveMode('vocab_quiz')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'vocab_quiz' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Trắc nghiệm TV</button>
+            <button onClick={() => setActiveMode('quiz')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'quiz' || activeMode === 'vocab_quiz' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Trắc nghiệm</button>
             <button onClick={() => setActiveMode('typing')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'typing' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Gõ phím</button>
             <button onClick={() => setActiveMode('drawing')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'drawing' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Luyện viết</button>
           </div>
@@ -322,6 +321,33 @@ const parseExamples = (examplesStr) => {
         )}
 
         {/* --- VIEW 3: TRẮC NGHIỆM --- */}
+        {(activeMode === 'quiz' || activeMode === 'vocab_quiz') && (
+          <div className="flex justify-center mb-6 animate-fadeIn">
+            <div className="bg-slate-100/80 p-1 rounded-2xl flex items-center border border-slate-200/40 shadow-inner">
+              <button
+                onClick={() => setActiveMode('quiz')}
+                className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                  activeMode === 'quiz'
+                    ? 'bg-white text-slate-900 shadow-md border border-slate-200/10'
+                    : 'text-slate-400 hover:text-slate-800'
+                }`}
+              >
+                Trắc nghiệm Hán tự
+              </button>
+              <button
+                onClick={() => setActiveMode('vocab_quiz')}
+                className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                  activeMode === 'vocab_quiz'
+                    ? 'bg-white text-slate-900 shadow-md border border-slate-200/10'
+                    : 'text-slate-400 hover:text-slate-800'
+                }`}
+              >
+                Trắc nghiệm Từ vựng
+              </button>
+            </div>
+          </div>
+        )}
+
         {activeMode === 'quiz' && (
           <KanjiQuizView filteredKanjis={filteredKanjis} />
         )}
