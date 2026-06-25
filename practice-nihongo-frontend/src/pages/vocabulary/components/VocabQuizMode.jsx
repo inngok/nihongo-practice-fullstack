@@ -55,7 +55,9 @@ export default function VocabQuizMode({
         />
 
         {feedback === 'incorrect' && (
-          <p className="text-rose-500 font-bold animate-bounce">Đáp án: {studyData[currentIndex]?.word}</p>
+          <p className="text-rose-500 font-bold animate-bounce">
+            Đáp án: {studyData[currentIndex]?.word} {studyData[currentIndex]?.reading ? `(${studyData[currentIndex]?.reading})` : ''}
+          </p>
         )}
       </div>
 

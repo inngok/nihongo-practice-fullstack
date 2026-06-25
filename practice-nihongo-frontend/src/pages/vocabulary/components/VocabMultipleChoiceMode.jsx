@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, Eye } from 'lucide-react';
 
 export default function VocabMultipleChoiceMode({
   studyData,
@@ -10,6 +10,7 @@ export default function VocabMultipleChoiceMode({
 }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [isCorrect, setIsCorrect] = useState(null);
+  const [showReading, setShowReading] = useState(false);
 
   const currentItem = studyData[currentIndex];
 
@@ -30,6 +31,7 @@ export default function VocabMultipleChoiceMode({
   useEffect(() => {
     setSelectedOption(null);
     setIsCorrect(null);
+    setShowReading(false);
   }, [currentIndex]);
 
   const handleSelect = (option) => {
@@ -79,9 +81,25 @@ export default function VocabMultipleChoiceMode({
             {currentItem.word}
           </h2>
           {currentItem.reading && (
-             <p className="text-sm sm:text-base font-normal text-slate-400 dark:text-slate-500 italic uppercase tracking-widest">
-               {currentItem.reading}
-             </p>
+             <div className="flex justify-center pt-2">
+               <button 
+                 onClick={() => setShowReading(!showReading)}
+                 className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs sm:text-sm font-medium ${
+                   showReading 
+                     ? 'text-slate-500 dark:text-slate-400' 
+                     : 'bg-slate-50 dark:bg-slate-800/50 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                 }`}
+               >
+                 {showReading ? (
+                   <span className="italic uppercase tracking-widest">{currentItem.reading}</span>
+                 ) : (
+                   <>
+                     <Eye size={14} />
+                     <span>Xem cách đọc</span>
+                   </>
+                 )}
+               </button>
+             </div>
           )}
         </div>
 

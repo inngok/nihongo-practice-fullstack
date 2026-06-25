@@ -78,27 +78,27 @@ export default function KanjiVocabView({
 
               {/* Back Face */}
               <div
-                className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-blue-600 dark:from-indigo-600 dark:to-blue-800 shadow-2xl shadow-indigo-200 dark:shadow-none rounded-[2.5rem] flex flex-col items-center justify-center p-10 text-center"
+                className="absolute inset-0 bg-black dark:bg-white border border-black dark:border-white shadow-2xl shadow-black/20 dark:shadow-none rounded-[2.5rem] flex flex-col items-center justify-center p-10 text-center"
                 style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
               >
-                <span className="absolute top-7 right-7 text-[9px] font-black text-white/50 uppercase tracking-[0.25em]">
+                <span className="absolute top-7 right-7 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.25em]">
                   Ý NGHĨA
                 </span>
 
                 {/* Word echo on back */}
-                <p className="text-indigo-200/50 font-kanji text-2xl mb-4 font-bold">
+                <p className="text-slate-500 dark:text-slate-400 font-kanji text-2xl mb-4 font-bold">
                   {kanjiVocabs[vocabIndex].word}
                 </p>
 
                 {/* Main meaning */}
-                <h3 className="text-3xl sm:text-4xl font-bold text-white leading-snug mb-4">
+                <h3 className="text-3xl sm:text-4xl font-bold text-white dark:text-black leading-snug mb-4">
                   {kanjiVocabs[vocabIndex].meaning}
                 </h3>
 
                 {/* Reading on back */}
                 {kanjiVocabs[vocabIndex].reading && (
-                  <div className="mt-2 px-5 py-2 bg-white/10 backdrop-blur-md rounded-full">
-                    <p className="text-sm text-indigo-50 font-bold tracking-widest">
+                  <div className="mt-2 px-5 py-2 bg-slate-800 dark:bg-slate-100 rounded-full border border-slate-700 dark:border-slate-200">
+                    <p className="text-sm text-slate-300 dark:text-slate-600 font-bold tracking-widest">
                       {kanjiVocabs[vocabIndex].reading}
                     </p>
                   </div>

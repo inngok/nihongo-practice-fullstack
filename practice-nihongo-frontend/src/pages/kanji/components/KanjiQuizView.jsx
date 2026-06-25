@@ -1,23 +1,90 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function KanjiQuizView({
-  quizQuestions,
-  quizFinished,
-  quizScore,
-  quizIndex,
-  generateQuiz,
-  handleSelectQuizOption,
-  quizSelectedOption,
-  getQuizOptionClass
-}) {
+const normalizeText = (str) => {
+  if (!str) return '';
+  return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
+};
+
+export default function KanjiQuizView({ filteredKanjis }) {
+  const [quizQuestions, setQuizQuestions] = useState([]);
+  const [quizIndex, setQuizIndex] = useState(0);
+  const [quizScore, setQuizScore] = useState(0);
+  const [quizFinished, setQuizFinished] = useState(false);
+  const [quizSelectedOption, setQuizSelectedOption] = useState(null);
+
+  useEffect(() => {
+    generateQuiz();
+  }, [filteredKanjis]);
+
+  const generateQuiz = () => {
+    if (filteredKanjis.length < 4) {
+      setQuizQuestions([]);
+      return;
+    }
+    
+    const shuffledList = [...filteredKanjis].sort(() => Math.random() - 0.5);
+    const questions = shuffledList.slice(0, Math.min(15, shuffledList.length)).map(kanji => {
+      const incorrects = filteredKanjis
+        .filter(k => k.id !== kanji.id && k.hanviet !== kanji.hanviet)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3)
+        .map(k => k.hanviet || 'CHƯA CÓ');
+      
+      while (incorrects.length < 3) incorrects.push('ĐANG CẬP NHẬT');
+      const options = [kanji.hanviet || 'CHƯA CÓ', ...incorrects].sort(() => Math.random() - 0.5);
+      
+      return {
+        kanji,
+        options,
+        correctAnswer: kanji.hanviet || 'CHƯA CÓ',
+        selectedAnswer: null,
+        isCorrect: null
+      };
+    });
+    
+    setQuizQuestions(questions);
+    setQuizIndex(0);
+    setQuizScore(0);
+    setQuizFinished(false);
+    setQuizSelectedOption(null);
+  };
+
+  const handleSelectQuizOption = (option) => {
+    if (quizSelectedOption) return;
+
+    setQuizSelectedOption(option);
+    const currentQuestion = quizQuestions[quizIndex];
+    currentQuestion.selectedAnswer = option;
+    
+    const isCorrect = normalizeText(option) === normalizeText(currentQuestion.correctAnswer);
+    currentQuestion.isCorrect = isCorrect;
+    if (isCorrect) setQuizScore(prev => prev + 1);
+
+    setTimeout(() => {
+      if (quizIndex < quizQuestions.length - 1) {
+        setQuizIndex(prev => prev + 1);
+        setQuizSelectedOption(null);
+      } else {
+        setQuizFinished(true);
+      }
+    }, 1500);
+  };
+
+  const getQuizOptionClass = (option) => {
+    if (quizSelectedOption === null) return "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-900 dark:text-white";
+    if (option === quizQuestions[quizIndex]?.correctAnswer) return "bg-slate-900 text-white dark:bg-white dark:text-black border-slate-900 dark:border-white font-black scale-[0.98] shadow-md shadow-black/10 dark:shadow-none";
+    if (option === quizSelectedOption) return "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 opacity-70";
+    return "bg-slate-50/50 dark:bg-slate-950 border-slate-100 dark:border-slate-850 text-slate-300 dark:text-slate-700 opacity-40";
+  };
+
   return (
     <div className="max-w-2xl mx-auto py-8">
       {quizQuestions.length === 0 ? (
-        <div className="py-20 text-center border border-dashed border-slate-200 rounded-2xl">
+        <div className="py-20 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
           <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Cần tối thiểu 4 từ để học trắc nghiệm</p>
         </div>
       ) : quizFinished ? (
-        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-10 md:p-12 text-center space-y-6 max-w-md mx-auto shadow-sm">
+        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-10 md:p-12 text-center space-y-6 max-w-md mx-auto shadow-sm animate-in fade-in">
           <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight">KẾT QUẢ ĐẠT ĐƯỢC</h3>
           <div className="w-24 h-24 bg-white dark:bg-slate-950 rounded-full flex items-center justify-center mx-auto shadow-inner border border-slate-100 dark:border-slate-800">
             <span className="text-3xl font-black text-slate-800 dark:text-slate-200">{quizScore}/{quizQuestions.length}</span>
@@ -26,14 +93,14 @@ export default function KanjiQuizView({
           <button onClick={generateQuiz} className="bg-black dark:bg-white text-white dark:text-black hover:opacity-80 w-full py-4 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center justify-center">Luyện tập lại</button>
         </div>
       ) : (
-        <div className="space-y-8 max-w-md mx-auto">
+        <div className="space-y-8 max-w-md mx-auto animate-in fade-in">
           <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
             <span>Câu hỏi {quizIndex + 1} / {quizQuestions.length}</span>
             <span className="text-slate-900 dark:text-white font-black underline decoration-slate-300">Đúng: {quizScore}</span>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-[2.5rem] p-8 text-center shadow-lg shadow-slate-100 dark:shadow-none">
-            <span className="text-[10px] font-black text-slate-200 dark:text-slate-800 uppercase tracking-wider block mb-2">Hỏi chữ Hán</span>
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2.5rem] p-8 text-center shadow-sm">
+            <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-wider block mb-2">Hỏi chữ Hán</span>
             <span className="text-7xl font-kanji font-bold text-slate-950 dark:text-white block">{quizQuestions[quizIndex]?.kanji.character}</span>
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest mt-6">Chữ Hán trên có âm Hán Việt là gì?</p>
           </div>
