@@ -61,6 +61,17 @@ export default function GrammarAddModal({
 
   useEffect(() => {
     if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
       if (initialData) {
         setFormData({
           structure: initialData.structure,
@@ -117,14 +128,16 @@ export default function GrammarAddModal({
     const hide = message.loading('AI đang phân tích ngữ pháp...', 0);
 
     try {
+      const currentSentences = examplesList.map(e => e.sentence).filter(s => s.trim() !== '').join('\n');
+
       const response = await fetchWithAuth(`${API_BASE_URL}/ai/generate-grammar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           structure: formData.structure,
-          existingSentence: formData.exampleSentence || ''
+          existingSentence: currentSentences
         })
-      }); 
+      });
       if (!response.ok) throw new Error('API Error');
       const data = await response.json();
 
@@ -135,17 +148,23 @@ export default function GrammarAddModal({
       }));
 
       setExamplesList(prevList => {
-         const isPrevEmpty = prevList.length === 1 && !prevList[0].sentence && !prevList[0].meaning;
-         if (isPrevEmpty && (data.exampleSentence || data.exampleMeaning)) {
-             return splitExamples(data.exampleSentence, data.exampleMeaning);
+         if (!data.exampleSentence && !data.exampleMeaning) return prevList;
+         const newExamples = splitExamples(data.exampleSentence, data.exampleMeaning);
+         const merged = [...newExamples];
+         while (merged.length < prevList.length) {
+             merged.push({ sentence: '', meaning: '' });
          }
-         return prevList;
+         return merged;
       });
 
       setQuizList(prev => {
-          const isPrevEmpty = prev.length === 1 && !prev[0];
-          if (isPrevEmpty && data.quizSentence) return splitQuiz(data.quizSentence);
-          return prev;
+          if (!data.quizSentence) return prev;
+          const newQuiz = splitQuiz(data.quizSentence);
+          const merged = [...newQuiz];
+          while (merged.length < prev.length) {
+              merged.push('');
+          }
+          return merged;
       });
 
       message.success('AI đã điền xong!');
