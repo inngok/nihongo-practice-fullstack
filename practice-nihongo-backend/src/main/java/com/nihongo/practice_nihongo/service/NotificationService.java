@@ -1,6 +1,8 @@
 package com.nihongo.practice_nihongo.service;
 
 import com.nihongo.practice_nihongo.model.NewsArticle;
+import com.nihongo.practice_nihongo.model.Notification;
+import com.nihongo.practice_nihongo.repository.NotificationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,6 +16,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @Service
 public class NotificationService {
+    
+    private final NotificationRepository notificationRepository;
+
+    public NotificationService(NotificationRepository notificationRepository) {
+        this.notificationRepository = notificationRepository;
+    }
     private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
     
     // Thread-safe list of active SSE connections
@@ -42,6 +50,15 @@ public class NotificationService {
     }
 
     public void broadcastNewArticle(NewsArticle article) {
+        // Save to DB first
+        Notification notification = new Notification(
+                "Bài báo mới: " + article.getTitle(),
+                "Có một bài báo mới vừa được đăng.",
+                "NEW_ARTICLE",
+                String.valueOf(article.getId())
+        );
+        notificationRepository.save(notification);
+
         log.info("Broadcasting new article notification to {} active clients: {}", emitters.size(), article.getTitle());
         
         List<SseEmitter> deadEmitters = new ArrayList<>();
@@ -61,6 +78,15 @@ public class NotificationService {
     }
     
     public void broadcastSystemMessage(String message) {
+        // Save to DB first
+        Notification notification = new Notification(
+                "Thông báo hệ thống",
+                message,
+                "SYSTEM",
+                null
+        );
+        notificationRepository.save(notification);
+
         List<SseEmitter> deadEmitters = new ArrayList<>();
         for (SseEmitter emitter : emitters) {
             try {

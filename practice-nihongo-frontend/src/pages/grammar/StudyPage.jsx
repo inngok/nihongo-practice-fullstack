@@ -56,7 +56,41 @@ export default function StudyPage() {
         const quizSentences = (item.quiz?.quizSentence || '').split('\n').map(s => s.trim()).filter(Boolean);
         const translations = (item.quiz?.translation || '').split('\n').map(s => s.trim()).filter(Boolean);
         
-        if (sentences.length > 1) {
+        if (quizSentences.length > 0) {
+          quizSentences.forEach((qSentence, idx) => {
+            let matchedTranslation = '';
+            let matchedSentence = '';
+            
+            const parts = qSentence.split(/_+/).map(p => p.trim()).filter(Boolean);
+            if (parts.length > 0) {
+              const matchIdx = sentences.findIndex(s => {
+                let lastIdx = 0;
+                for (const part of parts) {
+                  const currentIdx = s.indexOf(part, lastIdx);
+                  if (currentIdx === -1) return false;
+                  lastIdx = currentIdx + part.length;
+                }
+                return true;
+              });
+              
+              if (matchIdx !== -1) {
+                matchedTranslation = translations[matchIdx] || '';
+                matchedSentence = sentences[matchIdx] || '';
+              }
+            }
+            
+            flattened.push({
+              ...item,
+              id: `${item.id}_q_${idx}`,
+              quiz: {
+                ...item.quiz,
+                sentence: matchedSentence || qSentence.replace(/_+/g, '...'),
+                quizSentence: qSentence,
+                translation: matchedTranslation
+              }
+            });
+          });
+        } else if (sentences.length > 0) {
           sentences.forEach((sentence, idx) => {
             flattened.push({
               ...item,
@@ -64,8 +98,8 @@ export default function StudyPage() {
               quiz: {
                 ...item.quiz,
                 sentence: sentence,
-                quizSentence: quizSentences[idx] || (quizSentences.length === 1 ? quizSentences[0] : ''),
-                translation: translations[idx] || (translations.length === 1 ? translations[0] : '')
+                quizSentence: '',
+                translation: translations[idx] || ''
               }
             });
           });
