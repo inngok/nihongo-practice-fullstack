@@ -3,6 +3,7 @@ package com.nihongo.practice_nihongo.service;
 import com.nihongo.practice_nihongo.model.NewsArticle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -19,8 +20,8 @@ public class NotificationService {
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
 
     public SseEmitter subscribe() {
-        // Create an emitter with a 10-minute timeout (600,000 ms)
-        SseEmitter emitter = new SseEmitter(600000L);
+        // Create an emitter with no timeout (-1L)
+        SseEmitter emitter = new SseEmitter(-1L);
         
         emitters.add(emitter);
 
@@ -82,6 +83,20 @@ public class NotificationService {
                         .name("DATA_CHANGED")
                         .data(entityType));
             } catch (IOException e) {
+                deadEmitters.add(emitter);
+            }
+        }
+        emitters.removeAll(deadEmitters);
+    }
+
+    @Scheduled(fixedRate = 45000) // Send heartbeat every 45 seconds
+    public void sendHeartbeat() {
+        if (emitters.isEmpty()) return;
+        List<SseEmitter> deadEmitters = new ArrayList<>();
+        for (SseEmitter emitter : emitters) {
+            try {
+                emitter.send(SseEmitter.event().name("ping").data("keep-alive"));
+            } catch (Exception e) {
                 deadEmitters.add(emitter);
             }
         }
