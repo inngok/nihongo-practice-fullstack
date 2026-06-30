@@ -72,7 +72,7 @@ export default function MultipleChoiceMode({
   };
 
   return (
-    <div className="space-y-4 sm:space-y-8 animate-in fade-in duration-500 max-w-3xl mx-auto">
+    <div className="space-y-4 sm:space-y-8 animate-in fade-in duration-500 max-w-3xl mx-auto pb-24 sm:pb-0">
       {/* Top Navigation */}
       <div className="flex justify-between items-center px-2">
         <button
@@ -183,7 +183,7 @@ export default function MultipleChoiceMode({
       </div>
 
       {/* Control Buttons */}
-      <div className="flex justify-between items-center gap-4 px-2">
+      <div className="flex justify-between items-center gap-4 px-2 sticky bottom-4 z-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md py-3 sm:py-0 rounded-2xl sm:static sm:bg-transparent sm:backdrop-blur-none shadow-sm sm:shadow-none border border-slate-100 dark:border-slate-800 sm:border-none">
         <button
           onClick={handlePrev}
           disabled={currentIndex === 0}

@@ -187,7 +187,7 @@ export default function VocabFlashcardMode({
       )}
 
       {flashcardSubMode === 'memorize' ? (
-        <div className="flex justify-center gap-6 mt-8">
+        <div className="flex justify-center gap-6 mt-8 sticky bottom-4 z-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md py-3 sm:py-0 rounded-2xl sm:static sm:bg-transparent sm:backdrop-blur-none shadow-sm sm:shadow-none border border-slate-100 dark:border-slate-800 sm:border-none">
           <button
             onClick={() => handleSwipe('left')}
             className="w-16 h-16 rounded-full border border-rose-100 dark:border-rose-900 bg-rose-50/50 dark:bg-rose-950/20 hover:bg-rose-500 hover:text-white text-rose-500 flex items-center justify-center transition-all duration-300 shadow-md active:scale-95 shrink-0"
@@ -211,7 +211,7 @@ export default function VocabFlashcardMode({
           </button>
         </div>
       ) : (
-        <div className="flex flex-col sm:flex-row gap-4 mt-8">
+        <div className="flex flex-col sm:flex-row gap-4 mt-8 sticky bottom-4 z-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md p-3 sm:py-0 rounded-2xl sm:static sm:bg-transparent sm:backdrop-blur-none shadow-sm sm:shadow-none border border-slate-100 dark:border-slate-800 sm:border-none">
           <button
             onClick={() => { if (currentIndex > 0) { setCurrentIndex(prev => prev - 1); setIsFlipped(false); } }}
             disabled={currentIndex === 0}

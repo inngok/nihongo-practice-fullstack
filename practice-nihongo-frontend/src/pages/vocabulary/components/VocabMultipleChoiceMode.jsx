@@ -53,8 +53,8 @@ export default function VocabMultipleChoiceMode({
 
   return (
     <div className="flex flex-col gap-4 sm:gap-8 animate-in fade-in duration-500 max-w-4xl mx-auto w-full">
-      {/* Progress Bar */}
-      <div className="flex justify-between items-center px-4">
+      {/* Control Buttons */}
+      <div className="flex justify-between items-center gap-4 px-2 sticky bottom-4 z-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md py-3 sm:py-0 rounded-2xl sm:static sm:bg-transparent sm:backdrop-blur-none shadow-sm sm:shadow-none border border-slate-100 dark:border-slate-800 sm:border-none">
         <div className="flex items-center gap-4">
           <span className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
             Tiến trình: {currentIndex + 1} / {studyData.length}
@@ -147,7 +147,7 @@ export default function VocabMultipleChoiceMode({
         </div>
       </div>
 
-      <div className="flex flex-row gap-3 sm:gap-4 mt-2 sm:mt-4">
+      <div className="flex flex-row gap-3 sm:gap-4 mt-2 sm:mt-4 sticky bottom-4 z-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md py-3 sm:py-0 rounded-2xl sm:static sm:bg-transparent sm:backdrop-blur-none shadow-sm sm:shadow-none border border-slate-100 dark:border-slate-800 sm:border-none">
         <button
           onClick={() => { 
             if (currentIndex > 0) { 
