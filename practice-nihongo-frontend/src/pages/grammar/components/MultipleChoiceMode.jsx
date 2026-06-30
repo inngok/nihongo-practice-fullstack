@@ -72,7 +72,7 @@ export default function MultipleChoiceMode({
   };
 
   return (
-    <div className="space-y-4 sm:space-y-8 animate-in fade-in duration-500 max-w-3xl mx-auto pb-24 sm:pb-0">
+    <div className="space-y-4 sm:space-y-8 animate-in fade-in duration-500 max-w-3xl mx-auto pb-32">
       {/* Top Navigation */}
       <div className="flex justify-between items-center px-2">
         <button
@@ -183,25 +183,25 @@ export default function MultipleChoiceMode({
       </div>
 
       {/* Control Buttons */}
-      <div className="flex justify-between items-center gap-4 px-2 sticky bottom-4 z-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md py-3 sm:py-0 rounded-2xl sm:static sm:bg-transparent sm:backdrop-blur-none shadow-sm sm:shadow-none border border-slate-100 dark:border-slate-800 sm:border-none">
+      <div className="flex justify-between items-center gap-4 px-4 sticky bottom-4 sm:bottom-8 z-20 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl py-3 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800">
         <button
           onClick={handlePrev}
           disabled={currentIndex === 0}
-          className="flex-1 py-4 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800 text-slate-700 hover:text-black dark:text-slate-300 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
+          className="flex-1 py-4 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 hover:text-black dark:text-slate-300 dark:hover:text-white disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 active:scale-95"
         >
-          <ChevronLeft className="w-4 h-4" /> QUAY LẠI
+          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" /> QUAY LẠI
         </button>
 
         <button
           onClick={handleMcSubmit}
           disabled={!mcSelected && !mcChecked}
-          className={`flex-1 py-4 text-white disabled:opacity-40 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 active:scale-95
+          className={`flex-1 py-4 text-white disabled:opacity-40 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 active:scale-95
             ${mcChecked
               ? 'bg-black dark:bg-white text-white dark:text-black hover:bg-slate-900 dark:hover:bg-slate-100'
               : 'bg-black dark:bg-white text-white dark:text-black hover:bg-slate-900 dark:hover:bg-slate-100 border border-black dark:border-white'}`}
         >
           {mcChecked ? (
-            <>TIẾP THEO <ChevronRight className="w-4 h-4" /></>
+            <>TIẾP THEO (ENTER) <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" /></>
           ) : (
             'KIỂM TRA (ENTER)'
           )}

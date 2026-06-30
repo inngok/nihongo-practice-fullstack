@@ -220,6 +220,26 @@ export default function StudyPage() {
   };
 
   const getQuizSentence = (sentence, quizSentence, pattern) => {
+    // Prioritize auto-generating the blank to preserve the verb stem
+    if (sentence && pattern) {
+      const options = pattern.split(/[/／]/);
+      for (let opt of options) {
+        let cleanPattern = opt.replace(/[A-Za-z\+＋\(\)（）～~【】\[\]\s\-]/g, '').trim();
+
+        if (cleanPattern && cleanPattern.length > 0 && sentence.includes(cleanPattern)) {
+          const parts = sentence.split(cleanPattern);
+          return (
+            <span className="whitespace-pre-wrap">
+              {parts[0]}
+              <span className="text-slate-400 dark:text-slate-500 mx-1">_____</span>
+              {parts.slice(1).join(cleanPattern)}
+            </span>
+          );
+        }
+      }
+    }
+
+    // Fallback to DB provided quizSentence if pattern matching fails
     if (quizSentence && quizSentence.includes("_____")) {
       return (
         <span className="whitespace-pre-wrap">
@@ -233,24 +253,7 @@ export default function StudyPage() {
       );
     }
 
-    if (!sentence || !pattern) return sentence || '';
-    const options = pattern.split(/[/／]/);
-
-    for (let opt of options) {
-      let cleanPattern = opt.replace(/[A-Za-z\+＋\(\)（）～~【】\[\]\s\-]/g, '').trim();
-
-      if (cleanPattern && cleanPattern.length > 0 && sentence.includes(cleanPattern)) {
-        const parts = sentence.split(cleanPattern);
-        return (
-          <span className="whitespace-pre-wrap">
-            {parts[0]}
-            <span className="text-slate-400 dark:text-slate-500 mx-1">_____</span>
-            {parts.slice(1).join(cleanPattern)}
-          </span>
-        );
-      }
-    }
-    return <span className="whitespace-pre-wrap">{sentence} <span className="text-slate-400 dark:text-slate-500 mx-1">_____</span></span>;
+    return <span className="whitespace-pre-wrap">{sentence || ''} <span className="text-slate-400 dark:text-slate-500 mx-1">_____</span></span>;
   };
 
   const handleResetProgress = () => {
