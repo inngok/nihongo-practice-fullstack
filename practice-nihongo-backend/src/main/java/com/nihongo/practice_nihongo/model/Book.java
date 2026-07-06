@@ -30,9 +30,15 @@ public class Book {
     @Column(nullable = false, columnDefinition = "boolean default true")
     private Boolean publishGrammar = true;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean publishVocab = true;
+
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean publishKanji = true;
+
     public Book() {}
 
-    public Book(Long id, String title, String japaneseTitle, String levelLabel, String num, String type, List<Grammar> grammars, Boolean publishGrammar) {
+    public Book(Long id, String title, String japaneseTitle, String levelLabel, String num, String type, List<Grammar> grammars, Boolean publishGrammar, Boolean publishVocab, Boolean publishKanji) {
         this.id = id;
         this.title = title;
         this.japaneseTitle = japaneseTitle;
@@ -41,6 +47,8 @@ public class Book {
         this.type = type;
         this.grammars = grammars;
         this.publishGrammar = publishGrammar != null ? publishGrammar : true;
+        this.publishVocab = publishVocab != null ? publishVocab : true;
+        this.publishKanji = publishKanji != null ? publishKanji : true;
     }
 
     // Manual Getters and Setters
@@ -60,6 +68,10 @@ public class Book {
     public void setGrammars(List<Grammar> grammars) { this.grammars = grammars; }
     public Boolean getPublishGrammar() { return publishGrammar; }
     public void setPublishGrammar(Boolean publishGrammar) { this.publishGrammar = publishGrammar; }
+    public Boolean getPublishVocab() { return publishVocab; }
+    public void setPublishVocab(Boolean publishVocab) { this.publishVocab = publishVocab; }
+    public Boolean getPublishKanji() { return publishKanji; }
+    public void setPublishKanji(Boolean publishKanji) { this.publishKanji = publishKanji; }
 
     public static class BookBuilder {
         private Long id;
@@ -70,6 +82,8 @@ public class Book {
         private String type;
         private List<Grammar> grammars;
         private Boolean publishGrammar = true;
+        private Boolean publishVocab = true;
+        private Boolean publishKanji = true;
 
         public BookBuilder id(Long id) { this.id = id; return this; }
         public BookBuilder title(String title) { this.title = title; return this; }
@@ -79,9 +93,11 @@ public class Book {
         public BookBuilder type(String type) { this.type = type; return this; }
         public BookBuilder grammars(List<Grammar> grammars) { this.grammars = grammars; return this; }
         public BookBuilder publishGrammar(Boolean publishGrammar) { this.publishGrammar = publishGrammar; return this; }
+        public BookBuilder publishVocab(Boolean publishVocab) { this.publishVocab = publishVocab; return this; }
+        public BookBuilder publishKanji(Boolean publishKanji) { this.publishKanji = publishKanji; return this; }
 
         public Book build() {
-            return new Book(id, title, japaneseTitle, levelLabel, num, type, grammars, publishGrammar);
+            return new Book(id, title, japaneseTitle, levelLabel, num, type, grammars, publishGrammar, publishVocab, publishKanji);
         }
     }
 

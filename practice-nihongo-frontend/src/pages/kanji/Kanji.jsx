@@ -1,11 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import bookService from '../../api/bookService';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Kanji() {
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ROLE_ADMIN' || currentUser?.role === 'admin';
+
+
+  const filteredBooks = useMemo(() => {
+    if (!Array.isArray(books)) return [];
+    return books.filter(book => {
+      if (!isAdmin && book.publishKanji === false) return false;
+      
+      if (isAdmin) return true;
+
+      if (!currentUser) return true;
+      const bookLevel = (book.levelLabel || '').toUpperCase();
+      const bookTitle = (book.title || '').toUpperCase();
+      const bookJpTitle = (book.japaneseTitle || '').toUpperCase();
+      const targetLvl = (currentUser.jlptLevel || 'N3').toUpperCase();
+      return bookLevel.includes(targetLvl) || bookTitle.includes(targetLvl) || bookJpTitle.includes(targetLvl);
+    });
+  }, [books, currentUser, isAdmin]);
 
   useEffect(() => {
     let isMounted = true;
@@ -61,7 +82,7 @@ export default function Kanji() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {books.map((book) => (
+            {filteredBooks.map((book) => (
               <div
                 key={book.id}
                 onClick={() => navigate(`/kanji/set-4?bookId=${book.id}`)}
@@ -101,7 +122,7 @@ export default function Kanji() {
               </div>
             ))}
 
-            {books.length === 0 && (
+            {filteredBooks.length === 0 && (
               <div className="col-span-full py-24 text-center border border-dashed border-slate-200 dark:border-slate-800/60 rounded-3xl bg-slate-50/20 dark:bg-slate-900/10">
                 <p className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider text-xs italic">Chưa có giáo trình Hán tự nào.</p>
               </div>

@@ -32,7 +32,9 @@ export default function BookManager() {
     levelLabel: '',
     num: '',
     types: ['VOCABULARY'],
-    publishGrammar: true
+    publishGrammar: true,
+    publishVocab: true,
+    publishKanji: true
   });
 
   useEffect(() => {
@@ -65,7 +67,9 @@ export default function BookManager() {
       levelLabel: '',
       num: '',
       types: ['VOCABULARY'],
-      publishGrammar: true
+      publishGrammar: true,
+      publishVocab: true,
+      publishKanji: true
     });
     setEditingId(null);
   };
@@ -83,7 +87,9 @@ export default function BookManager() {
       levelLabel: book.levelLabel,
       num: book.num,
       types: bookTypes,
-      publishGrammar: book.publishGrammar !== false
+      publishGrammar: book.publishGrammar !== false,
+      publishVocab: book.publishVocab !== false,
+      publishKanji: book.publishKanji !== false
     });
     setEditingId(book.id);
     setIsModalOpen(true);
@@ -98,7 +104,9 @@ export default function BookManager() {
         levelLabel: formData.levelLabel,
         num: formData.num,
         type: formData.types.join(','),
-        publishGrammar: formData.publishGrammar
+        publishGrammar: formData.publishGrammar,
+        publishVocab: formData.publishVocab,
+        publishKanji: formData.publishKanji
       };
 
       if (editingId) {
@@ -378,6 +386,32 @@ export default function BookManager() {
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" checked={formData.publishGrammar} onChange={(e) => setFormData(prev => ({...prev, publishGrammar: e.target.checked}))} className="sr-only peer" />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-black dark:peer-checked:bg-white"></div>
+                  </label>
+                </div>
+              )}
+
+              {formData.types.includes('VOCABULARY') && (
+                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-900 dark:text-white">HIỂN THỊ TỪ VỰNG</span>
+                    <span className="text-[10px] text-slate-400">Cho phép học viên xem phần từ vựng của sách này</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked={formData.publishVocab} onChange={(e) => setFormData(prev => ({...prev, publishVocab: e.target.checked}))} className="sr-only peer" />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-black dark:peer-checked:bg-white"></div>
+                  </label>
+                </div>
+              )}
+
+              {formData.types.includes('KANJI') && (
+                <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-900 dark:text-white">HIỂN THỊ HÁN TỰ</span>
+                    <span className="text-[10px] text-slate-400">Cho phép học viên xem phần hán tự của sách này</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked={formData.publishKanji} onChange={(e) => setFormData(prev => ({...prev, publishKanji: e.target.checked}))} className="sr-only peer" />
                     <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-black dark:peer-checked:bg-white"></div>
                   </label>
                 </div>
