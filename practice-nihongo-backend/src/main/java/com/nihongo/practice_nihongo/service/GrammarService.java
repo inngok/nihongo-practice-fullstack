@@ -40,6 +40,7 @@ public class GrammarService {
         if (grammarDetails.getWeek() != null) grammar.setWeek(grammarDetails.getWeek());
         if (grammarDetails.getDay() != null) grammar.setDay(grammarDetails.getDay());
         if (grammarDetails.getSortOrder() != null) grammar.setSortOrder(grammarDetails.getSortOrder());
+        if (grammarDetails.getPublish() != null) grammar.setPublish(grammarDetails.getPublish());
         
         return grammarRepository.save(grammar);
     }

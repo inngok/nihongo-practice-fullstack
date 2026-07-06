@@ -1,5 +1,5 @@
 import React from 'react';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import { Pagination } from 'antd';
 
 const levelStyles = {
@@ -27,7 +27,8 @@ export default function GrammarManagerTable({
   draggedId,
   dragOverId,
   openEditModal,
-  handleDelete
+  handleDelete,
+  handleTogglePublish
 }) {
   return (
     <div className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/50">
@@ -117,6 +118,13 @@ export default function GrammarManagerTable({
                 </td>
                 <td className="px-6 py-5 text-right">
                   <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => handleTogglePublish(item)}
+                      className="p-2 text-slate-400 hover:text-black dark:hover:text-white transition-colors"
+                      title={item.publish === false ? "Hiện" : "Ẩn"}
+                    >
+                      {item.publish === false ? <EyeInvisibleOutlined className="text-base" /> : <EyeOutlined className="text-base" />}
+                    </button>
                     <button
                       onClick={() => openEditModal(item)}
                       className="p-2 text-slate-400 hover:text-black dark:hover:text-white transition-colors"

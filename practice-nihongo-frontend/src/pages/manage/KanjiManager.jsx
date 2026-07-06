@@ -447,6 +447,16 @@ export default function KanjiManager() {
     });
   };
 
+  const handleTogglePublish = async (kanji) => {
+    try {
+      await kanjiService.update(kanji.id, { publish: kanji.publish === false ? true : false });
+      messageApi.success(kanji.publish === false ? 'Đã hiện Hán tự' : 'Đã ẩn Hán tự');
+      fetchData();
+    } catch (err) {
+      messageApi.error('Lỗi khi cập nhật trạng thái');
+    }
+  };
+
   return (
     <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 bg-transparent">
       <style>{customSelectStyles}</style>
@@ -570,6 +580,7 @@ export default function KanjiManager() {
             dragOverId={dragOverId}
             openEditModal={openEditModal}
             handleDelete={handleDelete}
+            handleTogglePublish={handleTogglePublish}
           />
         )}
       </div>

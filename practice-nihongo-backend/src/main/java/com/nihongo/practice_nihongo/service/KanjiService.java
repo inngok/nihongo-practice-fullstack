@@ -97,6 +97,7 @@ public class KanjiService {
             Optional.ofNullable(kanji.getDay()).ifPresent(existing::setDay);
             Optional.ofNullable(kanji.getPage()).ifPresent(existing::setPage);
             Optional.ofNullable(kanji.getSortOrder()).ifPresent(existing::setSortOrder);
+            Optional.ofNullable(kanji.getPublish()).ifPresent(existing::setPublish);
 
             Optional.ofNullable(kanji.getBook())
                     .map(Book::getId)

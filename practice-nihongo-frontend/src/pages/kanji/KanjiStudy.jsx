@@ -36,7 +36,13 @@ export default function KanjiStudy() {
     try {
       setLoading(true);
       const response = await kanjiService.getAll({ bookId });
-      const data = response.data || [];
+      let data = response.data || [];
+      
+      const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ROLE_ADMIN';
+      if (!isAdmin) {
+        data = data.filter(item => item.publish !== false);
+      }
+
       setKanjiData(data);
       if (data.length > 0) {
         const weeks = [...new Set(data.map(i => i.week || 1))].sort((a, b) => a - b);

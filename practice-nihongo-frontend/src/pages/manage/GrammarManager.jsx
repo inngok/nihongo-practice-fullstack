@@ -473,6 +473,16 @@ export default function GrammarManager() {
     });
   };
 
+  const handleTogglePublish = async (grammar) => {
+    try {
+      await grammarService.update(grammar.id, { publish: grammar.publish === false ? true : false });
+      message.success(grammar.publish === false ? 'Đã hiện ngữ pháp' : 'Đã ẩn ngữ pháp');
+      fetchData();
+    } catch (err) {
+      message.error('Lỗi khi cập nhật trạng thái');
+    }
+  };
+
   return (
     <div className="flex-grow w-full py-8 px-10 animate-in fade-in duration-500 text-slate-900 dark:text-slate-100 bg-transparent">
       <style>{customSelectStyles}</style>
@@ -597,6 +607,7 @@ export default function GrammarManager() {
             dragOverId={dragOverId}
             openEditModal={openEditModal}
             handleDelete={handleDelete}
+            handleTogglePublish={handleTogglePublish}
           />
 
 

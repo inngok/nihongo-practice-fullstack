@@ -117,7 +117,13 @@ export default function VocabStudy() {
     try {
       setLoading(true);
       const response = await vocabService.getAll({ bookId });
-      const data = response.data || [];
+      let data = response.data || [];
+      
+      const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin' || currentUser?.role === 'ROLE_ADMIN';
+      if (!isAdmin) {
+        data = data.filter(item => item.publish !== false);
+      }
+
       setVocabData(data);
 
       if (data.length === 0) return setLoading(false);

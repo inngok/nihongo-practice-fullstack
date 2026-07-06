@@ -1,5 +1,5 @@
 import React from 'react';
-import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, EyeOutlined, EyeInvisibleOutlined } from '@ant-design/icons';
 import { Pagination } from 'antd';
 
 export default function KanjiManagerTable({
@@ -18,7 +18,8 @@ export default function KanjiManagerTable({
   draggedId,
   dragOverId,
   openEditModal,
-  handleDelete
+  handleDelete,
+  handleTogglePublish
 }) {
   return (
     <div className="border border-slate-100 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/50">
@@ -82,6 +83,9 @@ export default function KanjiManagerTable({
                   {item.isDuplicate && (
                     <span className="text-[9px] font-black uppercase bg-rose-100 text-rose-600 px-2 py-1 rounded-md border border-rose-200 tracking-widest" title="Chữ Hán này bị lặp lại">Trùng</span>
                   )}
+                  {item.publish === false && (
+                    <span className="text-[8px] font-black uppercase bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-md border border-slate-300" title="Đã bị ẩn khỏi người học">Ẩn</span>
+                  )}
                 </div>
               </td>
               <td className="px-6 py-5">
@@ -108,6 +112,13 @@ export default function KanjiManagerTable({
               </td>
               <td className="px-6 py-5 text-right">
                 <div className="flex justify-end gap-1 transition-opacity">
+                  <button
+                    onClick={() => handleTogglePublish(item)}
+                    className="p-2 text-slate-400 hover:text-black dark:hover:text-white transition-colors"
+                    title={item.publish === false ? "Hiện" : "Ẩn"}
+                  >
+                    {item.publish === false ? <EyeInvisibleOutlined className="text-base" /> : <EyeOutlined className="text-base" />}
+                  </button>
                   <button
                     onClick={() => openEditModal(item)}
                     className="p-2 text-slate-400 hover:text-black dark:hover:text-white transition-colors"
