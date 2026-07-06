@@ -9,6 +9,6 @@ import java.util.Optional;
 
 @Repository
 public interface JlptPastVocabRepository extends JpaRepository<JlptPastVocab, Long> {
-    Optional<JlptPastVocab> findByWord(String word);
+    Optional<JlptPastVocab> findFirstByWord(String word);
     List<JlptPastVocab> findAllByOrderByAppearanceCountDesc();
 }
