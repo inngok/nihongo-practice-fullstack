@@ -192,6 +192,12 @@ const parseExamples = (examplesStr) => {
     setTimeout(() => setFlashcardIndex(prev => (prev - 1 + filteredKanjis.length) % filteredKanjis.length), 150);
   };
 
+  const handleNextFlashcard = () => {
+    if (filteredKanjis.length === 0) return;
+    setIsFlipped(false);
+    setTimeout(() => setFlashcardIndex(prev => (prev + 1) % filteredKanjis.length), 150);
+  };
+
   const handleAddFlashcard = async (kanji, e) => {
     if (e) e.stopPropagation();
     try {

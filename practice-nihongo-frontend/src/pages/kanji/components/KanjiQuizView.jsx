@@ -23,7 +23,7 @@ export default function KanjiQuizView({ filteredKanjis }) {
     }
     
     const shuffledList = [...filteredKanjis].sort(() => Math.random() - 0.5);
-    const questions = shuffledList.slice(0, Math.min(15, shuffledList.length)).map(kanji => {
+    const questions = shuffledList.map(kanji => {
       const incorrects = filteredKanjis
         .filter(k => k.id !== kanji.id && k.hanviet !== kanji.hanviet)
         .sort(() => Math.random() - 0.5)
