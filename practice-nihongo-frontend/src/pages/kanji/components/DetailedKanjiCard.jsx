@@ -106,9 +106,9 @@ export default function DetailedKanjiCard({ kanji, handleOpenDetail, handleAddFl
            {examples.map((ex, idx) => (
              <div key={idx} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:border-slate-300 transition-all relative">
                 <span className="absolute top-4 right-5 text-[9px] font-bold text-slate-200 dark:text-slate-800 tracking-widest">#{idx + 1}</span>
-                <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{ex.word}</h4>
-                <p className="text-[10px] text-slate-400 dark:text-slate-600 mb-2">{ex.reading}</p>
-                <p className="text-sm text-slate-700 dark:text-slate-300 font-bold">{ex.meaning}</p>
+                <h4 className="text-3xl font-bold text-slate-900 dark:text-white mb-3 font-kanji tracking-wide">{ex.word}</h4>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mb-2">{ex.reading}</p>
+                <p className="text-base text-slate-700 dark:text-slate-300 font-bold">{ex.meaning}</p>
              </div>
            ))}
         </div>

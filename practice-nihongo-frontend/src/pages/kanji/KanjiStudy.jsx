@@ -36,7 +36,13 @@ export default function KanjiStudy() {
     try {
       setLoading(true);
       const response = await kanjiService.getAll({ bookId });
-      const data = response.data || [];
+      let data = response.data || [];
+
+      const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ROLE_ADMIN';
+      if (!isAdmin) {
+        data = data.filter(item => item.publish !== false);
+      }
+
       setKanjiData(data);
       if (data.length > 0) {
         const weeks = [...new Set(data.map(i => i.week || 1))].sort((a, b) => a - b);
@@ -71,29 +77,29 @@ export default function KanjiStudy() {
 
   useEffect(() => {
     if (currentUser && activeData.length > 0 && bookId) {
-       fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`)
-         .then(res => res.json())
-         .then(resData => {
-            if (resData.data) {
-               try {
-                  const state = JSON.parse(resData.data);
-                  if (state.currentIndex !== undefined && state.currentIndex < activeData.length) {
-                     setCurrentIndex(state.currentIndex);
-                  }
-               } catch(e) {}
-            }
-         }).catch(() => {});
+      fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`)
+        .then(res => res.json())
+        .then(resData => {
+          if (resData.data) {
+            try {
+              const state = JSON.parse(resData.data);
+              if (state.currentIndex !== undefined && state.currentIndex < activeData.length) {
+                setCurrentIndex(state.currentIndex);
+              }
+            } catch (e) { }
+          }
+        }).catch(() => { });
     }
   }, [bookId, selectedWeek, activeData.length, currentUser]);
 
   useEffect(() => {
     if (currentUser && bookId && activeMode !== 'list') {
-        const state = { activeMode };
-        fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json' },
-           body: JSON.stringify({ data: JSON.stringify(state) })
-        }).catch(() => {});
+      const state = { activeMode };
+      fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: JSON.stringify(state) })
+      }).catch(() => { });
     }
   }, [activeMode, bookId, selectedWeek, currentUser]);
 
@@ -115,9 +121,16 @@ export default function KanjiStudy() {
           .filter(i => {
             const term = searchTerm.toLowerCase().trim();
             if (!term) return true;
-            return i.character.toLowerCase().includes(term) || 
-                   i.meaning.toLowerCase().includes(term) || 
-                   (i.hanviet && i.hanviet.toLowerCase().includes(term));
+
+            // Check if the kanji's properties include the search term
+            const matchInKanji = i.character.toLowerCase().includes(term) ||
+              i.meaning.toLowerCase().includes(term) ||
+              (i.hanviet && i.hanviet.toLowerCase().includes(term));
+
+
+            const matchInTerm = term.includes(i.character.toLowerCase());
+
+            return matchInKanji || matchInTerm;
           })
           .map((item) => (
             <div
@@ -159,7 +172,7 @@ export default function KanjiStudy() {
       ) : (
         <div className="max-w-7xl mx-auto space-y-12">
           {/* Top Bar */}
-          <button 
+          <button
             onClick={() => navigate('/kanji')}
             className="group flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-black dark:hover:text-white uppercase tracking-widest transition-all mb-4"
           >
@@ -186,11 +199,10 @@ export default function KanjiStudy() {
                   <button
                     key={week}
                     onClick={() => { setSelectedWeek(week); setActiveMode('list'); }}
-                    className={`px-5 py-2 rounded-xl text-[11px] font-black transition-all ${
-                      selectedWeek === week 
-                        ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105' 
-                        : 'bg-slate-50 text-slate-400 dark:bg-slate-900 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white'
-                    }`}
+                    className={`px-5 py-2 rounded-xl text-[11px] font-black transition-all ${selectedWeek === week
+                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105'
+                      : 'bg-slate-50 text-slate-400 dark:bg-slate-900 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white'
+                      }`}
                   >
                     TUẦN {week}
                   </button>
@@ -207,11 +219,10 @@ export default function KanjiStudy() {
                 <button
                   key={m.id}
                   onClick={() => setActiveMode(m.id)}
-                  className={`flex-1 sm:flex-none px-2 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[9px] sm:text-[10px] font-black tracking-widest transition-all text-center ${
-                    activeMode === m.id 
-                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-xl' 
-                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                  }`}
+                  className={`flex-1 sm:flex-none px-2 sm:px-8 py-2.5 sm:py-3 rounded-xl text-[9px] sm:text-[10px] font-black tracking-widest transition-all text-center ${activeMode === m.id
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-xl'
+                    : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                    }`}
                 >
                   {m.label}
                 </button>
@@ -222,13 +233,14 @@ export default function KanjiStudy() {
           {/* Main Content */}
           <div className="pt-4 pb-20">
             {activeMode === 'list' ? ListScreen : (
-               <div className="py-20 text-center italic text-slate-400">Chế độ học bài đang được cập nhật...</div>
+              <div className="py-20 text-center italic text-slate-400">Chế độ học bài đang được cập nhật...</div>
             )}
           </div>
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-in { animation: fade-in 0.5s ease-out forwards; }
       `}} />

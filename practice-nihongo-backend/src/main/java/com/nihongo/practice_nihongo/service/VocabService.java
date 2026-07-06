@@ -79,6 +79,7 @@ public class VocabService {
             if (vocab.getExampleMeaning() != null) existing.setExampleMeaning(vocab.getExampleMeaning());
             if (vocab.getWeek() != null) existing.setWeek(vocab.getWeek());
             if (vocab.getDay() != null) existing.setDay(vocab.getDay());
+            if (vocab.getPublish() != null) existing.setPublish(vocab.getPublish());
 
             if (vocab.getBook() != null && vocab.getBook().getId() != null) {
                 Book book = bookRepository.findById(vocab.getBook().getId()).orElse(null);

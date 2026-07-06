@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Repository
 public interface ConfusingGrammarGroupRepository extends JpaRepository<ConfusingGrammarGroup, Long> {
-    Optional<ConfusingGrammarGroup> findByTitle(String title);
+    Optional<ConfusingGrammarGroup> findFirstByTitle(String title);
 }

@@ -30,9 +30,12 @@ public class Kanji {
     @JoinColumn(name = "book_id")
     private Book book;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean publish = true;
+
     public Kanji() {}
 
-    public Kanji(Long id, String character, String kunyomi, String onyomi, String hanviet, String meaning, String examples, Integer week, Integer day, Integer page, Book book) {
+    public Kanji(Long id, String character, String kunyomi, String onyomi, String hanviet, String meaning, String examples, Integer week, Integer day, Integer page, Book book, Boolean publish) {
         this.id = id;
         this.character = character;
         this.kunyomi = kunyomi;
@@ -44,6 +47,7 @@ public class Kanji {
         this.day = day;
         this.page = page;
         this.book = book;
+        this.publish = publish != null ? publish : true;
     }
 
     // Manual Getters and Setters
@@ -71,6 +75,8 @@ public class Kanji {
     public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
     public Book getBook() { return book; }
     public void setBook(Book book) { this.book = book; }
+    public Boolean getPublish() { return publish; }
+    public void setPublish(Boolean publish) { this.publish = publish; }
 
     // Minimal builder-like pattern if needed, but standard setters are enough for now
     public static class KanjiBuilder {
@@ -85,6 +91,7 @@ public class Kanji {
         private Integer day;
         private Integer page;
         private Book book;
+        private Boolean publish = true;
 
         public KanjiBuilder id(Long id) { this.id = id; return this; }
         public KanjiBuilder character(String character) { this.character = character; return this; }
@@ -97,9 +104,10 @@ public class Kanji {
         public KanjiBuilder day(Integer day) { this.day = day; return this; }
         public KanjiBuilder page(Integer page) { this.page = page; return this; }
         public KanjiBuilder book(Book book) { this.book = book; return this; }
+        public KanjiBuilder publish(Boolean publish) { this.publish = publish; return this; }
         
         public Kanji build() {
-            return new Kanji(id, character, kunyomi, onyomi, hanviet, meaning, examples, week, day, page, book);
+            return new Kanji(id, character, kunyomi, onyomi, hanviet, meaning, examples, week, day, page, book, publish);
         }
     }
 

@@ -48,6 +48,12 @@ public class BookService {
         if (book.getPublishGrammar() == null) {
             book.setPublishGrammar(true);
         }
+        if (book.getPublishVocab() == null) {
+            book.setPublishVocab(true);
+        }
+        if (book.getPublishKanji() == null) {
+            book.setPublishKanji(true);
+        }
         return bookRepository.save(book);
     }
 
@@ -59,6 +65,8 @@ public class BookService {
         book.setNum(bookDetails.getNum());
         book.setType(bookDetails.getType() != null ? bookDetails.getType() : "VOCABULARY");
         book.setPublishGrammar(bookDetails.getPublishGrammar() != null ? bookDetails.getPublishGrammar() : true);
+        book.setPublishVocab(bookDetails.getPublishVocab() != null ? bookDetails.getPublishVocab() : true);
+        book.setPublishKanji(bookDetails.getPublishKanji() != null ? bookDetails.getPublishKanji() : true);
         return bookRepository.save(book);
     }
 

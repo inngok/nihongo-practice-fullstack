@@ -29,7 +29,7 @@ public class JlptPastVocabService {
                 continue;
             }
 
-            Optional<JlptPastVocab> existingOpt = repository.findByWord(word);
+            Optional<JlptPastVocab> existingOpt = repository.findFirstByWord(word);
             if (existingOpt.isPresent()) {
                 JlptPastVocab existing = existingOpt.get();
                 

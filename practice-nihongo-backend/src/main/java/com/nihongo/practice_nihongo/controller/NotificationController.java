@@ -1,14 +1,16 @@
 package com.nihongo.practice_nihongo.controller;
 
 import com.nihongo.practice_nihongo.model.NewsArticle;
+import com.nihongo.practice_nihongo.model.Notification;
+import com.nihongo.practice_nihongo.repository.NotificationRepository;
 import com.nihongo.practice_nihongo.service.NotificationService;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import io.swagger.v3.oas.annotations.Operation;
 import java.time.LocalDateTime;
 
 @RestController
@@ -19,13 +21,19 @@ public class NotificationController {
     @Autowired
     private NotificationService notificationService;
 
-    @Operation(summary = "Đăng ký nhận thông báo thời gian thực qua Server-Sent Events (SSE)")
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @GetMapping
+    public ResponseEntity<List<Notification>> getRecentNotifications() {
+        return ResponseEntity.ok(notificationRepository.findTop20ByOrderByCreatedAtDesc());
+    }
+
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe() {
         return notificationService.subscribe();
     }
 
-    @Operation(summary = "Gửi thông báo tin tức giả lập để test real-time")
     @PostMapping("/test")
     public ResponseEntity<String> sendTestNotification(@RequestParam(required = false) String title) {
         String finalTitle = title != null ? title : "Nhật Bản phát triển robot AI hỗ trợ học tiếng Nhật cực đỉnh!";

@@ -14,7 +14,9 @@ import {
   DeleteOutlined,
   FilterOutlined,
   ThunderboltOutlined,
-  SearchOutlined
+  SearchOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined
 } from '@ant-design/icons';
 
 const customStyles = `
@@ -298,6 +300,16 @@ export default function VocabManager() {
     }
   };
 
+  const handleTogglePublish = async (vocab) => {
+    try {
+      await vocabService.update(vocab.id, { publish: vocab.publish === false ? true : false });
+      messageApi.success(vocab.publish === false ? 'Đã hiện từ vựng' : 'Đã ẩn từ vựng');
+      fetchData();
+    } catch (err) {
+      messageApi.error('Lỗi khi cập nhật trạng thái');
+    }
+  };
+
 
 
   return (
@@ -433,6 +445,9 @@ export default function VocabManager() {
                           {v.isDuplicate && (
                             <span className="text-[8px] font-black uppercase bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded-md border border-rose-200" title="Từ này xuất hiện nhiều lần">Trùng</span>
                           )}
+                          {v.publish === false && (
+                            <span className="text-[8px] font-black uppercase bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded-md border border-slate-300" title="Đã bị ẩn khỏi người học">Ẩn</span>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-4 text-xs font-medium text-slate-500 italic">{v.reading}</td>
@@ -445,6 +460,9 @@ export default function VocabManager() {
                       </td>
                       <td className="pr-6 py-4 text-right">
                         <div className="flex justify-end gap-1">
+                          <button onClick={() => handleTogglePublish(v)} className="p-2 text-slate-400 hover:text-black dark:hover:text-white transition-colors" title={v.publish === false ? "Hiện" : "Ẩn"}>
+                            {v.publish === false ? <EyeInvisibleOutlined className="text-base" /> : <EyeOutlined className="text-base" />}
+                          </button>
                           <button onClick={() => openEditModal(v)} className="p-2 text-slate-400 hover:text-black dark:hover:text-white transition-colors" title="Sửa"><EditOutlined className="text-base" /></button>
                           <button onClick={() => handleDelete(v.id)} className="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Xóa"><DeleteOutlined className="text-base" /></button>
                         </div>

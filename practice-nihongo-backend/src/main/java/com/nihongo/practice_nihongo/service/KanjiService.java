@@ -58,7 +58,13 @@ public class KanjiService {
 
     public List<Kanji> createKanjisBulk(List<Kanji> kanjis) {
         for (Kanji kanji : kanjis) {
-            kanjiRepository.findByCharacter(kanji.getCharacter()).ifPresentOrElse(existing -> {
+            Optional<Kanji> existingOpt;
+            if (kanji.getBook() != null && kanji.getBook().getId() != null) {
+                existingOpt = kanjiRepository.findFirstByCharacterAndBookId(kanji.getCharacter(), kanji.getBook().getId());
+            } else {
+                existingOpt = kanjiRepository.findFirstByCharacter(kanji.getCharacter());
+            }
+            existingOpt.ifPresentOrElse(existing -> {
                 Optional.ofNullable(kanji.getHanviet()).ifPresent(existing::setHanviet);
                 Optional.ofNullable(kanji.getMeaning()).ifPresent(existing::setMeaning);
                 Optional.ofNullable(kanji.getKunyomi()).ifPresent(existing::setKunyomi);
@@ -97,6 +103,7 @@ public class KanjiService {
             Optional.ofNullable(kanji.getDay()).ifPresent(existing::setDay);
             Optional.ofNullable(kanji.getPage()).ifPresent(existing::setPage);
             Optional.ofNullable(kanji.getSortOrder()).ifPresent(existing::setSortOrder);
+            Optional.ofNullable(kanji.getPublish()).ifPresent(existing::setPublish);
 
             Optional.ofNullable(kanji.getBook())
                     .map(Book::getId)

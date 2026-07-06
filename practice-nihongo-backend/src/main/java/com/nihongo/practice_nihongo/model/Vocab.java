@@ -25,14 +25,16 @@ public class Vocab {
     private Integer week;
     private Integer day;
 
-
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "book_id")
     private Book book;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean publish = true;
+
     public Vocab() {}
 
-    public Vocab(Long id, String word, String reading, String meaning, String example, String exampleMeaning, Integer week, Integer day, Book book) {
+    public Vocab(Long id, String word, String reading, String meaning, String example, String exampleMeaning, Integer week, Integer day, Book book, Boolean publish) {
         this.id = id;
         this.word = word;
         this.reading = reading;
@@ -42,6 +44,7 @@ public class Vocab {
         this.week = week;
         this.day = day;
         this.book = book;
+        this.publish = publish != null ? publish : true;
     }
 
     // Manual Getters and Setters
@@ -63,6 +66,8 @@ public class Vocab {
     public void setDay(Integer day) { this.day = day; }
     public Book getBook() { return book; }
     public void setBook(Book book) { this.book = book; }
+    public Boolean getPublish() { return publish; }
+    public void setPublish(Boolean publish) { this.publish = publish; }
 
     public static class VocabBuilder {
         private Long id;
@@ -74,6 +79,7 @@ public class Vocab {
         private Integer week;
         private Integer day;
         private Book book;
+        private Boolean publish = true;
 
         public VocabBuilder id(Long id) { this.id = id; return this; }
         public VocabBuilder word(String word) { this.word = word; return this; }
@@ -84,9 +90,10 @@ public class Vocab {
         public VocabBuilder week(Integer week) { this.week = week; return this; }
         public VocabBuilder day(Integer day) { this.day = day; return this; }
         public VocabBuilder book(Book book) { this.book = book; return this; }
+        public VocabBuilder publish(Boolean publish) { this.publish = publish; return this; }
 
         public Vocab build() {
-            return new Vocab(id, word, reading, meaning, example, exampleMeaning, week, day, book);
+            return new Vocab(id, word, reading, meaning, example, exampleMeaning, week, day, book, publish);
         }
     }
 
