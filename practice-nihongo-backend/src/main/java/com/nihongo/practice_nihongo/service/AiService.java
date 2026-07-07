@@ -114,10 +114,11 @@ public class AiService {
                 return res;
             }
             String prompt = "You are a professional Japanese teacher. For the Japanese word or phrase provided, " +
-                    "generate its reading, Vietnamese meaning, a natural Japanese example sentence, and the Vietnamese translation of that example sentence. " +
+                    "generate its reading, Sino-Vietnamese reading (Âm Hán Việt), Vietnamese meaning, a natural Japanese example sentence, and the Vietnamese translation of that example sentence. " +
                     "Return the response strictly as a JSON object with the following keys:\n" +
                     "{\n" +
                     "  \"reading\": \"(only hiragana/katakana representation, no kanji, no spaces)\",\n" +
+                    "  \"hanviet\": \"(Sino-Vietnamese reading, e.g. HỌC SINH. Leave empty if no kanji)\",\n" +
                     "  \"meaning\": \"(Vietnamese translation)\",\n" +
                     "  \"example\": \"(natural Japanese example sentence containing the word)\",\n" +
                     "  \"exampleMeaning\": \"(Vietnamese translation of the example sentence)\"\n" +
@@ -132,6 +133,37 @@ public class AiService {
             log.error("Gemini Error: " + e.getMessage());
             String safeError = e.getMessage() != null ? e.getMessage().replace("\"", "'").replace("\n", " ") : "Unknown Error";
             return String.format("{\"reading\": \"[Lỗi AI]\", \"meaning\": \"Server AI từ chối: %s\", \"example\": \"\", \"exampleMeaning\": \"\"}", safeError);
+        }
+    }
+
+    public String extractHanvietBulk(List<String> words) throws Exception {
+        try {
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
+                recordAiUsage(true);
+                return "{}";
+            }
+            
+            String wordsList = String.join(", ", words);
+            String prompt = "You are a Japanese linguistics expert. I will give you a list of Japanese words. " +
+                    "For each word, extract ONLY the Sino-Vietnamese reading (Âm Hán Việt) of its Kanji characters. " +
+                    "If a word has no Kanji (only Hiragana/Katakana), return an empty string for it. " +
+                    "Return the response strictly as a JSON object where the keys are the exact Japanese words and the values are their Sino-Vietnamese readings.\n" +
+                    "Example:\n" +
+                    "{\n" +
+                    "  \"学生\": \"HỌC SINH\",\n" +
+                    "  \"食べる\": \"THỰC\",\n" +
+                    "  \"りんご\": \"\"\n" +
+                    "}\n" +
+                    "Do not include any formatting, markdown, or other text except the clean JSON object.\n" +
+                    "Words to process: " + wordsList;
+            String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res;
+        } catch (Exception e) {
+            recordAiUsage(false);
+            log.error("Gemini Error bulk hanviet: " + e.getMessage());
+            return "{}";
         }
     }
 
@@ -241,7 +273,6 @@ public class AiService {
                 recordAiUsage(true);
                 return "[Không có API Key cho dịch thuật]";
             }
-            // For now, maxTokens is simply ignored in callGemini as the current implementation doesn't strictly pass maxOutputTokens.
             String res = callGemini(prompt);
             recordAiUsage(true);
             return res;
@@ -261,16 +292,16 @@ public class AiService {
         } else if (typeUpper.contains("GRAMMAR")) {
             schema = "[{\"structure\": \"...\", \"meaning\": \"...\", \"explanation\": \"...\", \"exampleSentence\": \"...\", \"exampleMeaning\": \"...\", \"quizSentence\": \"...\", \"level\": null, \"week\": null, \"day\": null}]";
         } else {
-            schema = "[{\"word\": \"...\", \"reading\": \"...\", \"meaning\": \"...\", \"example\": \"...\", \"exampleMeaning\": \"...\", \"week\": null, \"day\": null, \"page\": null}]";
+            schema = "[{\"word\": \"...\", \"reading\": \"...\", \"hanviet\": \"...\", \"meaning\": \"...\", \"example\": \"...\", \"exampleMeaning\": \"...\", \"week\": null, \"day\": null, \"page\": null}]";
         }
 
-        return "You are a professional Japanese data formatter. Convert the following messy data into a valid JSON array strictly following this schema: " + schema + 
-               ". \n\nInput data:\n" + rawData + 
+        return "You are a professional Japanese data formatter. Convert the following messy data into a valid JSON array strictly following this schema: " + schema +
+               ". \n\nInput data:\n" + rawData +
                "\n\nRules:\n" +
                "1. Return ONLY the JSON array. No other text.\n" +
                "2. Ensure all fields are present. Use null for numeric fields (week, day, page) and empty strings for text fields if information is missing.\n" +
                "3. For Kanji, separate kunyomi and onyomi correctly if possible. If only one reading is provided, try to identify if it is Kun or On. If the Vietnamese meaning (\"meaning\") is missing, translate the Kanji's meaning into Vietnamese.\n" +
-               "4. For Vocabulary, if the Vietnamese meaning (\"meaning\") of the word/phrase is missing or empty, you MUST translate and populate the meaning in Vietnamese.\n" +
+               "4. For Vocabulary, if the Vietnamese meaning (\"meaning\") of the word/phrase is missing or empty, you MUST translate and populate the meaning in Vietnamese. Also, MUST extract the Sino-Vietnamese reading (Âm Hán Việt) of the Kanji characters in the word and put it in \"hanviet\" (e.g. \"HỌC SINH\"). If the word has no Kanji, leave \"hanviet\" empty.\n" +
                "5. For Vocabulary/Grammar, if the Japanese example sentence (\"example\" or \"exampleSentence\") or its Vietnamese translation (\"exampleMeaning\") is missing, you MUST generate a natural, beginner-friendly Japanese example sentence containing that word/structure and translate it correctly into Vietnamese for \"exampleMeaning\". For Grammar specifically, if the structure contains multiple synonymous patterns separated by slashes (/) or dots (・) (e.g. 〜ものですから / 〜ものだから / 〜もので), you MUST provide AT LEAST ONE example sentence for EACH pattern. If it has multiple usage forms, cover them as well. Join multiple sentences using \\n.\n" +
                "6. For Grammar, the \"quizSentence\" MUST be exactly the \"exampleSentence\", but you MUST replace the grammar point with '_____'. CRITICAL RULE: YOU MUST KEEP ALL MAIN VERBS, NOUNS, AND ADJECTIVES! NEVER replace the entire predicate. Example: if grammar is '〜ことになっている' and sentence is '挨拶をすることになっている。', output '挨拶をする_____。' (keep 'する'). If grammar is 'とても〜ない' and sentence is 'とても解けません', output 'とても解け_____。' or '_____解けません。' (keep '解け'). There MUST be exactly one '_____' in the string.\n" +
                "7. For Grammar, if explanation is missing, provide a short, clear explanation in Vietnamese about how to use the structure.\n" +

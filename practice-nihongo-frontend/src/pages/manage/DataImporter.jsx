@@ -314,8 +314,8 @@ export default function DataImporter() {
       headers += '一,ひと.つ,イチ,NHẤT,một,"一人 (ひとり): một người\\n一日 (ついたch): ngày mùng một",1\n';
       filename = 'kanji_template_lesson.csv';
     } else {
-      headers = 'word,reading,meaning,example,exampleMeaning,lesson\n';
-      headers += '食べる,たべる,Ăn,ご飯を食べる,Ăn cơm,1\n';
+      headers = 'word,reading,hanviet,meaning,example,exampleMeaning,lesson\n';
+      headers += '食べる,たべる,THỰC,Ăn,ご飯を食べる,Ăn cơm,1\n';
       filename = 'vocab_template_lesson.csv';
     }
 

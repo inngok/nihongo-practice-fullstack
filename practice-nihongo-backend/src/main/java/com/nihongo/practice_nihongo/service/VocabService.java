@@ -75,6 +75,7 @@ public class VocabService {
             if (vocab.getWord() != null) existing.setWord(vocab.getWord());
             if (vocab.getReading() != null) existing.setReading(vocab.getReading());
             if (vocab.getMeaning() != null) existing.setMeaning(vocab.getMeaning());
+            if (vocab.getHanviet() != null) existing.setHanviet(vocab.getHanviet());
             if (vocab.getExample() != null) existing.setExample(vocab.getExample());
             if (vocab.getExampleMeaning() != null) existing.setExampleMeaning(vocab.getExampleMeaning());
             if (vocab.getWeek() != null) existing.setWeek(vocab.getWeek());

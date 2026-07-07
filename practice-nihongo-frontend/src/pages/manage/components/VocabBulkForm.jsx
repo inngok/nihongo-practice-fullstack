@@ -146,6 +146,7 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
                   <tr>
                     <th className="p-4 w-12 text-center"><input type="checkbox" onChange={(e) => setPreviewData(d => d.map(item => ({ ...item, selected: e.target.checked })))} checked={previewData.every(i => i.selected)} className="w-4 h-4 cursor-pointer rounded-sm" /></th>
                     <th className="p-4 text-left font-bold uppercase tracking-widest text-[10px] text-slate-400">Từ vựng</th>
+                    <th className="p-4 text-left font-bold uppercase tracking-widest text-[10px] text-slate-400">Hán Việt</th>
                     <th className="p-4 text-left font-bold uppercase tracking-widest text-[10px] text-slate-400">Ý nghĩa</th>
                   </tr>
                 </thead>
@@ -154,6 +155,7 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
                     <tr key={idx} className={`transition-colors ${item.selected ? 'bg-white dark:bg-slate-800/30' : 'opacity-40 grayscale'}`}>
                       <td className="p-4 text-center"><input type="checkbox" checked={item.selected} onChange={() => { const d = [...previewData]; d[idx].selected = !d[idx].selected; setPreviewData(d); }} className="w-4 h-4 cursor-pointer rounded-sm" /></td>
                       <td className="p-4 font-bold text-slate-900 dark:text-white font-kanji text-base">{item.word}</td>
+                      <td className="p-4 text-slate-600 dark:text-slate-300 font-medium">{item.hanviet}</td>
                       <td className="p-4 text-slate-600 dark:text-slate-300 font-medium leading-relaxed">{item.meaning}</td>
                     </tr>
                   ))}

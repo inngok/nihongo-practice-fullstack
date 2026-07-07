@@ -142,7 +142,8 @@ const parseExamples = (examplesStr) => {
       const query = searchQuery.toLowerCase();
       result = result.filter(k => 
         [k.character, k.hanviet, k.meaning, k.onyomi, k.kunyomi]
-          .some(field => field?.toLowerCase().includes(query))
+          .some(field => field?.toLowerCase().includes(query)) ||
+        (k.character && query.includes(k.character.toLowerCase()))
       );
     }
 
@@ -231,32 +232,31 @@ const parseExamples = (examplesStr) => {
           >
             <span className="transition-transform group-hover:-translate-x-1">←</span> QUAY LẠI
           </button>
-          
-          <span className="text-[10px] font-black tracking-[0.25em] text-slate-300 dark:text-slate-700 uppercase">
-            {formattedBookCode}
-          </span>
         </div>
 
         {/* Dynamic Page Pills Grid */}
-        <div className="flex flex-wrap gap-2.5 mb-10 max-w-4xl">
+        <div className="flex flex-wrap items-center gap-2.5 mb-10 max-w-4xl">
+          <span className="text-[10px] font-black tracking-[0.25em] text-slate-300 dark:text-slate-700 uppercase mr-4">
+            {formattedBookCode}
+          </span>
           <button
             onClick={() => setSelectedPageFilter('all')}
-            className={`text-[9px] font-black tracking-wider uppercase px-4 py-2 rounded-lg transition-all ${
+            className={`w-10 h-10 text-[9px] font-black tracking-wider uppercase rounded-full transition-all flex items-center justify-center shrink-0 ${
               selectedPageFilter === 'all'
                 ? 'bg-slate-950 text-white dark:bg-white dark:text-black shadow-sm'
                 : 'bg-slate-50 text-slate-400 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-500 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800'
             }`}
           >
-            Tất cả
+            ALL
           </button>
           {uniquePages.map(p => {
             const [type, val] = p.split('_');
-            const label = type === 'week' ? `Bài ${val}` : type === 'page' ? `Trang ${val}` : `Phần ${val}`;
+            const label = val;
             return (
               <button
                 key={p}
                 onClick={() => setSelectedPageFilter(p)}
-                className={`text-[9px] font-black tracking-wider uppercase px-4 py-2 rounded-lg transition-all ${
+                className={`w-10 h-10 text-[10px] font-black tracking-wider uppercase rounded-full transition-all flex items-center justify-center shrink-0 ${
                   selectedPageFilter === p
                     ? 'bg-slate-950 text-white dark:bg-white dark:text-black shadow-sm'
                     : 'bg-slate-50 text-slate-400 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-500 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800'

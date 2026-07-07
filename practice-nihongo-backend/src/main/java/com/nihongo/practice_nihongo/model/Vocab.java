@@ -15,6 +15,7 @@ public class Vocab {
 
     private String reading;
     private String meaning;
+    private String hanviet;
     
     @Column(columnDefinition = "TEXT")
     private String example;
@@ -34,11 +35,12 @@ public class Vocab {
 
     public Vocab() {}
 
-    public Vocab(Long id, String word, String reading, String meaning, String example, String exampleMeaning, Integer week, Integer day, Book book, Boolean publish) {
+    public Vocab(Long id, String word, String reading, String meaning, String hanviet, String example, String exampleMeaning, Integer week, Integer day, Book book, Boolean publish) {
         this.id = id;
         this.word = word;
         this.reading = reading;
         this.meaning = meaning;
+        this.hanviet = hanviet;
         this.example = example;
         this.exampleMeaning = exampleMeaning;
         this.week = week;
@@ -56,6 +58,8 @@ public class Vocab {
     public void setReading(String reading) { this.reading = reading; }
     public String getMeaning() { return meaning; }
     public void setMeaning(String meaning) { this.meaning = meaning; }
+    public String getHanviet() { return hanviet; }
+    public void setHanviet(String hanviet) { this.hanviet = hanviet; }
     public String getExample() { return example; }
     public void setExample(String example) { this.example = example; }
     public String getExampleMeaning() { return exampleMeaning; }
@@ -74,6 +78,7 @@ public class Vocab {
         private String word;
         private String reading;
         private String meaning;
+        private String hanviet;
         private String example;
         private String exampleMeaning;
         private Integer week;
@@ -85,6 +90,7 @@ public class Vocab {
         public VocabBuilder word(String word) { this.word = word; return this; }
         public VocabBuilder reading(String reading) { this.reading = reading; return this; }
         public VocabBuilder meaning(String meaning) { this.meaning = meaning; return this; }
+        public VocabBuilder hanviet(String hanviet) { this.hanviet = hanviet; return this; }
         public VocabBuilder example(String example) { this.example = example; return this; }
         public VocabBuilder exampleMeaning(String exampleMeaning) { this.exampleMeaning = exampleMeaning; return this; }
         public VocabBuilder week(Integer week) { this.week = week; return this; }
@@ -93,7 +99,7 @@ public class Vocab {
         public VocabBuilder publish(Boolean publish) { this.publish = publish; return this; }
 
         public Vocab build() {
-            return new Vocab(id, word, reading, meaning, example, exampleMeaning, week, day, book, publish);
+            return new Vocab(id, word, reading, meaning, hanviet, example, exampleMeaning, week, day, book, publish);
         }
     }
 
