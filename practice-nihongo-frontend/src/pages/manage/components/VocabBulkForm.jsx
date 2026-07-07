@@ -65,29 +65,38 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
       setIsSaving(true);
       const hide = messageApi.loading('Đang lưu dữ liệu...', 0);
       try {
+        // allItems preserves the original selected order for sortOrder assignment
+        const allItems = items;
+
         for (const itm of newItems) {
+          const globalIdx = allItems.indexOf(itm);
           await vocabService.create({
             ...itm,
             week: weekInt,
-            book: { id: bookIdInt }
+            book: { id: bookIdInt },
+            sortOrder: globalIdx >= 0 ? globalIdx + 1 : null
           });
         }
 
         if (actionType === 'OVERWRITE') {
           for (const dup of duplicates) {
+            const globalIdx = allItems.indexOf(dup);
             await vocabService.update(dup.existingId, {
               ...dup,
               week: weekInt,
-              book: { id: bookIdInt }
+              book: { id: bookIdInt },
+              sortOrder: globalIdx >= 0 ? globalIdx + 1 : null
             });
           }
         } else if (actionType === 'ADD_NEW') {
           for (const dup of duplicates) {
-            delete dup.existingId;
+            const globalIdx = allItems.indexOf(dup);
+            const { existingId, ...rest } = dup;
             await vocabService.create({
-              ...dup,
+              ...rest,
               week: weekInt,
-              book: { id: bookIdInt }
+              book: { id: bookIdInt },
+              sortOrder: globalIdx >= 0 ? globalIdx + 1 : null
             });
           }
         }

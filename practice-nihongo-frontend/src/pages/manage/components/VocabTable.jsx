@@ -13,8 +13,16 @@ const VocabTable = memo(function VocabTable({
   toggleSelectAll,
   toggleSelectOne,
   openEditModal,
-  handleDelete
+  handleDelete,
+  draggedId,
+  dragOverId,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd
 }) {
+  const isDraggable = !!onDragStart;
+
   return (
     <div className="relative">
       {loading ? (
@@ -26,6 +34,7 @@ const VocabTable = memo(function VocabTable({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
+                {isDraggable && <th className="pl-4 py-4 w-8" title="Kéo để sắp xếp"><span className="text-slate-300">⠿</span></th>}
                 <th className="pl-6 py-4 w-12">
                   <input
                     type="checkbox"
@@ -45,13 +54,29 @@ const VocabTable = memo(function VocabTable({
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
               {filteredVocabs.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((v) => (
-                <tr key={v.id} className={`transition-colors ${selectedIds.includes(v.id) ? 'bg-slate-50 dark:bg-slate-800/50' : 'hover:bg-slate-50/50'}`}>
+                <tr
+                  key={v.id}
+                  draggable={isDraggable}
+                  onDragStart={isDraggable ? (e) => onDragStart(e, v.id) : undefined}
+                  onDragOver={isDraggable ? (e) => onDragOver(e, v.id) : undefined}
+                  onDrop={isDraggable ? (e) => onDrop(e, v.id) : undefined}
+                  onDragEnd={isDraggable ? onDragEnd : undefined}
+                  className={`transition-colors cursor-grab active:cursor-grabbing
+                    ${draggedId === v.id ? 'opacity-40' : ''}
+                    ${dragOverId === v.id ? 'border-t-2 border-black dark:border-white' : ''}
+                    ${selectedIds.includes(v.id) ? 'bg-slate-50 dark:bg-slate-800/50' : 'hover:bg-slate-50/50'}
+                  `}
+                >
+                  {isDraggable && (
+                    <td className="pl-4 py-4 text-slate-300 dark:text-slate-700 select-none text-lg">⠿</td>
+                  )}
                   <td className="pl-6 py-4">
                     <input
                       type="checkbox"
                       checked={selectedIds.includes(v.id)}
                       onChange={() => toggleSelectOne(v.id)}
                       className="w-4 h-4 cursor-pointer"
+                      onMouseDown={(e) => e.stopPropagation()}
                     />
                   </td>
                   <td className="px-4 py-4 font-bold text-slate-900 dark:text-white font-kanji text-lg">

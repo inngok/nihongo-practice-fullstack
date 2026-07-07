@@ -31,6 +31,7 @@ export default function VocabStudy() {
   const [completedIds, setCompletedIds] = useState([]);
   const [isShuffle, setIsShuffle] = useState(false);
   const [showVietnameseFirst, setShowVietnameseFirst] = useState(false);
+  const [showHanViet, setShowHanViet] = useState(false);
   const [studyData, setStudyData] = useState([]);
 
   // Swipe Card States
@@ -107,15 +108,15 @@ export default function VocabStudy() {
 
   useEffect(() => {
     const handleDataChanged = () => {
-      if (bookId) fetchVocab();
+      if (bookId) fetchVocab(true); // true = background refresh
     };
     window.addEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
     return () => window.removeEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
   }, [bookId]);
 
-  const fetchVocab = async () => {
+  const fetchVocab = async (isBackground = false) => {
     try {
-      setLoading(true);
+      if (!isBackground) setLoading(true);
       const response = await vocabService.getAll({ bookId });
       let data = response.data || [];
       
@@ -126,16 +127,19 @@ export default function VocabStudy() {
 
       setVocabData(data);
 
-      if (data.length === 0) return setLoading(false);
+      if (data.length === 0) {
+        if (!isBackground) setLoading(false);
+        return;
+      }
 
       const units = [...new Set(data.map(i => parseInt(i.week ?? i.unit ?? i.lesson ?? 1)))].sort((a, b) => a - b);
       const parsedUnit = parseInt(unitParam);
       setSelectedUnit(units.includes(parsedUnit) ? parsedUnit : units[0]);
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     } catch (error) {
       console.error('Error fetching vocab:', error);
       setVocabData([]);
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   };
 
@@ -155,6 +159,12 @@ export default function VocabStudy() {
       const val = i.week ?? i.unit ?? i.lesson ?? 1;
       return parseInt(val) === parseInt(selectedUnit);
     });
+    // sort by sortOrder (admin-defined), fall back to id (insertion order)
+    data = [...data].sort((a, b) => {
+      const sa = a.sortOrder != null ? a.sortOrder : (a.id || 0);
+      const sb = b.sortOrder != null ? b.sortOrder : (b.id || 0);
+      return sa - sb;
+    });
     if (isShuffle) return [...data].sort(() => Math.random() - 0.5);
     return data;
   }, [vocabData, selectedUnit, isShuffle]);
@@ -172,12 +182,14 @@ export default function VocabStudy() {
     
     if (!currentUser) return;
     
-    fetchWithAuth(`${API_BASE_URL}/progress/quickAccess`, {
+    // fire-and-forget, no need to track
+    fetch(`${API_BASE_URL}/progress/quickAccess`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token') || ''}` },
       body: JSON.stringify({ data: JSON.stringify(quickAccessData) })
     }).catch(() => {});
-  }, [bookId, selectedUnit, activeData, vocabData, currentUser, fetchWithAuth]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookId, selectedUnit, currentUser]);
 
   useEffect(() => {
     if (activeMode !== 'list') {
@@ -211,12 +223,17 @@ export default function VocabStudy() {
   useEffect(() => {
     if (!currentUser || !bookId || activeMode === 'list') return;
     
-    const state = { currentIndex, activeMode };
-    fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: JSON.stringify(state) })
-    }).catch(() => { });
+    // debounce: only save progress 2s after the user stops changing state
+    const timer = setTimeout(() => {
+      const state = { currentIndex, activeMode };
+      fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: JSON.stringify(state) })
+      }).catch(() => { });
+    }, 2000);
+    
+    return () => clearTimeout(timer);
   }, [currentIndex, activeMode, bookId, selectedUnit, currentUser]);
 
   useEffect(() => {
@@ -427,6 +444,14 @@ export default function VocabStudy() {
                         <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${isShuffle ? 'left-[18px]' : 'left-0.5'}`} />
                       </button>
                     </div>
+                    {(activeMode === 'list' || activeMode === 'flashcard') && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-black text-slate-300">HÁN VIỆT</span>
+                        <button onClick={() => setShowHanViet(!showHanViet)} className={`w-8 h-4 rounded-full ${showHanViet ? 'bg-black' : 'bg-slate-200'} relative transition-colors`}>
+                          <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${showHanViet ? 'left-[18px]' : 'left-0.5'}`} />
+                        </button>
+                      </div>
+                    )}
                     {activeMode === 'flashcard' && (
                       <div className="flex items-center gap-2">
                         <span className="text-[9px] font-black text-slate-300">VIỆT → NHẬT</span>
@@ -468,6 +493,17 @@ export default function VocabStudy() {
                       <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 ${isShuffle ? 'left-6 bg-white dark:bg-black' : 'left-1 bg-white dark:bg-slate-400'}`} />
                     </button>
                   </div>
+                  {(activeMode === 'list' || activeMode === 'flashcard') && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest whitespace-nowrap">HÁN VIỆT</span>
+                      <button
+                        onClick={() => setShowHanViet(!showHanViet)}
+                        className={`relative shrink-0 w-11 h-6 rounded-full transition-all duration-300 ${showHanViet ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 ${showHanViet ? 'left-6 bg-white dark:bg-black' : 'left-1 bg-white dark:bg-slate-400'}`} />
+                      </button>
+                    </div>
+                  )}
                   {activeMode === 'flashcard' && (
                     <div className="flex items-center gap-3">
                       <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest whitespace-nowrap">VIỆT → NHẬT</span>
@@ -511,6 +547,7 @@ export default function VocabStudy() {
                   searchTerm={searchTerm}
                   setSearchTerm={setSearchTerm}
                   completedIds={completedIds}
+                  showHanViet={showHanViet}
                 />
               )}
               {activeMode === 'flashcard' && (
@@ -534,6 +571,7 @@ export default function VocabStudy() {
                   cardStyle={cardStyle}
                   swipeDirection={swipeDirection}
                   setShowResults={setShowResults}
+                  showHanViet={showHanViet}
                 />
               )}
               {activeMode === 'quiz' && (

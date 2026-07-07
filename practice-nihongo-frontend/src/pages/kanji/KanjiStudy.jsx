@@ -26,15 +26,15 @@ export default function KanjiStudy() {
 
   useEffect(() => {
     const handleDataChanged = () => {
-      if (bookId) fetchKanji();
+      if (bookId) fetchKanji(true);
     };
     window.addEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
     return () => window.removeEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
   }, [bookId]);
 
-  const fetchKanji = async () => {
+  const fetchKanji = async (isBackground = false) => {
     try {
-      setLoading(true);
+      if (!isBackground) setLoading(true);
       const response = await kanjiService.getAll({ bookId });
       let data = response.data || [];
 
@@ -48,11 +48,11 @@ export default function KanjiStudy() {
         const weeks = [...new Set(data.map(i => i.week || 1))].sort((a, b) => a - b);
         setSelectedWeek(weeks[0] || 1);
       }
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     } catch (error) {
       console.error('Error fetching kanji:', error);
       setKanjiData([]);
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   };
 

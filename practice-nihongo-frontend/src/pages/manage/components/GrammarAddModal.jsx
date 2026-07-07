@@ -233,18 +233,25 @@ export default function GrammarAddModal({
       setIsSaving(true);
       const hide = message.loading(`Đang lưu cấu trúc ngữ pháp...`, 0);
       try {
-        const createPayload = (item) => ({
-          structure: item.structure,
-          meaning: item.meaning,
-          explanation: item.explanation,
-          exampleSentence: item.exampleSentence,
-          exampleMeaning: item.exampleMeaning,
-          quizSentence: item.quizSentence,
-          level: item.level && item.level !== 'N3' ? item.level : (formData.bookId ? books.find(b => b.id.toString() === formData.bookId.toString())?.levelLabel || 'N3' : 'N3'),
-          book: { id: parseInt(formData.bookId) },
-          week: formData.week ? parseInt(formData.week) : null,
-          day: item.day ? parseInt(item.day) : null
-        });
+        // Get the global sortOrder of each item in the full newItems/duplicates list
+        const allSelectedItems = itemsToSave;
+
+        const createPayload = (item) => {
+          const globalIdx = allSelectedItems.indexOf(item);
+          return {
+            structure: item.structure,
+            meaning: item.meaning,
+            explanation: item.explanation,
+            exampleSentence: item.exampleSentence,
+            exampleMeaning: item.exampleMeaning,
+            quizSentence: item.quizSentence,
+            level: item.level && item.level !== 'N3' ? item.level : (formData.bookId ? books.find(b => b.id.toString() === formData.bookId.toString())?.levelLabel || 'N3' : 'N3'),
+            book: { id: parseInt(formData.bookId) },
+            week: formData.week ? parseInt(formData.week) : null,
+            day: item.day ? parseInt(item.day) : null,
+            sortOrder: globalIdx >= 0 ? globalIdx + 1 : null
+          };
+        };
 
         for (const item of newItems) {
           await grammarService.create(createPayload(item));

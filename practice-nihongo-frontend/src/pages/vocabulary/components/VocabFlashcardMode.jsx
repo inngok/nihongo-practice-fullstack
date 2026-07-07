@@ -20,7 +20,8 @@ export default function VocabFlashcardMode({
   handleTouchEnd,
   cardStyle,
   swipeDirection,
-  setShowResults
+  setShowResults,
+  showHanViet
 }) {
   return (
     <div className="flex flex-col gap-8 animate-in fade-in duration-500 max-w-4xl mx-auto w-full">
@@ -147,6 +148,11 @@ export default function VocabFlashcardMode({
               <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 italic uppercase">
                 {studyData[currentIndex]?.reading}
               </p>
+              {showHanViet && studyData[currentIndex]?.hanviet && (
+                <div className="mt-6 px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] border border-indigo-100 dark:border-indigo-800">
+                  {studyData[currentIndex]?.hanviet}
+                </div>
+              )}
 
 
             </div>
@@ -159,7 +165,7 @@ export default function VocabFlashcardMode({
           className="perspective h-[380px] sm:h-[450px] cursor-pointer group"
         >
           <div key={currentIndex} className={`relative w-full h-full transition-all duration-700 preserve-3d shadow-2xl rounded-[3rem] ${isFlipped ? 'rotate-y-180' : 'hover:-translate-y-1 hover:shadow-3xl'}`}>
-            {/* Front Face */}
+            {/* Front Face — challenge side, no hanviet hint here */}
             <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] flex flex-col items-center justify-center p-6 sm:p-12 text-center">
               <h2 className={`font-medium mb-6 sm:mb-8 select-all break-all whitespace-pre-wrap leading-tight ${showVietnameseFirst ? 'text-2xl sm:text-3xl md:text-5xl italic text-slate-900 dark:text-white' : 'text-4xl sm:text-5xl md:text-7xl font-kanji text-slate-900 dark:text-white'}`}>
                 {showVietnameseFirst ? studyData[currentIndex]?.meaning : studyData[currentIndex]?.word}
@@ -179,6 +185,11 @@ export default function VocabFlashcardMode({
               <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 italic uppercase">
                 {studyData[currentIndex]?.reading}
               </p>
+              {showHanViet && studyData[currentIndex]?.hanviet && (
+                <div className="mt-6 px-4 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] border border-indigo-100 dark:border-indigo-800">
+                  {studyData[currentIndex]?.hanviet}
+                </div>
+              )}
 
 
             </div>

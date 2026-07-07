@@ -26,6 +26,8 @@ export default function VocabManager() {
   const bookIdParam = searchParams.get('bookId');
   const { fetchWithAuth } = useAuth();
   const [messageApi, contextHolder] = message.useMessage();
+  const messageApiRef = React.useRef(messageApi);
+  React.useEffect(() => { messageApiRef.current = messageApi; }, [messageApi]);
 
   const [vocabs, setVocabs] = useState([]);
   const [books, setBooks] = useState([]);
@@ -43,9 +45,16 @@ export default function VocabManager() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  const fetchData = useCallback(async () => {
+  // Drag-and-drop reorder state
+  const [draggedId, setDraggedId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
+  const [manualOrder, setManualOrder] = useState([]);
+  const [hasUnsavedOrder, setHasUnsavedOrder] = useState(false);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
+
+  const fetchData = useCallback(async (isBackground = false) => {
     try {
-      setLoading(true);
+      if (!isBackground) setLoading(true);
       const [vRes, bRes] = await Promise.all([
         vocabService.getAll({ includePersonal: false }),
         bookService.getAll()
@@ -54,24 +63,25 @@ export default function VocabManager() {
       setVocabs(systemVocabs);
       setBooks(Array.isArray(bRes.data) ? bRes.data.filter(b => b.type?.includes('VOCABULARY')) : []);
     } catch (err) {
-      messageApi.error('Lỗi tải dữ liệu giáo trình');
+      messageApiRef.current.error('Lỗi tải dữ liệu giáo trình');
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
-  }, [messageApi]);
+  }, []); // stable - no deps that cause re-creation
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchData();
     if (bookIdParam) setSelectedBookId(bookIdParam);
     const channel = new BroadcastChannel('nihongo-sync-channel');
-    channel.onmessage = (e) => (e.data?.type === 'BOOKS_UPDATED' || e.data?.type === 'DATA_CHANGED') && fetchData();
-    const handleGlobalDataChanged = () => fetchData();
+    channel.onmessage = (e) => (e.data?.type === 'BOOKS_UPDATED' || e.data?.type === 'DATA_CHANGED') && fetchData(true);
+    const handleGlobalDataChanged = () => fetchData(true);
     window.addEventListener('GLOBAL_DATA_CHANGED', handleGlobalDataChanged);
     return () => {
       channel.close();
       window.removeEventListener('GLOBAL_DATA_CHANGED', handleGlobalDataChanged);
     };
-  }, [bookIdParam, fetchData]);
+  }, [bookIdParam]); // fetchData is stable (no deps), safe to omit
 
   const filteredVocabs = useMemo(() => {
     let data = Array.isArray(vocabs) ? vocabs : [];
@@ -106,8 +116,71 @@ export default function VocabManager() {
     });
 
     if (showDuplicatesOnly) result = result.filter(v => v.isSecondaryDuplicate);
+
+    // apply sortOrder for stable display (admin-defined order)
+    result = [...result].sort((a, b) => {
+      const sa = a.sortOrder != null ? a.sortOrder : (a.id || 0);
+      const sb = b.sortOrder != null ? b.sortOrder : (b.id || 0);
+      return sa - sb;
+    });
     return result;
   }, [vocabs, selectedBookId, selectedLesson, searchTerm, showDuplicatesOnly]);
+
+  // Apply manual drag order on top
+  const orderedVocabs = useMemo(() => {
+    if (manualOrder.length === 0) return filteredVocabs;
+    const idToVocab = Object.fromEntries(filteredVocabs.map(v => [v.id, v]));
+    const ordered = manualOrder.map(id => idToVocab[id]).filter(Boolean);
+    const inOrder = new Set(manualOrder);
+    const rest = filteredVocabs.filter(v => !inOrder.has(v.id));
+    return [...ordered, ...rest];
+  }, [manualOrder, filteredVocabs]);
+
+  // Reset manual order when filters change
+  React.useEffect(() => {
+    setManualOrder(filteredVocabs.map(v => v.id));
+    setHasUnsavedOrder(false);
+  }, [filteredVocabs.length, selectedBookId, selectedLesson, showDuplicatesOnly]);
+
+  const handleDragStart = (e, id) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+  const handleDragOver = (e, id) => {
+    e.preventDefault();
+    if (id !== draggedId) setDragOverId(id);
+  };
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    if (!draggedId || draggedId === targetId) { setDraggedId(null); setDragOverId(null); return; }
+    setManualOrder(prev => {
+      const arr = [...prev];
+      const from = arr.indexOf(draggedId);
+      const to = arr.indexOf(targetId);
+      if (from === -1 || to === -1) return prev;
+      arr.splice(from, 1);
+      arr.splice(to, 0, draggedId);
+      return arr;
+    });
+    setHasUnsavedOrder(true);
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+  const handleDragEnd = () => { setDraggedId(null); setDragOverId(null); };
+
+  const handleSaveOrder = async () => {
+    setIsSavingOrder(true);
+    try {
+      await Promise.all(manualOrder.map((id, index) => vocabService.update(id, { sortOrder: index + 1 })));
+      messageApiRef.current.success('Đã lưu thứ tự thành công!');
+      setHasUnsavedOrder(false);
+      fetchData(true);
+    } catch {
+      messageApiRef.current.error('Lỗi khi lưu thứ tự!');
+    } finally {
+      setIsSavingOrder(false);
+    }
+  };
 
   const uniqueLessons = useMemo(() => {
     let data = Array.isArray(vocabs) ? vocabs : [];
@@ -129,12 +202,12 @@ export default function VocabManager() {
       onOk: async () => {
         try {
           await vocabService.delete(id);
-          fetchData();
-          messageApi.success('Đã xóa');
-        } catch { messageApi.error('Lỗi xóa!'); }
+          fetchData(true);
+          messageApiRef.current.success('Đã xóa');
+        } catch { messageApiRef.current.error('Lỗi xóa!'); }
       },
     });
-  }, [fetchData, messageApi]);
+  }, [fetchData]);
 
   const handleCleanDuplicates = useCallback(() => {
     let data = Array.isArray(vocabs) ? vocabs : [];
@@ -161,7 +234,7 @@ export default function VocabManager() {
       }
     });
 
-    if (duplicateIds.length === 0) return messageApi.info('Không tìm thấy từ vựng trùng lặp nào.');
+    if (duplicateIds.length === 0) return messageApiRef.current.info('Không tìm thấy từ vựng trùng lặp nào.');
 
     Modal.confirm({
       zIndex: 100000,
@@ -170,20 +243,20 @@ export default function VocabManager() {
       okText: 'Dọn dẹp ngay', okType: 'danger', cancelText: 'Hủy',
       onOk: async () => {
         setIsCleaning(true);
-        const hide = messageApi.loading(`Đang dọn dẹp ${duplicateIds.length} bản trùng...`, 0);
+        const hide = messageApiRef.current.loading(`Đang dọn dẹp ${duplicateIds.length} bản trùng...`, 0);
         try {
           for (const id of duplicateIds) await vocabService.delete(id);
-          messageApi.success(`Đã xóa sạch ${duplicateIds.length} bản trùng!`);
-          fetchData();
+          messageApiRef.current.success(`Đã xóa sạch ${duplicateIds.length} bản trùng!`);
+          fetchData(true);
         } catch {
-          messageApi.error('Lỗi khi dọn dẹp trùng lặp!');
+          messageApiRef.current.error('Lỗi khi dọn dẹp trùng lặp!');
         } finally {
           setIsCleaning(false);
           hide();
         }
       }
     });
-  }, [vocabs, selectedBookId, selectedLesson, messageApi, fetchData]);
+  }, [vocabs, selectedBookId, selectedLesson, fetchData]);
 
   const toggleSelectOne = useCallback((id) => {
     setSelectedIds(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id]);
@@ -204,7 +277,7 @@ export default function VocabManager() {
       messageApi.success('Đã cập nhật hệ thống!');
       setIsBulkUpdateOpen(false);
       setSelectedIds([]);
-      fetchData();
+      fetchData(true);
     } catch {
       messageApi.error('Lỗi!');
     }
@@ -212,9 +285,9 @@ export default function VocabManager() {
 
   const handleBulkAiHanviet = useCallback(async () => {
     const selectedVocabs = filteredVocabs.filter(v => selectedIds.includes(v.id) && v.word);
-    if (selectedVocabs.length === 0) return messageApi.warning('Không có từ vựng nào hợp lệ để xử lý.');
+    if (selectedVocabs.length === 0) return messageApiRef.current.warning('Không có từ vựng nào hợp lệ để xử lý.');
 
-    const hide = messageApi.loading(`AI đang phân tích Hán Việt cho ${selectedVocabs.length} từ...`, 0);
+    const hide = messageApiRef.current.loading(`AI đang phân tích Hán Việt cho ${selectedVocabs.length} từ...`, 0);
     try {
       const batchSize = 50;
       for (let i = 0; i < selectedVocabs.length; i += batchSize) {
@@ -239,15 +312,15 @@ export default function VocabManager() {
           }
         }
       }
-      messageApi.success('Đã cập nhật xong Hán Việt cho các từ đã chọn!');
+      messageApiRef.current.success('Đã cập nhật xong Hán Việt cho các từ đã chọn!');
       setSelectedIds([]);
-      fetchData();
+      fetchData(true);
     } catch {
-      messageApi.error('Lỗi kết nối đến AI!');
+      messageApiRef.current.error('Lỗi kết nối đến AI!');
     } finally {
       hide();
     }
-  }, [filteredVocabs, selectedIds, messageApi, fetchData, fetchWithAuth]);
+  }, [filteredVocabs, selectedIds, fetchData, fetchWithAuth]);
 
   return (
     <div className="flex-grow w-full py-8 px-6 md:px-10 bg-white dark:bg-slate-950 min-h-screen">
@@ -336,7 +409,7 @@ export default function VocabManager() {
 
         <VocabTable
           loading={loading}
-          filteredVocabs={filteredVocabs}
+          filteredVocabs={orderedVocabs}
           currentPage={currentPage}
           pageSize={pageSize}
           setCurrentPage={setCurrentPage}
@@ -346,6 +419,12 @@ export default function VocabManager() {
           toggleSelectOne={toggleSelectOne}
           openEditModal={openEditModal}
           handleDelete={handleDelete}
+          draggedId={draggedId}
+          dragOverId={dragOverId}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onDragEnd={handleDragEnd}
         />
 
         {selectedIds.length > 0 && (
@@ -381,7 +460,7 @@ export default function VocabManager() {
                       onOk: async () => {
                         for (const id of selectedIds) await vocabService.delete(id);
                         setSelectedIds([]);
-                        fetchData();
+                        fetchData(true);
                         messageApi.success('Đã xóa sạch!');
                       }
                     });
@@ -401,10 +480,33 @@ export default function VocabManager() {
           </div>
         )}
 
+        {/* Floating Save Order Bar */}
+        {hasUnsavedOrder && (
+          <div className="fixed bottom-10 right-10 z-[500] animate-in slide-in-from-bottom-5 duration-300">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-4">
+              <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest">Chưa lưu thứ tự</span>
+              <button
+                onClick={() => { setManualOrder(filteredVocabs.map(v => v.id)); setHasUnsavedOrder(false); }}
+                className="text-[10px] font-black uppercase tracking-widest text-slate-300 dark:text-slate-700 hover:text-slate-500 transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleSaveOrder}
+                disabled={isSavingOrder}
+                className="px-5 py-2 bg-black dark:bg-white text-white dark:text-black text-[10px] font-black uppercase tracking-widest rounded-xl hover:opacity-80 transition-all disabled:opacity-50"
+              >
+                {isSavingOrder ? 'Đang lưu...' : 'Lưu thứ tự'}
+              </button>
+            </div>
+          </div>
+        )}
+
         <VocabAddModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSuccess={() => { setIsModalOpen(false); fetchData(); }}
+          onSuccess={() => { setIsModalOpen(false); fetchData(true); }}
           editingVocab={editingVocab}
           books={books}
           initialBookId={selectedBookId}

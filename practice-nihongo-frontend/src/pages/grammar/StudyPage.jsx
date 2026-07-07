@@ -44,9 +44,10 @@ export default function StudyPage() {
       const unitA = parseInt(a.unit) || 0;
       const unitB = parseInt(b.unit) || 0;
       if (unitA !== unitB) return unitA - unitB;
-      const dayA = parseInt(a.day) || 0;
-      const dayB = parseInt(b.day) || 0;
-      return dayA - dayB;
+      // respect curriculum sortOrder first, fall back to day
+      const sortA = a.sortOrder != null ? a.sortOrder : (parseInt(a.day) || 0);
+      const sortB = b.sortOrder != null ? b.sortOrder : (parseInt(b.day) || 0);
+      return sortA - sortB;
     });
 
     if (activeMode === 'quiz' || activeMode === 'multiple_choice' || activeMode === 'listening') {
@@ -118,11 +119,7 @@ export default function StudyPage() {
     fetchGrammar();
   }, [targetBookId]);
 
-  useEffect(() => {
-    const handleDataChanged = () => fetchGrammar();
-    window.addEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
-    return () => window.removeEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
-  }, [targetBookId]);
+
 
   useEffect(() => {
     if (activeData.length > 0 && targetBookId) {
@@ -176,8 +173,16 @@ export default function StudyPage() {
   }, [currentIndex, activeMode, targetBookId, currentUser]);
 
 
-  const fetchGrammar = async () => {
+  useEffect(() => {
+    const handleDataChanged = () => fetchGrammar(true);
+    window.addEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
+    return () => window.removeEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
+  }, [targetBookId]);
+
+  const fetchGrammar = async (isBackground = false) => {
     try {
+      // Don't show loading spinner for background syncs
+      if (!isBackground) setLoading(true);
       const response = await grammarService.getAll();
       let data = response.data;
       
@@ -197,10 +202,10 @@ export default function StudyPage() {
         quiz: { sentence: item.exampleSentence, quizSentence: item.quizSentence, translation: item.exampleMeaning, answer: item.structure }
       }));
       setGrammarData(mapped);
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     } catch (error) {
       console.error(error);
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   };
 
