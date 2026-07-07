@@ -7,6 +7,7 @@ export default function DataImporterDuplicateModal({
   nonDuplicateItems,
   onKeepOld,
   onOverwriteNew,
+  onAddNew,
   onClose
 }) {
   if (!isOpen) return null;
@@ -35,7 +36,7 @@ export default function DataImporterDuplicateModal({
           </div>
           <div className="flex justify-between text-xs font-semibold">
             <span className="text-slate-500 dark:text-slate-400">Bản ghi trùng (đã có):</span>
-            <span className="text-slate-900 dark:text-white text-slate-900 dark:text-white font-bold">{duplicateItems.length}</span>
+            <span className="text-slate-900 dark:text-white font-bold">{duplicateItems.length}</span>
           </div>
           
           {/* Short preview of some duplicates */}
@@ -67,9 +68,15 @@ export default function DataImporterDuplicateModal({
           </button>
           <button
             onClick={onOverwriteNew}
-            className="w-full py-3.5 bg-slate-900 dark:bg-white text-white dark:text-black hover:bg-black dark:hover:bg-slate-100 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-slate-900/10 dark:shadow-none"
+            className="w-full py-3.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md"
           >
             2. Theo cái mới (Ghi đè {duplicateItems.length} bản trùng)
+          </button>
+          <button
+            onClick={onAddNew}
+            className="w-full py-3.5 bg-slate-900 dark:bg-white text-white dark:text-black hover:bg-black dark:hover:bg-slate-100 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-slate-900/10 dark:shadow-none"
+          >
+            3. Lưu thành mới (Vẫn thêm {duplicateItems.length} bản trùng)
           </button>
           <button
             onClick={onClose}

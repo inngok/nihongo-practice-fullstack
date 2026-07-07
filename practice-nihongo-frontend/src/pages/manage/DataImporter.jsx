@@ -142,6 +142,22 @@ export default function DataImporter() {
     );
   };
 
+  const handleAddNew = async () => {
+    setDuplicateModalVisible(false);
+    
+    // Remove existingId from duplicates so they are treated as new
+    const updatedDuplicates = duplicateItems.map(item => {
+      const { existingId, ...rest } = item;
+      return rest;
+    });
+
+    const combinedData = [...nonDuplicateItems, ...updatedDuplicates];
+    await proceedImport(
+      combinedData,
+      `Đã thêm mới ${duplicateItems.length} bản ghi trùng và import thêm ${nonDuplicateItems.length} bản ghi mới thành công!`
+    );
+  };
+
   const handleImport = async () => {
     if (!jsonData.trim()) {
       return messageApi.error('Vui lòng nhập dữ liệu JSON');
@@ -640,6 +656,7 @@ export default function DataImporter() {
         nonDuplicateItems={nonDuplicateItems}
         onKeepOld={handleKeepOld}
         onOverwriteNew={handleOverwriteNew}
+        onAddNew={handleAddNew}
         onClose={() => setDuplicateModalVisible(false)}
       />
     </div>
