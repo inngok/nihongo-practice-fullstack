@@ -145,7 +145,7 @@ export default function VocabFlashcardMode({
               <h3 className={`font-medium text-slate-900 dark:text-white mb-4 ${showVietnameseFirst ? 'text-3xl sm:text-4xl md:text-5xl font-kanji' : 'text-2xl sm:text-3xl md:text-4xl italic'}`}>
                 {showVietnameseFirst ? studyData[currentIndex]?.word : studyData[currentIndex]?.meaning}
               </h3>
-              <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 italic uppercase">
+              <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 tracking-wider">
                 {studyData[currentIndex]?.reading}
               </p>
               {showHanViet && studyData[currentIndex]?.hanviet && (
@@ -182,7 +182,7 @@ export default function VocabFlashcardMode({
               <h3 className={`font-medium text-slate-900 dark:text-white mb-4 ${showVietnameseFirst ? 'text-3xl sm:text-4xl md:text-5xl font-kanji' : 'text-2xl sm:text-3xl md:text-4xl italic'}`}>
                 {showVietnameseFirst ? studyData[currentIndex]?.word : studyData[currentIndex]?.meaning}
               </h3>
-              <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 italic uppercase">
+              <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 tracking-wider">
                 {studyData[currentIndex]?.reading}
               </p>
               {showHanViet && studyData[currentIndex]?.hanviet && (

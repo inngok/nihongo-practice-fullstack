@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Check, X, Eye } from 'lucide-react';
+import { Check, X, Eye, Volume2, VolumeX } from 'lucide-react';
 
 export default function VocabMultipleChoiceMode({
   studyData,
@@ -9,8 +9,8 @@ export default function VocabMultipleChoiceMode({
   setShowResults
 }) {
   const [selectedOption, setSelectedOption] = useState(null);
-  const [isCorrect, setIsCorrect] = useState(null);
   const [showReading, setShowReading] = useState(false);
+  const [autoPlayAudio, setAutoPlayAudio] = useState(false);
 
   const currentItem = studyData[currentIndex];
 
@@ -30,7 +30,6 @@ export default function VocabMultipleChoiceMode({
 
   useEffect(() => {
     setSelectedOption(null);
-    setIsCorrect(null);
     setShowReading(false);
   }, [currentIndex]);
 
@@ -38,7 +37,21 @@ export default function VocabMultipleChoiceMode({
     if (selectedOption) return;
 
     setSelectedOption(option);
-    setIsCorrect(option.isCorrect);
+
+    if (option.isCorrect) {
+      setShowReading(true);
+      
+      if (autoPlayAudio) {
+        const text = currentItem.word;
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'ja-JP';
+          utterance.rate = 0.9;
+          window.speechSynthesis.speak(utterance);
+        }
+      }
+    }
   };
 
   const handleNext = () => {
@@ -56,10 +69,17 @@ export default function VocabMultipleChoiceMode({
       {/* Control Buttons */}
       <div className="flex justify-between items-center gap-4 px-2 sticky bottom-4 z-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md py-3 sm:py-0 rounded-2xl sm:static sm:bg-transparent sm:backdrop-blur-none shadow-sm sm:shadow-none border border-slate-100 dark:border-slate-800 sm:border-none">
         <div className="flex items-center gap-4">
-          <span className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
+          <button
+            onClick={() => setAutoPlayAudio(!autoPlayAudio)}
+            className={`p-2 rounded-lg transition-all border ${autoPlayAudio ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 border-indigo-100 dark:border-indigo-900' : 'bg-slate-50 dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-slate-800 hover:text-slate-600'}`}
+            title="Tự động đọc khi trả lời đúng"
+          >
+            {autoPlayAudio ? <Volume2 size={16} /> : <VolumeX size={16} />}
+          </button>
+          <span className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest hidden sm:inline">
             Tiến trình: {currentIndex + 1} / {studyData.length}
           </span>
-          <div className="h-1 bg-slate-100 dark:bg-slate-800 w-32 sm:w-48 rounded-full overflow-hidden">
+          <div className="h-1 bg-slate-100 dark:bg-slate-800 w-24 sm:w-48 rounded-full overflow-hidden">
             <div
               className="h-full bg-black dark:bg-white transition-all duration-500"
               style={{ width: `${((currentIndex + 1) / (studyData.length || 1)) * 100}%` }}
@@ -67,7 +87,7 @@ export default function VocabMultipleChoiceMode({
           </div>
           <button
             onClick={handleResetProgress}
-            className="px-3 py-1 bg-rose-50 dark:bg-rose-950/30 text-rose-500 border border-rose-100 dark:border-rose-900 hover:bg-rose-500 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+            className="px-3 py-1 bg-rose-50 dark:bg-rose-950/30 text-rose-500 border border-rose-100 dark:border-rose-900 hover:bg-rose-500 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all shrink-0"
           >
             HỌC LẠI
           </button>
@@ -77,7 +97,7 @@ export default function VocabMultipleChoiceMode({
       <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-3xl sm:rounded-[3rem] p-4 sm:p-12 text-center shadow-sm">
         <div className="mb-6 sm:mb-10 space-y-2 sm:space-y-4">
           <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">Chọn nghĩa đúng của từ sau</span>
-          <h2 className="text-3xl sm:text-5xl md:text-6xl font-black italic text-slate-900 dark:text-white select-all break-all whitespace-pre-wrap leading-tight">
+          <h2 className="text-3xl sm:text-5xl md:text-6xl font-medium font-kanji text-slate-900 dark:text-white select-all break-all whitespace-pre-wrap leading-tight">
             {currentItem.word}
           </h2>
           {currentItem.reading && (
@@ -91,7 +111,7 @@ export default function VocabMultipleChoiceMode({
                  }`}
                >
                  {showReading ? (
-                   <span className="italic uppercase tracking-widest">{currentItem.reading}</span>
+                   <span className="font-medium tracking-widest">{currentItem.reading}</span>
                  ) : (
                    <>
                      <Eye size={14} />
