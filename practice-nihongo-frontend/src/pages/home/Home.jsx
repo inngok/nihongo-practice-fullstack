@@ -142,6 +142,14 @@ export default function Home() {
             </span>
           </Link>
         )}
+        <Link
+          to="/grammar/keigo"
+          className="group px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-[2rem] hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
+        >
+          <span className="text-[10px] md:text-[11px] font-black tracking-[0.3em] uppercase text-slate-500 dark:text-slate-400 group-hover:text-white dark:group-hover:text-black transition-colors">
+            Tôn Kính Ngữ
+          </span>
+        </Link>
       </div>
 
       {/* Quick Access Floating Button */}

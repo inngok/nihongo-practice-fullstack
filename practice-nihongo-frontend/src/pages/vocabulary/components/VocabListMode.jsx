@@ -1,18 +1,40 @@
 import React from 'react';
 import { Search, Check } from 'lucide-react';
 
-export default function VocabListMode({ activeData, searchTerm, setSearchTerm, completedIds, showHanViet }) {
+export default function VocabListMode({ activeData, searchTerm, setSearchTerm, completedIds, showHanViet, setShowHanViet, isShuffle, setIsShuffle }) {
   return (
     <div className="flex flex-col gap-10 animate-in fade-in duration-500">
-      <div className="relative group max-w-2xl">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 w-5 h-5 group-focus-within:text-black dark:group-focus-within:text-white transition-colors" />
-        <input
-          type="text"
-          placeholder="Tìm kiếm từ vựng..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          className="w-full pl-12 pr-4 py-4 border-b-2 border-slate-100 dark:border-slate-800 bg-transparent focus:border-black dark:focus:border-white outline-none font-medium text-slate-900 dark:text-white transition-colors"
-        />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+        <div className="relative group w-full max-w-2xl">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-600 w-5 h-5 group-focus-within:text-black dark:group-focus-within:text-white transition-colors" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm từ vựng..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-4 border-b-2 border-slate-100 dark:border-slate-800 bg-transparent focus:border-black dark:focus:border-white outline-none font-medium text-slate-900 dark:text-white transition-colors"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6 px-2 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">XÁO TRỘN</span>
+            <button
+              onClick={() => setIsShuffle(!isShuffle)}
+              className={`relative shrink-0 w-8 sm:w-11 h-4 sm:h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+            >
+              <div className={`absolute top-0.5 sm:top-1 w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-300 ${isShuffle ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
+            </button>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">HÁN VIỆT</span>
+            <button
+              onClick={() => setShowHanViet(!showHanViet)}
+              className={`relative shrink-0 w-8 sm:w-11 h-4 sm:h-6 rounded-full transition-all duration-300 ${showHanViet ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+            >
+              <div className={`absolute top-0.5 sm:top-1 w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-300 ${showHanViet ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col bg-white dark:bg-slate-950/50 rounded-[2rem] overflow-hidden border border-slate-50 dark:border-slate-900 shadow-sm">

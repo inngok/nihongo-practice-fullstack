@@ -16,6 +16,7 @@ const Register = lazy(() => import("../pages/auth/Register"));
 // Grammar
 const Grammar = lazy(() => import("../pages/grammar/Grammar"));
 const ConfusingGrammar = lazy(() => import("../pages/grammar/ConfusingGrammar"));
+const KeigoPage = lazy(() => import("../pages/grammar/KeigoPage"));
 const GrammarStudy = lazy(() => import("../pages/grammar/StudyPage"));
 const VocabStudy = lazy(() => import("../pages/vocabulary/VocabStudy"));
 const KanjiStudy = lazy(() => import("../pages/kanji/KanjiStudy"));
@@ -202,6 +203,7 @@ export default function RouteMap() {
             <Route index element={<Grammar />} />
             <Route path="study" element={<GrammarStudyWrapper />} />
             <Route path="confusing" element={<ConfusingGrammar />} />
+            <Route path="keigo" element={<KeigoPage />} />
           </Route>
 
           {/* Vocabulary Section */}

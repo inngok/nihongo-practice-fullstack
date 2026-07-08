@@ -8,6 +8,7 @@ const VocabListMode = React.lazy(() => import('./components/VocabListMode'));
 const VocabFlashcardMode = React.lazy(() => import('./components/VocabFlashcardMode'));
 const VocabQuizMode = React.lazy(() => import('./components/VocabQuizMode'));
 const VocabMultipleChoiceMode = React.lazy(() => import('./components/VocabMultipleChoiceMode'));
+const VocabResultsModal = React.lazy(() => import('./components/VocabResultsModal'));
 
 export default function VocabStudy() {
   const navigate = useNavigate();
@@ -305,6 +306,7 @@ export default function VocabStudy() {
     setFeedback(null);
     setUserInput('');
     setCompletedIds([]);
+    setStudyData(activeData);
   };
 
 
@@ -437,30 +439,6 @@ export default function VocabStudy() {
               <div className="space-y-4 w-full md:w-auto">
                 <div className="flex justify-between items-center w-full">
                   <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.2em]">CHỌN BÀI HỌC</p>
-                  <div className="flex items-center gap-4 md:hidden">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] font-black text-slate-300">XÁO TRỘN</span>
-                      <button onClick={() => setIsShuffle(!isShuffle)} className={`w-8 h-4 rounded-full ${isShuffle ? 'bg-black' : 'bg-slate-200'} relative transition-colors`}>
-                        <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${isShuffle ? 'left-[18px]' : 'left-0.5'}`} />
-                      </button>
-                    </div>
-                    {(activeMode === 'list' || activeMode === 'flashcard') && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-black text-slate-300">HÁN VIỆT</span>
-                        <button onClick={() => setShowHanViet(!showHanViet)} className={`w-8 h-4 rounded-full ${showHanViet ? 'bg-black' : 'bg-slate-200'} relative transition-colors`}>
-                          <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${showHanViet ? 'left-[18px]' : 'left-0.5'}`} />
-                        </button>
-                      </div>
-                    )}
-                    {activeMode === 'flashcard' && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-black text-slate-300">VIỆT → NHẬT</span>
-                        <button onClick={() => { setShowVietnameseFirst(!showVietnameseFirst); setIsFlipped(false); }} className={`w-8 h-4 rounded-full ${showVietnameseFirst ? 'bg-black' : 'bg-slate-200'} relative transition-colors`}>
-                          <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${showVietnameseFirst ? 'left-[18px]' : 'left-0.5'}`} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {uniqueUnits.map(unit => (
@@ -483,39 +461,7 @@ export default function VocabStudy() {
               </div>
 
               <div className="flex items-center gap-6">
-                <div className="hidden md:flex items-center gap-6">
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest whitespace-nowrap">XÁO TRỘN</span>
-                    <button
-                      onClick={() => setIsShuffle(!isShuffle)}
-                      className={`relative shrink-0 w-11 h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-                    >
-                      <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 ${isShuffle ? 'left-6 bg-white dark:bg-black' : 'left-1 bg-white dark:bg-slate-400'}`} />
-                    </button>
-                  </div>
-                  {(activeMode === 'list' || activeMode === 'flashcard') && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest whitespace-nowrap">HÁN VIỆT</span>
-                      <button
-                        onClick={() => setShowHanViet(!showHanViet)}
-                        className={`relative shrink-0 w-11 h-6 rounded-full transition-all duration-300 ${showHanViet ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-                      >
-                        <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 ${showHanViet ? 'left-6 bg-white dark:bg-black' : 'left-1 bg-white dark:bg-slate-400'}`} />
-                      </button>
-                    </div>
-                  )}
-                  {activeMode === 'flashcard' && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest whitespace-nowrap">VIỆT → NHẬT</span>
-                      <button
-                        onClick={() => { setShowVietnameseFirst(!showVietnameseFirst); setIsFlipped(false); }}
-                        className={`relative shrink-0 w-11 h-6 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-                      >
-                        <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'left-6 bg-white dark:bg-black' : 'left-1 bg-white dark:bg-slate-400'}`} />
-                      </button>
-                    </div>
-                  )}
-                </div>
+
                 <div className="flex items-center bg-slate-50/50 dark:bg-slate-900/50 p-1 rounded-2xl shadow-inner border border-slate-100 dark:border-slate-800 w-full sm:w-auto justify-between sm:justify-start">
                   {[
                     { id: 'list', label: 'Danh sách' },
@@ -548,6 +494,9 @@ export default function VocabStudy() {
                   setSearchTerm={setSearchTerm}
                   completedIds={completedIds}
                   showHanViet={showHanViet}
+                  setShowHanViet={setShowHanViet}
+                  isShuffle={isShuffle}
+                  setIsShuffle={setIsShuffle}
                 />
               )}
               {activeMode === 'flashcard' && (
@@ -561,6 +510,7 @@ export default function VocabStudy() {
                   setIsFlipped={setIsFlipped}
                   handleResetProgress={handleResetProgress}
                   showVietnameseFirst={showVietnameseFirst}
+                  setShowVietnameseFirst={setShowVietnameseFirst}
                   handleSwipe={handleSwipe}
                   handleMouseDown={handleMouseDown}
                   handleMouseMove={handleMouseMove}
@@ -572,6 +522,9 @@ export default function VocabStudy() {
                   swipeDirection={swipeDirection}
                   setShowResults={setShowResults}
                   showHanViet={showHanViet}
+                  setShowHanViet={setShowHanViet}
+                  isShuffle={isShuffle}
+                  setIsShuffle={setIsShuffle}
                 />
               )}
               {activeMode === 'quiz' && (
@@ -586,6 +539,8 @@ export default function VocabStudy() {
                   setFeedback={setFeedback}
                   handleSubmit={handleSubmit}
                   setShowResults={setShowResults}
+                  isShuffle={isShuffle}
+                  setIsShuffle={setIsShuffle}
                 />
               )}
               {activeMode === 'multiple_choice' && (
@@ -595,6 +550,8 @@ export default function VocabStudy() {
                   setCurrentIndex={setCurrentIndex}
                   handleResetProgress={handleResetProgress}
                   setShowResults={setShowResults}
+                  isShuffle={isShuffle}
+                  setIsShuffle={setIsShuffle}
                 />
               )}
               </React.Suspense>
@@ -604,27 +561,29 @@ export default function VocabStudy() {
       </div>
 
       {showResults && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-10 text-center shadow-xl max-w-xs w-full space-y-6">
-            <h2 className="text-lg font-medium text-slate-800 dark:text-slate-200">Hoàn thành bài học</h2>
-            
-            <div className="py-4 flex items-baseline justify-center gap-1.5">
-              <span className="text-6xl font-light text-slate-900 dark:text-white">{score}</span>
-              <span className="text-xl font-normal text-slate-400 dark:text-slate-500">/ {studyData.length}</span>
-            </div>
-            
-            <button
-              onClick={() => { 
-                setShowResults(false); 
-                setActiveMode('flashcard'); 
-                handleResetProgress();
-              }}
-              className="w-full py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl text-sm font-medium hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
-            >
-              Học lại từ đầu
-            </button>
-          </div>
-        </div>
+        <VocabResultsModal 
+          score={score}
+          total={studyData.length}
+          activeMode={activeMode}
+          flashcardSubMode={flashcardSubMode}
+          completedIdsLength={completedIds.length}
+          handleResetProgress={handleResetProgress}
+          setShowResults={setShowResults}
+          handleStudyUnmemorized={() => {
+            const unmemorized = studyData.filter(item => !completedIds.includes(item.id));
+            if (unmemorized.length > 0) {
+              setStudyData(unmemorized);
+              setCurrentIndex(0);
+              setIsFlipped(false);
+              setScore(0);
+              setCompletedIds([]);
+              setShowResults(false);
+            } else {
+              handleResetProgress();
+              setShowResults(false);
+            }
+          }}
+        />
       )}
 
       <style dangerouslySetInnerHTML={{
