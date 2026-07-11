@@ -68,7 +68,10 @@ export default function KanjiCanvas({ kanjiList, addedKanjiIds, onAddFlashcard, 
 
         // Parse paths representing strokes (ID containing '-s')
         const paths = Array.from(svgDoc.querySelectorAll('path'))
-          .filter(p => p.id && p.id.includes('-s'))
+          .filter(p => {
+            const id = p.getAttribute('id');
+            return id && id.includes('-s');
+          })
           .map(p => p.getAttribute('d'))
           .filter(Boolean);
 
