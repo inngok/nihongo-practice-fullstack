@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, User, Mic, Play, Eye, EyeOff, Volume2, Gauge } from 'lucide-react';
 
 import { Link } from 'react-router-dom';
@@ -17,6 +17,16 @@ export default function SpeakingExercise() {
   const [showTranslation, setShowTranslation] = useState({});
   const [audioSpeed, setAudioSpeed] = useState(1);
   const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+
+  useEffect(() => {
+    // Preload voices so the first click uses the correct voice
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+  }, []);
 
   const activeScenario = activeLesson.scenarios.find(s => s.id === activeScenarioId);
 
@@ -47,9 +57,26 @@ export default function SpeakingExercise() {
   const speakText = (text) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      // Remove placeholder brackets before speaking for better pronunciation
-      const cleanText = text.replace(/\[|\]/g, '');
+      // Remove placeholder brackets and Furigana before speaking for better pronunciation
+      // Replace Kanji(hiragana) with just Kanji
+      let cleanText = text.replace(/\[|\]/g, '');
+      cleanText = cleanText.replace(/([\u4E00-\u9FAF\u3005]+)\([\u3040-\u309F]+\)/g, '$1');
+      
       const utterance = new SpeechSynthesisUtterance(cleanText);
+      
+      // Try to find better Japanese voices
+      const voices = window.speechSynthesis.getVoices();
+      const jpVoices = voices.filter(v => v.lang === 'ja-JP' || v.lang === 'ja_JP');
+      
+      if (jpVoices.length > 0) {
+        // Ưu tiên các giọng đọc tự nhiên (Natural/Premium/Nanami/Keita của Windows/Edge) 
+        // hoặc Google Nhật Bản nếu có.
+        const bestVoice = jpVoices.find(v => v.name.includes('Natural') || v.name.includes('Premium') || v.name.includes('Nanami') || v.name.includes('Keita')) 
+                          || jpVoices.find(v => v.name.includes('Google')) 
+                          || jpVoices[0];
+        utterance.voice = bestVoice;
+      }
+
       utterance.lang = 'ja-JP';
       utterance.rate = audioSpeed;
       window.speechSynthesis.speak(utterance);
@@ -58,8 +85,33 @@ export default function SpeakingExercise() {
 
   // Helper function to render text with replacements highlighted
 
+  const parseRuby = (text, showFurigana) => {
+    if (typeof text !== 'string') return text;
+    const rubyParts = text.split(/([\u4E00-\u9FAF\u3005]+)\(([\u3040-\u309F]+)\)/g);
+    if (rubyParts.length === 1) return text;
+    return (
+      <>
+        {rubyParts.map((rPart, rIndex) => {
+          if (rIndex % 3 === 1) {
+            return showFurigana ? (
+              <ruby key={rIndex}>
+                {rPart}
+                <rt className="text-[12px] md:text-[13px] opacity-80 font-normal pb-[2px]">{rubyParts[rIndex + 1]}</rt>
+              </ruby>
+            ) : (
+              <span key={rIndex}>{rPart}</span>
+            );
+          } else if (rIndex % 3 === 2) {
+            return null;
+          }
+          return <span key={rIndex}>{rPart}</span>;
+        })}
+      </>
+    );
+  };
+
   // Helper function to render text with replacements and grammar highlighted
-  const renderTextWithReplacements = (text, replacements, maskKeywords) => {
+  const renderTextWithReplacements = (text, replacements, maskKeywords, showFurigana) => {
     // Regex to match [key] or {{grammar}}
     const parts = text.split(/(\[[^\]]+\]|\{\{[^\}]+\}\})/g);
 
@@ -68,20 +120,20 @@ export default function SpeakingExercise() {
         const key = part.slice(1, -1);
         const replacementValue = replacements[key] || part;
         return (
-          <span key={index} className={`px-2 py-0.5 mx-1 font-bold rounded-md transition-all duration-300 shadow-sm ${maskKeywords ? 'bg-black text-transparent dark:bg-white select-none' : 'bg-slate-200 dark:bg-slate-700 text-black dark:text-white'}`}>
-            {replacementValue}
+          <span key={index} className={`inline-block px-2 py-1 mx-1 my-1 font-bold rounded-md transition-all duration-300 shadow-sm align-middle ${maskKeywords ? 'bg-black text-transparent dark:bg-white select-none' : 'bg-slate-200 dark:bg-slate-700 text-black dark:text-white'}`}>
+            {parseRuby(replacementValue, showFurigana)}
           </span>
         );
       }
       if (part.startsWith('{{') && part.endsWith('}}')) {
         const grammarValue = part.slice(2, -2);
         return (
-          <span key={index} className={`px-2 py-0.5 mx-1 font-black rounded-md transition-all duration-300 shadow-sm ${maskKeywords ? 'bg-black text-transparent dark:bg-white select-none' : 'bg-slate-800 dark:bg-slate-200 text-white dark:text-black'}`}>
-            {grammarValue}
+          <span key={index} className={`inline-block px-2 py-1 mx-1 my-1 font-black rounded-md transition-all duration-300 shadow-sm align-middle ${maskKeywords ? 'bg-black text-transparent dark:bg-white select-none' : 'bg-slate-800 dark:bg-slate-200 text-white dark:text-black'}`}>
+            {parseRuby(grammarValue, showFurigana)}
           </span>
         );
       }
-      return <span key={index}>{part}</span>;
+      return <span key={index} className={showFurigana ? 'leading-loose' : ''}>{parseRuby(part, showFurigana)}</span>;
     });
   };
 
@@ -146,7 +198,7 @@ export default function SpeakingExercise() {
         {activeTab === 'bamen' && (
           <>
             {/* Lesson Selectors */}
-            <div className="mt-8 flex gap-3 overflow-x-auto pb-2 scrollbar-hide border-b border-slate-200 dark:border-slate-800">
+            <div className="mt-8 flex flex-wrap gap-3 pb-2 border-b border-slate-200 dark:border-slate-800">
               {speakingData.map((lesson) => (
                 <button
                   key={lesson.lessonId}
@@ -162,7 +214,7 @@ export default function SpeakingExercise() {
             </div>
 
             {/* Bamen Selectors */}
-            <div className="mt-6 flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="mt-6 flex flex-wrap gap-3">
               {activeLesson.scenarios.map((scenario) => (
                 <button
                   key={scenario.id}
@@ -277,11 +329,19 @@ export default function SpeakingExercise() {
                       <div className={`flex-1 p-4 rounded-2xl border transition-all duration-300 relative group ${isUser
                           ? 'bg-slate-50 dark:bg-slate-800/50 border-black dark:border-white border-2'
                           : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800/50'
-                        } ${isOverridden ? 'ring-2 ring-black dark:ring-white' : ''}`}>
+                        }`}>
                         <div className={`${isHidden ? 'bg-slate-200 dark:bg-slate-700 text-transparent blur-[4px] select-none rounded-lg' : ''} transition-all duration-300`}>
-                          <p className={`text-lg leading-relaxed ${isUser ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
-                            {renderTextWithReplacements(turn.text, activeScenario.replacements, maskKeywords)}
+                          <p className={`text-lg md:text-xl transition-all duration-300 ${showHiragana[index] ? 'leading-[2.75rem] md:leading-[3rem]' : 'leading-relaxed'} ${isUser ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+                            {renderTextWithReplacements(showHiragana[index] && turn.textHiragana ? turn.textHiragana : turn.text, activeScenario.replacements, maskKeywords, showHiragana[index])}
                           </p>
+                          
+                          {showTranslation[index] && turn.translation && (
+                            <div className="mt-3">
+                              <div className="text-slate-500 dark:text-slate-400 text-sm md:text-base font-medium italic px-3 py-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg">
+                                {renderTextWithReplacements(turn.translation, activeScenario.replacementsVi || activeScenario.replacements, maskKeywords, false)}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {isHidden && (
@@ -292,23 +352,45 @@ export default function SpeakingExercise() {
                           </div>
                         )}
 
-                        {isUser && !isHidden && (
-                          <div className="mt-3 flex items-center justify-between">
-                            <div className="text-[10px] font-bold text-black dark:text-white font-black uppercase tracking-widest flex items-center gap-1">
-                              Vai của bạn
+                        {!isHidden && (
+                          <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                            <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1">
+                              {isUser ? 'Vai của bạn' : 'Đối thoại'}
                             </div>
-                            {practiceLevel !== 'none' && (
-                              <button onClick={() => toggleReveal(index)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:text-slate-300">
-                                Bật che
-                              </button>
-                            )}
+                            
+                            <div className="flex items-center gap-2">
+                              {turn.translation && (
+                                <button
+                                  onClick={() => toggleTranslation(index)}
+                                  className={`w-8 h-8 rounded-full shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center hover:scale-110 transition-all duration-300 text-xs font-bold ${showTranslation[index] ? 'bg-black text-white dark:bg-white dark:text-black font-black' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-800/50'}`}
+                                  title="Hiện/ẩn Tiếng Việt"
+                                >
+                                  VN
+                                </button>
+                              )}
+                              {turn.textHiragana && (
+                                <button
+                                  onClick={() => toggleHiragana(index)}
+                                  className={`w-8 h-8 rounded-full shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center hover:scale-110 transition-all duration-300 font-bold text-xs ${showHiragana[index] ? 'bg-black text-white dark:bg-white dark:text-black font-black' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-800/50'}`}
+                                  title="Hiện/ẩn Furigana"
+                                >
+                                  あ
+                                </button>
+                              )}
+                              
+                              {practiceLevel !== 'none' && isUser && (
+                                <button onClick={() => toggleReveal(index)} className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center hover:bg-slate-50 dark:bg-slate-800/50 hover:scale-110 transition-all duration-300" title="Ẩn lời thoại">
+                                  <EyeOff className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                         )}
 
                         {!isUser && (
                           <button
                             onClick={() => speakText(actualText)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-slate-800/50 text-black dark:text-white font-black flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 hover:scale-110 transition-all duration-300 opacity-0 group-hover:opacity-100"
+                            className="absolute -right-3 -top-3 w-10 h-10 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-slate-800/50 text-black dark:text-white font-black flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 hover:scale-110 transition-all duration-300 opacity-0 group-hover:opacity-100"
                           >
                             <Volume2 className="w-5 h-5" />
                           </button>
@@ -337,9 +419,9 @@ export default function SpeakingExercise() {
 
                 <div className="flex justify-between items-start mb-6 gap-4">
                   <div className="flex-1">
-                    <p className="text-slate-800 dark:text-slate-200 font-bold text-lg leading-snug">{item.questionText}</p>
+                    <p className="text-slate-800 dark:text-slate-200 font-bold text-lg md:text-xl leading-snug">{item.questionText}</p>
                     {isTranslation && (
-                      <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-1 mb-3 italic">{item.questionTranslation}</p>
+                      <p className="text-slate-500 dark:text-slate-400 font-medium text-sm md:text-base mt-1 mb-3 italic">{item.questionTranslation}</p>
                     )}
 
                     {item.subQuestions && item.subQuestions.length > 0 && (
@@ -373,13 +455,13 @@ export default function SpeakingExercise() {
                 <div className="relative">
                   <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-6 border border-slate-100 dark:border-slate-800/50 relative group animate-in fade-in zoom-in-95 duration-300">
                     <div className={`${isHidden ? 'bg-slate-200 dark:bg-slate-700 text-transparent blur-[4px] select-none rounded-lg' : ''} transition-all duration-300`}>
-                      <p className="text-slate-800 dark:text-slate-200 text-lg leading-relaxed mb-4 min-h-[56px]">
-                        {isHiragana && item.answerHiragana ? item.answerHiragana : item.answer}
+                      <p className={`text-slate-800 dark:text-slate-200 text-lg md:text-xl transition-all duration-300 mb-4 min-h-[56px] ${isHiragana ? 'leading-[2.75rem] md:leading-[3rem]' : 'leading-relaxed'}`}>
+                        {parseRuby(isHiragana && item.answerHiragana ? item.answerHiragana : item.answer, isHiragana)}
                       </p>
 
                       {isTranslation && (
                         <div className="mb-4">
-                          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium italic border-l-2 border-black dark:border-white pl-3 py-1 bg-slate-100 dark:bg-slate-800/50 rounded-r-lg">
+                          <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base font-medium italic border-l-2 border-black dark:border-white pl-3 py-1.5 bg-slate-100 dark:bg-slate-800/50 rounded-r-lg">
                             {item.answerTranslation}
                           </p>
                         </div>
@@ -403,7 +485,7 @@ export default function SpeakingExercise() {
                             <button
                               onClick={() => toggleHiragana(`alt_${index}`)}
                               className={`w-10 h-10 rounded-full shadow-sm border border-slate-200 dark:border-slate-800 flex items-center justify-center hover:scale-110 transition-all duration-300 font-bold ${isHiragana ? 'bg-black text-white dark:bg-white dark:text-black text-black dark:text-white font-black' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:bg-slate-800/50'}`}
-                              title="Hiện/ẩn Hiragana"
+                              title="Hiện/ẩn Furigana"
                             >
                               あ
                             </button>
