@@ -19,6 +19,7 @@ export const speakingLesson6Data = {
       title: "Bài mẫu gốc",
       jpDescription: "基本会話 (Hội thoại cơ bản)",
       viDescription: "Đoạn hội thoại gốc trong sách.",
+      audioUrl: "/audio/lesson6_base.mp3",
       details: [],
       replacements: {
         symptom: "食欲(しょくよく)も",

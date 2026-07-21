@@ -241,15 +241,31 @@ export default function SpeakingExercise() {
               <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4 border-b border-slate-100 dark:border-slate-800/50 pb-3">
                 Thông tin tình huống
               </h2>
+              
+              {activeScenario.audioUrl && (
+                <div className="mb-6">
+                  <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">
+                    Audio hội thoại gốc
+                  </span>
+                  <audio 
+                    controls 
+                    src={activeScenario.audioUrl} 
+                    className="w-full rounded-full"
+                  />
+                </div>
+              )}
+
               <div className="mb-6 space-y-3">
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/50">
-                  <p className="text-slate-800 dark:text-slate-200 text-sm leading-relaxed font-medium mb-3">
-                    {activeScenario.jpDescription}
-                  </p>
+                  <p 
+                    className="text-slate-800 dark:text-slate-200 text-sm leading-relaxed font-medium mb-3"
+                    dangerouslySetInnerHTML={{ __html: activeScenario.jpDescription }}
+                  />
                   <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
-                    <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed italic">
-                      {activeScenario.viDescription}
-                    </p>
+                    <p 
+                      className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed italic"
+                      dangerouslySetInnerHTML={{ __html: activeScenario.viDescription }}
+                    />
                   </div>
                 </div>
               </div>
@@ -414,7 +430,12 @@ export default function SpeakingExercise() {
               <div key={item.id} className="bg-white dark:bg-slate-900/60 p-6 md:p-10 rounded-[2.5rem] md:rounded-[3rem] border border-slate-100 dark:border-slate-800 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] transition-all duration-500 hover:shadow-[0_30px_70px_-20px_rgba(0,0,0,0.08)] hover:border-slate-200 dark:hover:border-slate-700">
                 <div className="flex items-center gap-3 mb-4">
                   <span className="px-3 py-1 border border-black dark:border-white text-black dark:text-white text-xs font-bold rounded-full">Bài {item.lesson}</span>
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">Câu {item.id}</h3>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                    Câu {item.id}
+                    {item.isExtra && (
+                      <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] uppercase tracking-wider rounded-md border border-amber-200 dark:border-amber-800/50">Mở rộng (Tham khảo)</span>
+                    )}
+                  </h3>
                 </div>
 
                 <div className="flex justify-between items-start mb-6 gap-4">

@@ -138,9 +138,9 @@ export const speakingAlternatives = [
       "1) Hãy cho biết cuốn sách bạn yêu thích.",
       "2) Hãy giải thích lý do."
     ],
-    answer: "私の一番好きな本は『ドラえもん』です。子供の頃、この漫画を読んで、その面白さに感動しました。大人になった今でも忘れがたいものです。",
-    answerHiragana: "私(わたし)の一番(いちばん)好(す)きな本(ほん)は『ドラえもん』です。子供(こども)の頃(ころ)、この漫画(まんが)を読(よ)んで、その面白(おもしろ)さに感動(かんどう)しました。大人(おとな)になった今(いま)でも忘(わす)れがたいものです。",
-    answerTranslation: "Cuốn sách tôi thích nhất là 'Doraemon'. Khi còn nhỏ, tôi đã đọc cuốn truyện tranh này và cảm động vì sự thú vị của nó. Đến bây giờ khi đã lớn, nó vẫn là một thứ khó quên đối với tôi.",
+    answer: "私の一番好きな本は『星の王子さま』です。子供の頃、この本を読んで、本当に大切なものは目に見えないという言葉に感動しました。大人になった今でも忘れがたいものです。",
+    answerHiragana: "私(わたし)の一番(いちばん)好(す)きな本(ほん)は『星(ほし)の王子(おうじ)さま』です。子供(こども)の頃(ころ)、この本(ほん)を読(よ)んで、本当(ほんとう)に大切(たいせつ)なものは目(め)に見(み)えないという言葉(ことば)に感動(かんどう)しました。大人(おとな)になった今(いま)でも忘(わす)れがたいものです。",
+    answerTranslation: "Cuốn sách tôi thích nhất là 'Hoàng tử bé'. Khi còn nhỏ, tôi đã đọc cuốn sách này và cảm động trước câu nói 'Những thứ thực sự quan trọng thì không thể nhìn thấy bằng mắt'. Đến bây giờ khi đã lớn, nó vẫn là một thứ khó quên đối với tôi.",
     grammarUsed: "～に感動しました / 忘れがたいものです"
   },
   {
@@ -174,9 +174,66 @@ export const speakingAlternatives = [
       "1) Điều thú vị có thể làm ở Hà Nội trong 1 ngày là gì?",
       "2) Làm thế nào để có thể trải nghiệm được?"
     ],
-    answer: "ハノイで1日だけなら、旧市街の夜市へ足を伸ばすのがおすすめです。にぎやかな景色が楽しくて、有名な観光地として知られています。買い物をしながら、色々なストリートフードを食べ歩くのが面白い体験になると思います。",
-    answerHiragana: "ハノイで1日(いちにち)だけなら、旧市街(きゅうしがい)の夜市(よいち)へ足(あし)を伸(の)ばすのがおすすめです。にぎやかな景色(けしき)が楽(たの)しくて、有名(ゆうめい)な観光地(かんこうち)として知(し)られています。買(か)い物(もの)をしながら、色々(いろいろ)なストリートフードを食(た)べ歩(ある)くのが面白(おもしろ)い体験(たいけん)になると思(おも)います。",
-    answerTranslation: "Nếu chỉ có 1 ngày ở Hà Nội, tôi khuyên bạn nên ghé qua chợ đêm ở Khu phố cổ. Khung cảnh náo nhiệt rất vui và nơi đây được biết đến như một địa điểm du lịch nổi tiếng. Việc vừa đi mua sắm vừa thưởng thức nhiều món ăn đường phố đa dạng sẽ là một trải nghiệm thú vị.",
+    answer: "ハノイで1日だけなら、旧市街へ足を伸ばすのがおすすめです。有名な観光地として知られています。にぎやかな景色を見ながら、ストリートフードを食べ歩くのが楽しいと思います。",
+    answerHiragana: "ハノイで1日(いちにち)だけなら、旧市街(きゅうしがい)へ足(あし)を伸(の)ばすのがおすすめです。有名(ゆうめい)な観光地(かんこうち)として知(し)られています。にぎやかな景色(けしき)を見(み)ながら、ストリートフードを食(た)べ歩(ある)くのが楽(たの)しいと思(おも)います。",
+    answerTranslation: "Nếu chỉ có 1 ngày ở Hà Nội, tôi khuyên bạn nên ghé qua Khu phố cổ. Nơi đó được biết đến như một địa điểm du lịch nổi tiếng. Tôi nghĩ việc vừa ngắm khung cảnh náo nhiệt vừa thưởng thức các món ăn đường phố sẽ rất vui.",
     grammarUsed: "足を伸ばす / 景色 / ～として知られている / 食べ歩く"
+  },
+  {
+    id: 11,
+    lesson: 10,
+    questionText: "現代では、手紙を書く人が少なくなりました。その理由は何だと思いますか。",
+    questionTranslation: "Trong thời đại ngày nay, số người viết thư tay ngày càng ít đi. Bạn nghĩ lý do là gì?",
+    subQuestions: [
+      "1) 現代社会で手紙を書く人が減っている理由は？",
+      "2) あなたは今でも手紙を書きますか。"
+    ],
+    subQuestionsTranslation: [
+      "1) Lý do người viết thư tay giảm đi trong xã hội hiện đại là gì?",
+      "2) Bạn bây giờ có còn viết thư tay không?"
+    ],
+    answer: "インターネットが発達し、簡単にメッセージが送れるようになったからです。すぐ届くので、わざわざ手紙を書く人が減り、今では特別な時にしか書かなくなったのだと思います。",
+    answerHiragana: "インターネットが発達(はったつ)し、簡単(かんたん)にメッセージが送(おく)れるようになったからです。すぐ届(とど)くので、わざわざ手紙(てがみ)を書(か)く人(ひと)が減(へ)り、今(いま)では特別(とくべつ)な時(とき)にしか書(か)かなくなったのだと思(おも)います。",
+    answerTranslation: "Vì internet phát triển, chúng ta có thể dễ dàng gửi tin nhắn. Nhắn cái là tới ngay nên số người cất công viết thư tay đã giảm đi, và tôi nghĩ hiện nay người ta chỉ còn viết vào những dịp đặc biệt.",
+    grammarUsed: "～ようになった / わざわざ / ～しか～ない",
+    isExtra: true
+  },
+  {
+    id: 12,
+    lesson: 10,
+    questionText: "友達の家にスマートフォンを忘れてしまいました。友達に電話をして、何と言いますか。",
+    questionTranslation: "Bạn để quên điện thoại ở nhà bạn bè. Khi gọi điện thoại cho bạn, bạn sẽ nói gì?",
+    subQuestions: [
+      "1) どんな状況ですか。",
+      "2) どのように謝り、どうしてほしいか伝えますか。"
+    ],
+    subQuestionsTranslation: [
+      "1) Tình huống lúc đó như thế nào?",
+      "2) Bạn sẽ xin lỗi và nhờ họ làm gì?"
+    ],
+    answer: "ごめん、そっちの家にスマホを忘れてしまったようなんだ。かばんに入れたつもりだったんだけど、なくて……。もし見つかったら、着払いで送ってもらってもいいかな？",
+    answerHiragana: "ごめん、そっちの家(いえ)にスマホを忘(わす)れてしまったようなんだ。かばんに入(い)れたつもりだったんだけど、なくて……。もし見(み)つかったら、着払(ちゃくばら)いで送(おく)ってもらってもいいかな？",
+    answerTranslation: "Xin lỗi, hình như tớ để quên điện thoại ở nhà cậu mất rồi. Tớ cứ nghĩ là đã cho vào cặp rồi, nhưng mà không thấy... Nếu tìm thấy, cậu có thể gửi chuyển phát trả tiền sau cho tớ được không?",
+    grammarUsed: "～てしまったようなんだ / ～たつもりだったが / 送ってもらってもいいかな",
+    isExtra: true
+  },
+  {
+    id: 13,
+    lesson: 7,
+    questionText: "さ来月の土曜日に「日本交流祭り」があります。友達を誘う時、何と言いますか。",
+    questionTranslation: "Thứ 7 của tháng sau nữa có 'Lễ hội giao lưu Nhật Bản'. Khi rủ bạn bè, bạn sẽ nói gì?",
+    subQuestions: [
+      "1) どんなイベントがあるか伝えますか。",
+      "2) どのように友達を誘いますか。"
+    ],
+    subQuestionsTranslation: [
+      "1) Bạn sẽ truyền đạt về sự kiện gì?",
+      "2) Bạn sẽ rủ bạn bè như thế nào?"
+    ],
+    answer: "あのう、日本交流祭りに興味がありますか。さ来月の土曜日に、そのイベントがあるんです。日本の文化が体験できるって評判なんですよ。一緒に行ってもらえるかなと思って……。",
+    answerHiragana: "あのう、日本交流祭(にほんこうりゅうまつ)りに興味(きょうみ)がありますか。さ来月(らいげつ)の土曜日(どようび)に、そのイベントがあるんです。日本(にほん)の文化(ぶんか)が体験(たいけん)できるって評判(ひょうばん)なんですよ。一緒(いっしょ)に行(い)ってもらえるかなと思(おも)って……。",
+    answerTranslation: "À này, cậu có hứng thú với lễ hội giao lưu Nhật Bản không? Thứ 7 tháng sau nữa có sự kiện đó đấy. Nghe đồn là có thể trải nghiệm văn hóa Nhật Bản. Nếu được tớ muốn rủ cậu đi cùng...",
+    grammarUsed: "～って評判なんですよ / ～てもらえるかなと思って",
+    isExtra: true
   }
 ];

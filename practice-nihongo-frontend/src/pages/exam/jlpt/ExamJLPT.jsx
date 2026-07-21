@@ -12,7 +12,7 @@ const examModules = [
   },
   {
     id: 'speaking',
-    title: "Luyện Nói (Tạm thời)",
+    title: "Luyện Nói (JPD326)",
     description: "Luyện tập hội thoại tiếng Nhật theo tình huống thực tế bằng dữ liệu mô phỏng.",
     path: "/exam-jlpt/speaking",
     status: "ready"

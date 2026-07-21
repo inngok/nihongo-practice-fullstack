@@ -20,6 +20,7 @@ export const speakingLesson8Data = {
       title: "Bài mẫu gốc",
       jpDescription: "基本会話 (Hội thoại cơ bản)",
       viDescription: "Đoạn hội thoại gốc trong sách.",
+      audioUrl: "/audio/lesson8_base.mp3",
       details: [],
       replacements: {
         topic: "来月(らいげつ)のシフト",

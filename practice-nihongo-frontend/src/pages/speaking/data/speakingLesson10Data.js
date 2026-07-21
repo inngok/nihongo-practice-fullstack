@@ -24,6 +24,7 @@ export const speakingLesson10Data = {
       title: "Bài mẫu gốc",
       jpDescription: "基本会話 (Hội thoại cơ bản)",
       viDescription: "Đoạn hội thoại gốc trong sách.",
+      audioUrl: "/audio/lesson10_base.mp3",
       details: [],
       replacements: {
         store_name: "レストランみやび",

@@ -24,6 +24,7 @@ export const speakingLesson7Data = {
       title: "Bài mẫu gốc",
       jpDescription: "基本会話 (Hội thoại cơ bản)",
       viDescription: "Đoạn hội thoại gốc trong sách.",
+      audioUrl: "/audio/lesson7_base.mp3",
       details: [],
       replacements: {
         event_name: "フリーマーケット",
@@ -43,7 +44,10 @@ export const speakingLesson7Data = {
         purpose_topic: "1 chiếc áo thun 300 yên được bán ra",
         purpose_result: "sẽ trích 30 yên để quyên góp"
       },
-      lineOverrides: {}
+      lineOverrides: {
+        8: { role: 'A', text: "この[event_name]、100ぐらいのお店が出るんですよ。[feature_topic]{{にしては}}[feature_result]って評判なんです。", textHiragana: "この[event_name]、100ぐらいのお店(みせ)が出(で)るんですよ。[feature_topic]{{にしては}}[feature_result]って評判(ひょうばん)なんです。", translation: "Cái [event_name] này, có khoảng 100 cửa hàng tham gia đấy. Tuy là [feature_topic] nhưng lại nổi tiếng là [feature_result].", isUser: true },
+        10: { role: 'A', text: "しかも、売り上げの一部が介助犬の育成のために寄付されるんです。例えば、[purpose_topic]{{につき}}[purpose_result]んです。", textHiragana: "しかも、売(う)り上(あ)げの一部(いちぶ)が介助犬(かいじょけん)の育成(いくせい)のために寄付(きふ)されるんです。例(たと)えば、[purpose_topic]{{につき}}[purpose_result]んです。", translation: "Hơn nữa, một phần doanh thu sẽ được quyên góp để huấn luyện chó hỗ trợ. Ví dụ, cứ mỗi [purpose_topic] thì [purpose_result].", isUser: true }
+      }
     },
     {
       id: "lesson7_bamen3_1",
