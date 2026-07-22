@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { message, Select } from 'antd';
-import * as XLSX from 'xlsx';
+// XLSX được lazy import khi cần — không ảnh hưởng bundle chính
 import { API_BASE_URL } from '../../config';
 import DataImporterDuplicateModal from './components/DataImporterDuplicateModal';
 
@@ -285,9 +285,10 @@ export default function DataImporter() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       try {
         const bstr = evt.target.result;
+        const XLSX = await import('xlsx');
         const wb = XLSX.read(bstr, { type: 'binary' });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
@@ -355,6 +356,7 @@ export default function DataImporter() {
     reader.onload = async (evt) => {
       try {
         const bstr = evt.target.result;
+        const XLSX = await import('xlsx');
         const wb = XLSX.read(bstr, { type: 'binary' });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];

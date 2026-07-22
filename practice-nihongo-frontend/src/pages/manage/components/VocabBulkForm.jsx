@@ -65,38 +65,36 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
       setIsSaving(true);
       const hide = messageApi.loading('Đang lưu dữ liệu...', 0);
       try {
-        // allItems preserves the original selected order for sortOrder assignment
         const allItems = items;
 
-        for (const itm of newItems) {
-          const globalIdx = allItems.indexOf(itm);
-          await vocabService.create({
-            ...itm,
-            week: weekInt,
-            book: { id: bookIdInt },
-            sortOrder: globalIdx >= 0 ? globalIdx + 1 : null
-          });
-        }
+        for (let i = 0; i < allItems.length; i++) {
+          const itm = allItems[i];
+          const isDup = duplicates.find(d => d.word === itm.word);
+          const sortOrder = i + 1;
 
-        if (actionType === 'OVERWRITE') {
-          for (const dup of duplicates) {
-            const globalIdx = allItems.indexOf(dup);
-            await vocabService.update(dup.existingId, {
-              ...dup,
-              week: weekInt,
-              book: { id: bookIdInt },
-              sortOrder: globalIdx >= 0 ? globalIdx + 1 : null
-            });
-          }
-        } else if (actionType === 'ADD_NEW') {
-          for (const dup of duplicates) {
-            const globalIdx = allItems.indexOf(dup);
-            const { existingId, ...rest } = dup;
+          if (isDup) {
+            if (actionType === 'OVERWRITE') {
+              await vocabService.update(isDup.existingId, {
+                ...isDup,
+                week: weekInt,
+                book: { id: bookIdInt },
+                sortOrder
+              });
+            } else if (actionType === 'ADD_NEW') {
+              const { existingId, ...rest } = isDup;
+              await vocabService.create({
+                ...rest,
+                week: weekInt,
+                book: { id: bookIdInt },
+                sortOrder
+              });
+            }
+          } else {
             await vocabService.create({
-              ...rest,
+              ...itm,
               week: weekInt,
               book: { id: bookIdInt },
-              sortOrder: globalIdx >= 0 ? globalIdx + 1 : null
+              sortOrder
             });
           }
         }

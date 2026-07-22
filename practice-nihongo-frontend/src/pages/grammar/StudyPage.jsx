@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Search, ArrowLeft, Volume2, ChevronDown } from 'lucide-react';
 import grammarService from '../../api/grammarService';
@@ -86,15 +86,21 @@ export default function StudyPage() {
     }
   }, [targetBookId, activeData.length, currentUser]);
 
+  // Debounce progress save — chỉ lưu sau 1.5s kể từ lần cuối thay đổi, tránh gọi API mỗi lần click Next/Prev
+  const progressSaveTimer = useRef(null);
   useEffect(() => {
     if (currentUser && targetBookId && activeMode !== 'menu' && activeMode !== 'list') {
-      const state = { currentIndex, activeMode };
-      fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: JSON.stringify(state) })
-      }).catch(() => { });
+      if (progressSaveTimer.current) clearTimeout(progressSaveTimer.current);
+      progressSaveTimer.current = setTimeout(() => {
+        const state = { currentIndex, activeMode };
+        fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: JSON.stringify(state) })
+        }).catch(() => { });
+      }, 1500);
     }
+    return () => { if (progressSaveTimer.current) clearTimeout(progressSaveTimer.current); };
   }, [currentIndex, activeMode, targetBookId, currentUser]);
 
 
@@ -104,7 +110,7 @@ export default function StudyPage() {
     return () => window.removeEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
   }, [targetBookId]);
 
-  const fetchGrammar = async (isBackground = false) => {
+  const fetchGrammar = useCallback(async (isBackground = false) => {
     try {
       // Don't show loading spinner for background syncs
       if (!isBackground) setLoading(true);
@@ -132,7 +138,7 @@ export default function StudyPage() {
       console.error(error);
       if (!isBackground) setLoading(false);
     }
-  };
+  }, [targetBookId, currentUser]);
 
   const toggleExpand = useCallback((id) => {
     setExpandedId(prev => prev === id ? null : id);

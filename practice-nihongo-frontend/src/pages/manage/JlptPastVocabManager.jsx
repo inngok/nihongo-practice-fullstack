@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { message, Select } from 'antd';
-import * as XLSX from 'xlsx';
+import { message, Select, Modal } from 'antd';
+// XLSX được lazy import khi user upload file — không load trong bundle chính
 import { API_BASE_URL } from '../../config';
 import { UploadCloud, CheckCircle } from 'lucide-react';
 
@@ -31,62 +31,88 @@ export default function JlptPastVocabManager() {
     }
 
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       try {
         const bstr = evt.target.result;
+        // Dynamic import — chỉ tải thư viện xlsx khi thực sự cần
+        const XLSX = await import('xlsx');
         const wb = XLSX.read(bstr, { type: 'binary' });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws, { defval: "" });
-        
-        if (data.length === 0) {
+        // Dùng header:1 để lấy raw rows, rồi tự xử lý header
+        const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+
+        if (rawRows.length < 2) {
           return messageApi.warning('File không có dữ liệu');
         }
 
-        // Standardize headers to support Vietnamese & English forms & trailing spaces
-        const normalizedData = data.map(rawItem => {
-            const item = {};
-            const values = []; // for fallback
-            for (let k in rawItem) {
-               if (rawItem[k] !== undefined && rawItem[k] !== null && String(rawItem[k]).trim() !== '') {
-                   values.push(rawItem[k]);
-               }
-               const cleanKey = k.replace(/[\s_]+/g, '').toLowerCase();
-               item[cleanKey] = rawItem[k];
-            }
-            
-            let word = item['từvựng'] || item['tuvung'] || item['character'] || item['word'] || item['kanji'] || item['từ'] || item['vocab'] || item['vocabulary'] || item['chữ'] || '';
-            let kanji = item['hántự'] || item['hantu'] || item['cáchđọc'] || item['reading'] || item['âmđọc'] || item['hiragana'] || item['phiênâm'] || item['cáchđọc'] || '';
-            let meaning = item['ýnghĩa'] || item['nghĩatiếngviệt'] || item['nghĩa'] || item['meaning'] || item['nghia'] || item['tiếngviệt'] || '';
-            
-            // Tự động nhận diện nếu không khớp bất kỳ cột nào nhưng có dữ liệu (ít nhất 2 cột)
-            if (!word && !kanji && !meaning && values.length >= 2) {
-                word = values[0] || '';
-                if (values.length >= 3) {
-                    kanji = values[1] || '';
-                    meaning = values[2] || '';
-                } else {
-                    meaning = values[1] || '';
-                }
-            }
+        // Dòng đầu là header, tìm index các cột cần thiết
+        const headers = rawRows[0].map(h => String(h).replace(/[\s_]+/g, '').toLowerCase());
+        const colWord    = headers.findIndex(h => ['từvựng','tuvung','word','kanji','character','vocab','vocabulary','chữ','từ'].includes(h)) ;
+        const colReading = headers.findIndex(h => ['cáchđọc','cáchđọc/từđồngnghĩa','reading','hántự','hantu','hiragana','phiênâm','âmđọc'].includes(h));
+        const colMeaning = headers.findIndex(h => ['ýnghĩa','nghĩa','meaning','nghia','tiếngviệt','nghĩatiếngviệt'].includes(h));
 
-            // Nếu word (Kanji) trống nhưng có cách đọc (từ chỉ có Hiragana), lấy luôn cách đọc làm word
-            const finalWord = String(word).trim() || String(kanji).trim();
-            const finalKanji = String(kanji).trim();
-            
-            return { 
-                word: finalWord, 
-                kanji: finalKanji, 
-                meaning: String(meaning).trim() 
-            };
-        }).filter(item => item.word);
+        // Fallback: nếu không match header nào, dùng cột theo vị trí (cột 2, 3, 4 — bỏ qua Năm + STT)
+        const iWord    = colWord    >= 0 ? colWord    : 2;
+        const iReading = colReading >= 0 ? colReading : 3;
+        const iMeaning = colMeaning >= 0 ? colMeaning : 4;
 
-        if (normalizedData.length === 0) {
-            return messageApi.error('Không tìm thấy cột hợp lệ (ví dụ: KANJI hoặc Từ vựng) trong file.');
+        const results = [];
+
+        for (let r = 1; r < rawRows.length; r++) {
+          const row = rawRows[r];
+          let wordRaw    = String(row[iWord]    ?? '').trim();
+          let readingRaw = String(row[iReading] ?? '').trim();
+          let meaningRaw = String(row[iMeaning] ?? '').trim();
+
+          if (!meaningRaw && readingRaw) {
+            const hasJapanese = /[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/.test(readingRaw);
+            if (!hasJapanese) {
+              meaningRaw = readingRaw;
+              readingRaw = '';
+            }
+          }
+
+          if (!wordRaw) continue;
+
+          // --- Tách các từ bị gộp chung vào 1 ô ---
+          // Pattern trong file: "từ1 SỐ từ2" — số thứ tự nằm giữa 2 từ
+          // Ví dụ: "締め切った 20 ぞろぞろ", "勘定 25 騒がしい"
+          const wordParts = wordRaw.split(/\s+\d+\s+/);
+
+          // Tách reading: cách nhau bởi bất kỳ khoảng trắng nào (do tiếng Nhật không dùng dấu cách giữa từ)
+          const readingParts = readingRaw.split(/\s+/);
+
+          // Tách meaning: tìm ranh giới giữa 2 nghĩa bằng chữ cái viết hoa đứng đầu cụm mới
+          let meaningParts;
+          if (wordParts.length > 1) {
+            // Tách tại vị trí khoảng trắng trước chữ hoa bắt đầu câu nghĩa tiếp theo
+            const meaningSplitMatch = meaningRaw.match(/^(.+?)\s{1,}([A-ZẮẰẲẴẶĂẤẦẨẪẬÁÀẢÃẠĐÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘỚỜỞỠỢÚÙỦŨỤỨỪỬỮỰY].+)$/);
+            if (meaningSplitMatch) {
+              meaningParts = [meaningSplitMatch[1], meaningSplitMatch[2]];
+            } else {
+              meaningParts = [meaningRaw];
+            }
+          } else {
+            meaningParts = [meaningRaw];
+          }
+
+          for (let i = 0; i < wordParts.length; i++) {
+            const word    = wordParts[i]?.trim()    || '';
+            const reading = (readingParts[i] || readingParts[0] || '').trim();
+            const meaning = (meaningParts[i] || meaningParts[0] || '').trim();
+            if (word) {
+              results.push({ word, kanji: reading, meaning });
+            }
+          }
         }
 
-        setJsonData(normalizedData);
-        messageApi.success(`Đã đọc ${normalizedData.length} từ vựng từ file!`);
+        if (results.length === 0) {
+            return messageApi.error('Không tìm thấy cột hợp lệ (ví dụ: Từ vựng, Cách đọc, Ý nghĩa) trong file.');
+        }
+
+        setJsonData(results);
+        messageApi.success(`Đã đọc ${results.length} từ vựng từ file!`);
       } catch (err) {
         messageApi.error('Lỗi khi đọc file: ' + err.message);
       }
@@ -132,32 +158,38 @@ export default function JlptPastVocabManager() {
     }
   };
 
-  const handleDeleteImport = async () => {
+  const handleDeleteImport = () => {
     if (!examMonth || !examYear) {
         return messageApi.error('Vui lòng chọn tháng và điền năm thi (VD: Tháng 7, Năm 2024)');
     }
     const period = `${examMonth}/${examYear}`;
     
-    if (!window.confirm(`Bạn có chắc chắn muốn HOÀN TÁC (xóa) toàn bộ dữ liệu import của đợt thi ${period} (${level}) không?`)) {
-        return;
-    }
+    Modal.confirm({
+      title: 'Xác nhận Hoàn tác Import',
+      content: `Bạn có chắc chắn muốn HOÀN TÁC (xóa) toàn bộ dữ liệu import của đợt thi ${period} (Cấp độ ${level}) không? Hành động này không thể phục hồi.`,
+      okText: 'Xóa dữ liệu',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        setIsLoading(true);
+        try {
+          const response = await fetchWithAuth(`${API_BASE_URL}/jlpt-vocabs/import?examPeriod=${period}&level=${level}`, {
+            method: 'DELETE',
+          });
 
-    setIsLoading(true);
-    try {
-      const response = await fetchWithAuth(`${API_BASE_URL}/jlpt-vocabs/import?examPeriod=${period}&level=${level}`, {
-        method: 'DELETE',
-      });
+          if (!response.ok) {
+            const errData = await response.text();
+            throw new Error(errData || `Server lỗi: ${response.status}`);
+          }
 
-      if (!response.ok) {
-        throw new Error(`Server lỗi: ${response.status}`);
+          messageApi.success(`Đã xóa thành công toàn bộ dữ liệu của đợt thi ${period} (${level})!`);
+        } catch (error) {
+          messageApi.error(`Lỗi khi xóa: ${error.message}`);
+        } finally {
+          setIsLoading(false);
+        }
       }
-
-      messageApi.success(`Đã xóa thành công toàn bộ dữ liệu của đợt thi ${period} (${level})!`);
-    } catch (error) {
-      messageApi.error(`Lỗi khi xóa: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
@@ -248,6 +280,36 @@ export default function JlptPastVocabManager() {
                 )}
             </div>
         </div>
+
+        {jsonData.length > 0 && (
+          <div className="mt-8 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 overflow-hidden flex flex-col max-h-[500px]">
+             <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-6 flex justify-between items-center shrink-0">
+                <span>3. Bản Xem Trước Dữ Liệu ({jsonData.length} từ)</span>
+             </h2>
+             <div className="overflow-y-auto custom-scrollbar flex-grow border border-slate-100 dark:border-slate-800 rounded-xl">
+               <table className="w-full text-left border-collapse text-xs">
+                 <thead className="sticky top-0 bg-slate-50 dark:bg-slate-900 z-10 border-b border-slate-200 dark:border-slate-800">
+                   <tr>
+                     <th className="py-4 px-4 font-bold text-slate-500 uppercase tracking-wider text-center w-12">#</th>
+                     <th className="py-4 px-4 font-bold text-slate-500 uppercase tracking-wider">Từ vựng (Kanji)</th>
+                     <th className="py-4 px-4 font-bold text-slate-500 uppercase tracking-wider">Cách đọc</th>
+                     <th className="py-4 px-4 font-bold text-slate-500 uppercase tracking-wider">Ý nghĩa</th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 bg-white dark:bg-transparent">
+                   {jsonData.map((item, idx) => (
+                     <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-900/80 transition-colors">
+                       <td className="py-4 px-4 text-center font-bold text-slate-300">{idx + 1}</td>
+                       <td className="py-4 px-4 font-bold text-slate-900 dark:text-white text-base font-kanji">{item.word}</td>
+                       <td className="py-4 px-4 text-slate-600 dark:text-slate-300 font-medium">{item.kanji}</td>
+                       <td className="py-4 px-4 text-slate-500 dark:text-slate-400">{item.meaning}</td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+             </div>
+          </div>
+        )}
 
         <div className="mt-8 flex flex-col md:flex-row gap-4">
             <button

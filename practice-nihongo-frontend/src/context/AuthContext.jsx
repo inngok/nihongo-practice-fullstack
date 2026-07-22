@@ -264,12 +264,11 @@ export const AuthProvider = ({ children }) => {
     let token = localStorage.getItem('nihongo_token');
 
     const headers = {
-      'Cache-Control': 'no-cache',
       ...options.headers,
       'Authorization': `Bearer ${token}`
     };
 
-    let response = await fetch(url, { cache: 'no-store', ...options, headers });
+    let response = await fetch(url, { ...options, headers });
 
     if (response.status === 401) {
       try {

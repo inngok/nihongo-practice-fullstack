@@ -245,29 +245,32 @@ export default function KanjiAddModal({
     const saveProcess = async (actionType) => {
       const hide = messageApi.loading(`Đang lưu chữ Hán...`, 0);
       try {
-        for (const item of newItems) {
-          await kanjiService.create({
-            ...item,
-            book: { id: bookIdInt },
-            week: weekInt,
-            day: formData.day ? parseInt(formData.day) : null
-          });
-        }
-
-        if (actionType === 'OVERWRITE') {
-          for (const dup of duplicates) {
-            await kanjiService.update(dup.existingId, {
-              ...dup,
-              book: { id: bookIdInt },
-              week: weekInt,
-              day: formData.day ? parseInt(formData.day) : null
-            });
-          }
-        } else if (actionType === 'ADD_NEW') {
-          for (const dup of duplicates) {
-            delete dup.existingId;
+        const allItems = itemsToSave;
+        
+        for (let i = 0; i < allItems.length; i++) {
+          const item = allItems[i];
+          const isDup = duplicates.find(d => d.character === item.character);
+          
+          if (isDup) {
+            if (actionType === 'OVERWRITE') {
+              await kanjiService.update(isDup.existingId, {
+                ...isDup,
+                book: { id: bookIdInt },
+                week: weekInt,
+                day: formData.day ? parseInt(formData.day) : null
+              });
+            } else if (actionType === 'ADD_NEW') {
+              const { existingId, ...rest } = isDup;
+              await kanjiService.create({
+                ...rest,
+                book: { id: bookIdInt },
+                week: weekInt,
+                day: formData.day ? parseInt(formData.day) : null
+              });
+            }
+          } else {
             await kanjiService.create({
-              ...dup,
+              ...item,
               book: { id: bookIdInt },
               week: weekInt,
               day: formData.day ? parseInt(formData.day) : null

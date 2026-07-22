@@ -253,17 +253,18 @@ export default function GrammarAddModal({
           };
         };
 
-        for (const item of newItems) {
-          await grammarService.create(createPayload(item));
-        }
-
-        if (actionType === 'OVERWRITE') {
-          for (const dup of duplicates) {
-            await grammarService.update(dup.existingId, createPayload(dup));
-          }
-        } else if (actionType === 'ADD_NEW') {
-          for (const dup of duplicates) {
-            await grammarService.create(createPayload(dup));
+        for (let i = 0; i < allSelectedItems.length; i++) {
+          const item = allSelectedItems[i];
+          const isDup = duplicates.find(d => d.structure === item.structure);
+          
+          if (isDup) {
+            if (actionType === 'OVERWRITE') {
+              await grammarService.update(isDup.existingId, createPayload(isDup));
+            } else if (actionType === 'ADD_NEW') {
+              await grammarService.create(createPayload(isDup));
+            }
+          } else {
+            await grammarService.create(createPayload(item));
           }
         }
 
