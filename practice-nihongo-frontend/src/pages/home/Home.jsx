@@ -15,7 +15,7 @@ export default function Home() {
       if (saved) {
         setQuickAccess(JSON.parse(saved));
       }
-    } catch (e) {}
+    } catch (e) { }
 
     // 2. Sync from backend to support cross-device
     if (currentUser) {
@@ -27,9 +27,9 @@ export default function Home() {
               const parsed = JSON.parse(resData.data);
               setQuickAccess(parsed);
               localStorage.setItem('quickAccess', resData.data);
-            } catch(e) {}
+            } catch (e) { }
           }
-        }).catch(() => {});
+        }).catch(() => { });
     }
   }, [currentUser, fetchWithAuth]);
 
@@ -129,15 +129,25 @@ export default function Home() {
           className="group px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-[2rem] hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
         >
           <span className="text-[10px] md:text-[11px] font-black tracking-[0.3em] uppercase text-slate-500 dark:text-slate-400 group-hover:text-white dark:group-hover:text-black transition-colors">
-            Ôn thi JLPT
+            Ôn thi
           </span>
         </Link>
+        {currentUser && (
+          <Link
+            to="/my-vocab"
+            className="group px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-[2rem] hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
+          >
+            <span className="text-[10px] md:text-[11px] font-black tracking-[0.3em] uppercase text-slate-500 dark:text-slate-400 group-hover:text-white dark:group-hover:text-black transition-colors">
+              Sổ tay
+            </span>
+          </Link>
+        )}
         <Link
-          to="/news"
+          to="/grammar/keigo"
           className="group px-8 py-4 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-850 rounded-[2rem] hover:bg-black dark:hover:bg-white hover:border-black dark:hover:border-white hover:-translate-y-1 hover:shadow-2xl transition-all duration-300"
         >
           <span className="text-[10px] md:text-[11px] font-black tracking-[0.3em] uppercase text-slate-500 dark:text-slate-400 group-hover:text-white dark:group-hover:text-black transition-colors">
-            Đọc báo
+            Tôn Kính Ngữ
           </span>
         </Link>
       </div>

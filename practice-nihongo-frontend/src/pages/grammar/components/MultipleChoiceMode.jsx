@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import { cleanOption } from '../utils/grammarHelpers';
 
 export default function MultipleChoiceMode({
   activeData,
@@ -19,13 +20,28 @@ export default function MultipleChoiceMode({
 
   useEffect(() => {
     if (activeData[currentIndex]) {
-      const correctOption = activeData[currentIndex]?.quiz.answer;
-      if (!correctOption) return;
+      const correctOptionRaw = activeData[currentIndex]?.quiz.answer;
+      if (!correctOptionRaw) return;
 
-      const uniqueAnswers = Array.from(new Set(grammarData.map(item => item.quiz?.answer).filter(Boolean)));
-      let otherOptions = uniqueAnswers.filter(ans => ans !== correctOption);
-      otherOptions = otherOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
-      const allOptions = [correctOption, ...otherOptions].sort(() => 0.5 - Math.random());
+      const correctCleaned = cleanOption(correctOptionRaw);
+
+      const allRawAnswers = Array.from(new Set(grammarData.map(item => item.quiz?.answer).filter(Boolean)));
+      
+      let otherCleanedOptions = [];
+      let seen = new Set();
+      seen.add(correctCleaned);
+
+      for (let raw of allRawAnswers) {
+        if (raw === correctOptionRaw) continue;
+        let cleaned = cleanOption(raw);
+        if (!seen.has(cleaned)) {
+          seen.add(cleaned);
+          otherCleanedOptions.push(cleaned);
+        }
+      }
+
+      otherCleanedOptions = otherCleanedOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
+      const allOptions = [correctCleaned, ...otherCleanedOptions].sort(() => 0.5 - Math.random());
 
       setMcOptions(allOptions);
       setMcSelected(null);
@@ -115,10 +131,10 @@ export default function MultipleChoiceMode({
 
       {/* MC Card */}
       <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl sm:rounded-[2.5rem] p-5 sm:p-12 shadow-sm relative overflow-hidden">
-        {mcChecked && mcSelected === activeData[currentIndex]?.quiz.answer && (
+        {mcChecked && mcSelected === cleanOption(activeData[currentIndex]?.quiz.answer) && (
           <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500 animate-pulse"></div>
         )}
-        {mcChecked && mcSelected !== activeData[currentIndex]?.quiz.answer && (
+        {mcChecked && mcSelected !== cleanOption(activeData[currentIndex]?.quiz.answer) && (
           <div className="absolute top-0 left-0 right-0 h-1 bg-rose-500 animate-pulse"></div>
         )}
 
@@ -141,7 +157,7 @@ export default function MultipleChoiceMode({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto">
           {mcOptions.map((opt, idx) => {
-            const isCorrect = opt === activeData[currentIndex]?.quiz.answer;
+            const isCorrect = opt === cleanOption(activeData[currentIndex]?.quiz.answer);
             const isSelected = mcSelected === opt;
             let btnClass = "border-slate-200 dark:border-slate-800 hover:border-black dark:hover:border-white text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-950";
 

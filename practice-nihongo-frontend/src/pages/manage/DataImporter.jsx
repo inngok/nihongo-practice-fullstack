@@ -142,6 +142,22 @@ export default function DataImporter() {
     );
   };
 
+  const handleAddNew = async () => {
+    setDuplicateModalVisible(false);
+    
+    // Remove existingId from duplicates so they are treated as new
+    const updatedDuplicates = duplicateItems.map(item => {
+      const { existingId, ...rest } = item;
+      return rest;
+    });
+
+    const combinedData = [...nonDuplicateItems, ...updatedDuplicates];
+    await proceedImport(
+      combinedData,
+      `Đã thêm mới ${duplicateItems.length} bản ghi trùng và import thêm ${nonDuplicateItems.length} bản ghi mới thành công!`
+    );
+  };
+
   const handleImport = async () => {
     if (!jsonData.trim()) {
       return messageApi.error('Vui lòng nhập dữ liệu JSON');
@@ -298,8 +314,8 @@ export default function DataImporter() {
       headers += '一,ひと.つ,イチ,NHẤT,một,"一人 (ひとり): một người\\n一日 (ついたch): ngày mùng một",1\n';
       filename = 'kanji_template_lesson.csv';
     } else {
-      headers = 'word,reading,meaning,example,exampleMeaning,lesson\n';
-      headers += '食べる,たべる,Ăn,ご飯を食べる,Ăn cơm,1\n';
+      headers = 'word,reading,hanviet,meaning,example,exampleMeaning,lesson\n';
+      headers += '食べる,たべる,THỰC,Ăn,ご飯を食べる,Ăn cơm,1\n';
       filename = 'vocab_template_lesson.csv';
     }
 
@@ -640,6 +656,7 @@ export default function DataImporter() {
         nonDuplicateItems={nonDuplicateItems}
         onKeepOld={handleKeepOld}
         onOverwriteNew={handleOverwriteNew}
+        onAddNew={handleAddNew}
         onClose={() => setDuplicateModalVisible(false)}
       />
     </div>

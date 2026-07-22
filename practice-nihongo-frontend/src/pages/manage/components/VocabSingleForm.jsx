@@ -10,7 +10,7 @@ export default function VocabSingleForm({ onSuccess, editingVocab, books, initia
   const [messageApi, contextHolder] = message.useMessage();
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [formData, setFormData] = useState({
-    word: '', reading: '', meaning: '', example: '', exampleMeaning: '', bookId: '', week: '', day: ''
+    word: '', reading: '', meaning: '', hanviet: '', example: '', exampleMeaning: '', bookId: '', week: '', day: ''
   });
 
   useEffect(() => {
@@ -19,6 +19,7 @@ export default function VocabSingleForm({ onSuccess, editingVocab, books, initia
         word: editingVocab.word,
         reading: editingVocab.reading,
         meaning: editingVocab.meaning,
+        hanviet: editingVocab.hanviet || '',
         example: editingVocab.example,
         exampleMeaning: editingVocab.exampleMeaning,
         bookId: editingVocab.book?.id || '',
@@ -27,7 +28,7 @@ export default function VocabSingleForm({ onSuccess, editingVocab, books, initia
       });
     } else {
       setFormData({
-        word: '', reading: '', meaning: '', example: '', exampleMeaning: '', bookId: initialBookId || '', week: '', day: ''
+        word: '', reading: '', meaning: '', hanviet: '', example: '', exampleMeaning: '', bookId: initialBookId || '', week: '', day: ''
       });
     }
   }, [editingVocab, initialBookId]);
@@ -49,6 +50,7 @@ export default function VocabSingleForm({ onSuccess, editingVocab, books, initia
         ...p, 
         reading: p.reading ? p.reading : (data.reading || ''), 
         meaning: p.meaning ? p.meaning : (data.meaning || ''), 
+        hanviet: p.hanviet ? p.hanviet : (data.hanviet || ''),
         example: p.example ? p.example : (data.example || ''), 
         exampleMeaning: p.exampleMeaning ? p.exampleMeaning : (data.exampleMeaning || '') 
       }));
@@ -141,9 +143,15 @@ export default function VocabSingleForm({ onSuccess, editingVocab, books, initia
             <input type="text" name="reading" value={formData.reading} onChange={handleInputChange} required className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" />
           </div>
         </div>
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Ý nghĩa</label>
-          <input type="text" name="meaning" value={formData.meaning} onChange={handleInputChange} required className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" />
+        <div className="grid grid-cols-2 gap-8">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Ý nghĩa</label>
+            <input type="text" name="meaning" value={formData.meaning} onChange={handleInputChange} required className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Âm Hán Việt</label>
+            <input type="text" name="hanviet" value={formData.hanviet} onChange={handleInputChange} className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-lg outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" />
+          </div>
         </div>
         <div className="grid grid-cols-2 gap-8">
           <div className="space-y-2">

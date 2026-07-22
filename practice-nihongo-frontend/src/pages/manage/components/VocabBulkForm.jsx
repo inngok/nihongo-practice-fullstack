@@ -65,29 +65,38 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
       setIsSaving(true);
       const hide = messageApi.loading('Đang lưu dữ liệu...', 0);
       try {
+        // allItems preserves the original selected order for sortOrder assignment
+        const allItems = items;
+
         for (const itm of newItems) {
+          const globalIdx = allItems.indexOf(itm);
           await vocabService.create({
             ...itm,
             week: weekInt,
-            book: { id: bookIdInt }
+            book: { id: bookIdInt },
+            sortOrder: globalIdx >= 0 ? globalIdx + 1 : null
           });
         }
 
         if (actionType === 'OVERWRITE') {
           for (const dup of duplicates) {
+            const globalIdx = allItems.indexOf(dup);
             await vocabService.update(dup.existingId, {
               ...dup,
               week: weekInt,
-              book: { id: bookIdInt }
+              book: { id: bookIdInt },
+              sortOrder: globalIdx >= 0 ? globalIdx + 1 : null
             });
           }
         } else if (actionType === 'ADD_NEW') {
           for (const dup of duplicates) {
-            delete dup.existingId;
+            const globalIdx = allItems.indexOf(dup);
+            const { existingId, ...rest } = dup;
             await vocabService.create({
-              ...dup,
+              ...rest,
               week: weekInt,
-              book: { id: bookIdInt }
+              book: { id: bookIdInt },
+              sortOrder: globalIdx >= 0 ? globalIdx + 1 : null
             });
           }
         }
@@ -146,6 +155,7 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
                   <tr>
                     <th className="p-4 w-12 text-center"><input type="checkbox" onChange={(e) => setPreviewData(d => d.map(item => ({ ...item, selected: e.target.checked })))} checked={previewData.every(i => i.selected)} className="w-4 h-4 cursor-pointer rounded-sm" /></th>
                     <th className="p-4 text-left font-bold uppercase tracking-widest text-[10px] text-slate-400">Từ vựng</th>
+                    <th className="p-4 text-left font-bold uppercase tracking-widest text-[10px] text-slate-400">Hán Việt</th>
                     <th className="p-4 text-left font-bold uppercase tracking-widest text-[10px] text-slate-400">Ý nghĩa</th>
                   </tr>
                 </thead>
@@ -154,6 +164,7 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
                     <tr key={idx} className={`transition-colors ${item.selected ? 'bg-white dark:bg-slate-800/30' : 'opacity-40 grayscale'}`}>
                       <td className="p-4 text-center"><input type="checkbox" checked={item.selected} onChange={() => { const d = [...previewData]; d[idx].selected = !d[idx].selected; setPreviewData(d); }} className="w-4 h-4 cursor-pointer rounded-sm" /></td>
                       <td className="p-4 font-bold text-slate-900 dark:text-white font-kanji text-base">{item.word}</td>
+                      <td className="p-4 text-slate-600 dark:text-slate-300 font-medium">{item.hanviet}</td>
                       <td className="p-4 text-slate-600 dark:text-slate-300 font-medium leading-relaxed">{item.meaning}</td>
                     </tr>
                   ))}
@@ -174,7 +185,7 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
           <button
             onClick={handleBulkAiProcess}
             disabled={isAiProcessing}
-            className="w-full sm:w-auto px-8 py-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-black rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-black dark:hover:bg-white transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+            className="w-full sm:w-auto min-w-[180px] px-8 py-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-black rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-black dark:hover:bg-white transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
           >
             {isAiProcessing ? <div className="w-4 h-4 border-2 border-white/30 dark:border-black/30 border-t-white dark:border-t-black rounded-full animate-spin" /> : <ThunderboltOutlined />}
             {isAiProcessing ? 'ĐANG PHÂN TÍCH...' : 'AI PHÂN TÍCH'}
@@ -210,9 +221,9 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
             <button
               disabled={isSaving}
               onClick={handleSaveBulk}
-              className="w-full sm:w-auto px-8 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-slate-200 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto min-w-[160px] px-8 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 dark:hover:bg-slate-200 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSaving ? 'ĐANG LƯU...' : 'LƯU DỮ LIỆU'}
+              {isSaving ? 'ĐANG LƯU...' : `LƯU ${previewData.filter(i => i.selected).length} TỪ`}
             </button>
           </div>
         </div>

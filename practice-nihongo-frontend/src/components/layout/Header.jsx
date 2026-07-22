@@ -185,9 +185,7 @@ export default function Header() {
           { path: '/grammar', label: 'Ngữ pháp' },
           { path: '/vocabulary', label: 'Từ vựng' },
           { path: '/kanji', label: 'Hán tự' },
-          ...(currentUser ? [
-            { path: '/my-vocab', label: 'Sổ tay' }
-          ] : []),
+          { path: '/news', label: 'Tin tức' },
         ].map(nav => (
           <Link
             key={nav.path}

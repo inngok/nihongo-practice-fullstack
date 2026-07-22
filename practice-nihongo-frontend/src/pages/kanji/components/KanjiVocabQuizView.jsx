@@ -12,12 +12,12 @@ export default function KanjiVocabQuizView({ kanjiVocabs }) {
   // Generate quiz questions once when kanjiVocabs change
   const questions = useMemo(() => {
     if (!kanjiVocabs || kanjiVocabs.length < 4) return [];
-    
+
     // Shuffle all vocabs
     const shuffledVocabs = [...kanjiVocabs].sort(() => Math.random() - 0.5);
     // Take all questions
     const selectedQuestions = shuffledVocabs;
-    
+
     return selectedQuestions.map(vocab => {
       const wrongOptions = kanjiVocabs.filter(v => v.word !== vocab.word);
       const shuffledWrong = [...wrongOptions].sort(() => Math.random() - 0.5).slice(0, 3);
@@ -25,7 +25,7 @@ export default function KanjiVocabQuizView({ kanjiVocabs }) {
         { ...vocab, isCorrect: true },
         ...shuffledWrong.map(v => ({ ...v, isCorrect: false }))
       ].sort(() => Math.random() - 0.5);
-      
+
       return {
         vocab,
         options
@@ -42,7 +42,7 @@ export default function KanjiVocabQuizView({ kanjiVocabs }) {
 
   const handleSelect = (option) => {
     if (selectedOption) return;
-    
+
     setSelectedOption(option);
     setIsCorrect(option.isCorrect);
     if (option.isCorrect) {
@@ -88,8 +88,8 @@ export default function KanjiVocabQuizView({ kanjiVocabs }) {
           <p className="text-xs font-bold text-slate-400 dark:text-slate-600 uppercase tracking-wider">
             Bạn đã trả lời đúng {Math.round((score / questions.length) * 100)}% số câu hỏi!
           </p>
-          <button 
-            onClick={handleReset} 
+          <button
+            onClick={handleReset}
             className="bg-black dark:bg-white text-white dark:text-black hover:opacity-80 w-full py-4 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-md active:scale-95 flex items-center justify-center"
           >
             Luyện tập lại
@@ -129,16 +129,15 @@ export default function KanjiVocabQuizView({ kanjiVocabs }) {
             </h2>
             {currentQuestion.vocab.reading && (
               <div className="flex justify-center pt-2">
-                <button 
+                <button
                   onClick={() => setShowReading(!showReading)}
-                  className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs sm:text-sm font-medium ${
-                    showReading 
-                      ? 'text-slate-500 dark:text-slate-400' 
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs sm:text-sm font-medium ${showReading
+                      ? 'text-slate-500 dark:text-slate-400'
                       : 'bg-slate-50 dark:bg-slate-800/50 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                  }`}
+                    }`}
                 >
                   {showReading ? (
-                    <span className="italic uppercase tracking-widest">{currentQuestion.vocab.reading}</span>
+                    <span className="font-medium tracking-widest">{currentQuestion.vocab.reading}</span>
                   ) : (
                     <>
                       <Eye size={14} />
@@ -154,9 +153,9 @@ export default function KanjiVocabQuizView({ kanjiVocabs }) {
             {currentQuestion.options.map((option, idx) => {
               const isSelected = selectedOption?.word === option.word;
               const isCorrectOption = option.isCorrect;
-              
+
               let btnClass = "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-black dark:hover:border-white hover:shadow-md";
-              
+
               if (selectedOption) {
                 if (isCorrectOption) {
                   btnClass = "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black shadow-lg";
@@ -175,14 +174,13 @@ export default function KanjiVocabQuizView({ kanjiVocabs }) {
                   className={`relative p-3 sm:p-6 rounded-2xl border-2 transition-all duration-300 text-left flex flex-col justify-center min-h-[64px] sm:min-h-[100px] group ${btnClass}`}
                 >
                   <div className="flex items-center sm:items-start gap-3 sm:gap-4 w-full">
-                    <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                      selectedOption && isCorrectOption ? 'border-white dark:border-black bg-black dark:bg-white text-white dark:text-black' :
-                      selectedOption && isSelected && !isCorrectOption ? 'border-rose-500 bg-rose-500 text-white' :
-                      'border-slate-200 dark:border-slate-700 group-hover:border-black dark:group-hover:border-white text-slate-400 dark:text-slate-500 group-hover:text-black dark:group-hover:text-white'
-                    }`}>
+                    <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${selectedOption && isCorrectOption ? 'border-white dark:border-black bg-black dark:bg-white text-white dark:text-black' :
+                        selectedOption && isSelected && !isCorrectOption ? 'border-rose-500 bg-rose-500 text-white' :
+                          'border-slate-200 dark:border-slate-700 group-hover:border-black dark:group-hover:border-white text-slate-400 dark:text-slate-500 group-hover:text-black dark:group-hover:text-white'
+                      }`}>
                       {selectedOption && isCorrectOption ? <Check size={14} className="text-white dark:text-black" /> :
-                       selectedOption && isSelected && !isCorrectOption ? <X size={14} className="text-white" /> :
-                       <span className="text-[9px] sm:text-[10px] font-black">{String.fromCharCode(65 + idx)}</span>}
+                        selectedOption && isSelected && !isCorrectOption ? <X size={14} className="text-white" /> :
+                          <span className="text-[9px] sm:text-[10px] font-black">{String.fromCharCode(65 + idx)}</span>}
                     </div>
                     <span className="text-sm sm:text-lg font-bold">
                       {option.meaning}
@@ -198,11 +196,10 @@ export default function KanjiVocabQuizView({ kanjiVocabs }) {
           <button
             onClick={handleNext}
             disabled={!selectedOption}
-            className={`w-full py-3.5 sm:py-5 rounded-2xl text-[10px] font-black uppercase transition-all shadow-xl sm:shadow-2xl ${
-              selectedOption 
-                ? 'bg-black dark:bg-white text-white dark:text-black hover:scale-[1.02]' 
+            className={`w-full py-3.5 sm:py-5 rounded-2xl text-[10px] font-black uppercase transition-all shadow-xl sm:shadow-2xl ${selectedOption
+                ? 'bg-black dark:bg-white text-white dark:text-black hover:scale-[1.02]'
                 : 'bg-slate-100 dark:bg-slate-900 text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-70'
-            }`}
+              }`}
           >
             {currentIndex === questions.length - 1 ? 'KẾT THÚC' : 'TIẾP THEO'}
           </button>

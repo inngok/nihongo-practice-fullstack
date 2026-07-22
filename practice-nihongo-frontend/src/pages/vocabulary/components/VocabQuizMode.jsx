@@ -10,11 +10,13 @@ export default function VocabQuizMode({
   setFeedback,
   handleSubmit,
   setShowResults,
-  setCurrentIndex
+  setCurrentIndex,
+  isShuffle,
+  setIsShuffle
 }) {
   return (
     <div className="flex flex-col gap-8 animate-in fade-in duration-500 max-w-4xl mx-auto w-full">
-      <div className="flex justify-between items-center px-4">
+      <div className="flex flex-wrap justify-between items-center px-4 gap-4">
         <div className="flex items-center gap-4">
           <span className="text-[10px] font-black text-slate-400 dark:text-slate-600 uppercase tracking-widest">
             Tiến trình: {currentIndex + 1} / {studyData.length}
@@ -30,6 +32,15 @@ export default function VocabQuizMode({
             className="px-3 py-1 bg-rose-50 dark:bg-rose-950/30 text-rose-500 border border-rose-100 dark:border-rose-900 hover:bg-rose-500 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
           >
             HỌC LẠI
+          </button>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">XÁO TRỘN</span>
+          <button
+            onClick={() => setIsShuffle(!isShuffle)}
+            className={`relative shrink-0 w-8 sm:w-11 h-4 sm:h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+          >
+            <div className={`absolute top-0.5 sm:top-1 w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-300 ${isShuffle ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
           </button>
         </div>
       </div>

@@ -40,6 +40,20 @@ public class AIController {
         }
     }
 
+    @PostMapping("/extract-hanviet-bulk")
+    public ResponseEntity<String> extractHanvietBulk(@RequestBody Map<String, java.util.List<String>> request) {
+        try {
+            java.util.List<String> words = request.get("words");
+            if (words == null || words.isEmpty()) {
+                return ResponseEntity.badRequest().body("{}");
+            }
+            String result = aiService.extractHanvietBulk(words);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
     @PostMapping("/generate-grammar")
     public ResponseEntity<String> generateGrammar(@RequestBody Map<String, String> request) {
         try {

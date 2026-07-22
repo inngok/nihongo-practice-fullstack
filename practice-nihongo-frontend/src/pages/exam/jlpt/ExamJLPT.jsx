@@ -5,9 +5,16 @@ import { ChevronLeft } from 'lucide-react';
 const examModules = [
   {
     id: 'past-vocab',
-    title: "Từ Vựng Đã Thi",
+    title: "Từ Vựng Đã Thi N3",
     description: "Khám phá danh sách các từ vựng và Hán tự thường xuyên xuất hiện trong các kỳ thi JLPT thật.",
     path: "/exam-jlpt/past-vocab",
+    status: "ready"
+  },
+  {
+    id: 'speaking',
+    title: "Luyện Nói (JPD326)",
+    description: "Luyện tập hội thoại tiếng Nhật theo tình huống thực tế bằng dữ liệu mô phỏng.",
+    path: "/exam-jlpt/speaking",
     status: "ready"
   }
 ];
@@ -28,7 +35,7 @@ export default function ExamJLPT() {
           <div className="space-y-4">
             <span className="text-[10px] tracking-[0.4em] font-bold text-slate-300 uppercase">Chương trình luyện thi</span>
             <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter leading-tight italic uppercase">
-              Ôn thi JLPT
+              Ôn thi
             </h1>
             <p className="text-slate-400 font-medium text-sm md:text-base max-w-xl italic leading-relaxed">
               Tổng hợp cấu trúc và kỹ năng làm các dạng bài đặc thù trong kỳ thi năng lực tiếng Nhật JLPT N3.

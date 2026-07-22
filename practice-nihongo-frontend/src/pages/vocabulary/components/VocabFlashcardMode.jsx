@@ -20,7 +20,12 @@ export default function VocabFlashcardMode({
   handleTouchEnd,
   cardStyle,
   swipeDirection,
-  setShowResults
+  setShowResults,
+  showHanViet,
+  setShowHanViet,
+  setShowVietnameseFirst,
+  isShuffle,
+  setIsShuffle
 }) {
   return (
     <div className="flex flex-col gap-8 animate-in fade-in duration-500 max-w-4xl mx-auto w-full">
@@ -62,6 +67,36 @@ export default function VocabFlashcardMode({
             className="px-3 py-1 bg-rose-50 dark:bg-rose-950/30 text-rose-500 border border-rose-100 dark:border-rose-900 hover:bg-rose-500 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
           >
             HỌC LẠI
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 px-4">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">XÁO TRỘN</span>
+          <button
+            onClick={() => setIsShuffle(!isShuffle)}
+            className={`relative shrink-0 w-8 sm:w-11 h-4 sm:h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+          >
+            <div className={`absolute top-0.5 sm:top-1 w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-300 ${isShuffle ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
+          </button>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">HÁN VIỆT</span>
+          <button
+            onClick={() => setShowHanViet(!showHanViet)}
+            className={`relative shrink-0 w-8 sm:w-11 h-4 sm:h-6 rounded-full transition-all duration-300 ${showHanViet ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+          >
+            <div className={`absolute top-0.5 sm:top-1 w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-300 ${showHanViet ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
+          </button>
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">VIỆT → NHẬT</span>
+          <button
+            onClick={() => { setShowVietnameseFirst(!showVietnameseFirst); setIsFlipped(false); }}
+            className={`relative shrink-0 w-8 sm:w-11 h-4 sm:h-6 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+          >
+            <div className={`absolute top-0.5 sm:top-1 w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
           </button>
         </div>
       </div>
@@ -144,9 +179,14 @@ export default function VocabFlashcardMode({
               <h3 className={`font-medium text-slate-900 dark:text-white mb-4 ${showVietnameseFirst ? 'text-3xl sm:text-4xl md:text-5xl font-kanji' : 'text-2xl sm:text-3xl md:text-4xl italic'}`}>
                 {showVietnameseFirst ? studyData[currentIndex]?.word : studyData[currentIndex]?.meaning}
               </h3>
-              <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 italic uppercase">
+              <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 tracking-wider">
                 {studyData[currentIndex]?.reading}
               </p>
+              {showHanViet && studyData[currentIndex]?.hanviet && (
+                <div className="mt-6 px-4 py-1.5 bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] border border-slate-200 dark:border-slate-800">
+                  {studyData[currentIndex]?.hanviet}
+                </div>
+              )}
 
 
             </div>
@@ -159,7 +199,7 @@ export default function VocabFlashcardMode({
           className="perspective h-[380px] sm:h-[450px] cursor-pointer group"
         >
           <div key={currentIndex} className={`relative w-full h-full transition-all duration-700 preserve-3d shadow-2xl rounded-[3rem] ${isFlipped ? 'rotate-y-180' : 'hover:-translate-y-1 hover:shadow-3xl'}`}>
-            {/* Front Face */}
+            {/* Front Face — challenge side, no hanviet hint here */}
             <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] flex flex-col items-center justify-center p-6 sm:p-12 text-center">
               <h2 className={`font-medium mb-6 sm:mb-8 select-all break-all whitespace-pre-wrap leading-tight ${showVietnameseFirst ? 'text-2xl sm:text-3xl md:text-5xl italic text-slate-900 dark:text-white' : 'text-4xl sm:text-5xl md:text-7xl font-kanji text-slate-900 dark:text-white'}`}>
                 {showVietnameseFirst ? studyData[currentIndex]?.meaning : studyData[currentIndex]?.word}
@@ -176,9 +216,14 @@ export default function VocabFlashcardMode({
               <h3 className={`font-medium text-slate-900 dark:text-white mb-4 ${showVietnameseFirst ? 'text-3xl sm:text-4xl md:text-5xl font-kanji' : 'text-2xl sm:text-3xl md:text-4xl italic'}`}>
                 {showVietnameseFirst ? studyData[currentIndex]?.word : studyData[currentIndex]?.meaning}
               </h3>
-              <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 italic uppercase">
+              <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 tracking-wider">
                 {studyData[currentIndex]?.reading}
               </p>
+              {showHanViet && studyData[currentIndex]?.hanviet && (
+                <div className="mt-6 px-4 py-1.5 bg-slate-50 dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-[0.2em] border border-slate-200 dark:border-slate-800">
+                  {studyData[currentIndex]?.hanviet}
+                </div>
+              )}
 
 
             </div>
