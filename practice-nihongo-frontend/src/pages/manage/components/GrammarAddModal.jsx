@@ -373,10 +373,10 @@ export default function GrammarAddModal({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-slate-900/60 dark:bg-black/80 overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 md:p-6 bg-slate-900/60 dark:bg-black/80 overflow-y-auto">
       <div className={`bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full ${modalTab === 'bulk' ? 'max-w-6xl' : 'max-w-lg'} rounded-[32px] shadow-2xl flex flex-col max-h-[95vh] animate-in fade-in zoom-in duration-300 transition-all overflow-hidden`}>
         {/* Header with Tabs */}
-        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
+        <div className="px-4 md:px-8 py-4 md:py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
           <div className="flex items-center gap-8">
             <button
               onClick={() => setModalTab('single')}
@@ -399,8 +399,8 @@ export default function GrammarAddModal({
         </div>
 
         {modalTab === 'single' ? (
-          <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto no-scrollbar">
-            <div className="grid grid-cols-2 gap-8">
+          <form onSubmit={handleSubmit} className="p-4 md:p-8 space-y-6 overflow-y-auto no-scrollbar">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               <div className="space-y-2">
                 <div className="flex justify-between items-center px-1">
                   <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500">Cấu trúc</label>
@@ -438,15 +438,15 @@ export default function GrammarAddModal({
                 name="explanation"
                 value={formData.explanation}
                 onChange={handleInputChange}
-                rows="2"
+                rows="6"
                 placeholder="Cách dùng cấu trúc này..."
-                className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all resize-none placeholder:text-slate-200 dark:placeholder:text-slate-700"
+                className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700"
               ></textarea>
             </div>
 
             <div className="space-y-4 border-l-2 border-slate-100 dark:border-slate-800 pl-4 py-2">
               {examplesList.map((ex, index) => (
-                <div key={index} className="grid grid-cols-2 gap-8 relative group">
+                <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 relative group">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Ví dụ {index + 1} (JP)</label>
                     <input
@@ -542,7 +542,7 @@ export default function GrammarAddModal({
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-2 gap-4 md:gap-8">
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 px-1">Tuần (Week)</label>
                 <input
@@ -659,24 +659,79 @@ export default function GrammarAddModal({
                                 setPreviewData(newData);
                               }} className="w-4 h-4 rounded border-slate-300 accent-black dark:accent-white" />
                             </td>
-                            <td className="p-4">
-                              <div className="flex items-center gap-2">
-                                <div className="font-bold text-slate-900 dark:text-white text-base">{item.structure}</div>
-                                {item.isDuplicate && (
-                                  <span className="text-[8px] font-black uppercase bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded border border-rose-200">Đã có</span>
-                                )}
+                            <td className="p-4 align-top">
+                              <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                  <input 
+                                    type="text"
+                                    value={item.structure}
+                                    onChange={(e) => {
+                                      const newData = [...previewData];
+                                      newData[idx].structure = e.target.value;
+                                      setPreviewData(newData);
+                                    }}
+                                    className="font-bold text-slate-900 dark:text-white text-base bg-transparent border-b border-slate-200 dark:border-slate-700 hover:border-black dark:hover:border-white focus:border-black dark:focus:border-white outline-none w-full"
+                                  />
+                                  {item.isDuplicate && (
+                                    <span className="text-[8px] font-black uppercase bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded border border-rose-200 whitespace-nowrap">Đã có</span>
+                                  )}
+                                </div>
+                                <div className="text-black dark:text-white font-black uppercase tracking-widest text-[10px] opacity-50">{item.level}</div>
                               </div>
-                              <div className="text-black dark:text-white font-black uppercase tracking-widest text-[10px] opacity-50">{item.level}</div>
                             </td>
-                            <td className="p-4">
-                              <div className="font-medium text-slate-900 dark:text-white">{item.meaning}</div>
-                              <div className="text-slate-400 italic line-clamp-1">{item.explanation}</div>
+                            <td className="p-4 align-top">
+                              <div className="flex flex-col gap-2">
+                                <input
+                                  type="text"
+                                  value={item.meaning}
+                                  onChange={(e) => {
+                                    const newData = [...previewData];
+                                    newData[idx].meaning = e.target.value;
+                                    setPreviewData(newData);
+                                  }}
+                                  placeholder="Ý nghĩa"
+                                  className="font-medium text-slate-900 dark:text-white bg-transparent border-b border-slate-200 dark:border-slate-700 hover:border-black dark:hover:border-white focus:border-black dark:focus:border-white outline-none w-full"
+                                />
+                                <input
+                                  type="text"
+                                  value={item.explanation}
+                                  onChange={(e) => {
+                                    const newData = [...previewData];
+                                    newData[idx].explanation = e.target.value;
+                                    setPreviewData(newData);
+                                  }}
+                                  placeholder="Giải thích"
+                                  className="text-slate-500 dark:text-slate-400 italic bg-transparent border-b border-slate-200 dark:border-slate-700 hover:border-black dark:hover:border-white focus:border-black dark:focus:border-white outline-none w-full text-xs"
+                                />
+                              </div>
                             </td>
-                            <td className="p-4">
-                              <div className="text-slate-700 dark:text-slate-300 line-clamp-1">{item.exampleSentence}</div>
-                              <div className="text-slate-400 text-[10px] line-clamp-1 italic">{item.exampleMeaning}</div>
+                            <td className="p-4 align-top">
+                              <div className="flex flex-col gap-2">
+                                <input
+                                  type="text"
+                                  value={item.exampleSentence}
+                                  onChange={(e) => {
+                                    const newData = [...previewData];
+                                    newData[idx].exampleSentence = e.target.value;
+                                    setPreviewData(newData);
+                                  }}
+                                  placeholder="Ví dụ tiếng Nhật"
+                                  className="text-slate-700 dark:text-slate-300 bg-transparent border-b border-slate-200 dark:border-slate-700 hover:border-black dark:hover:border-white focus:border-black dark:focus:border-white outline-none w-full"
+                                />
+                                <input
+                                  type="text"
+                                  value={item.exampleMeaning}
+                                  onChange={(e) => {
+                                    const newData = [...previewData];
+                                    newData[idx].exampleMeaning = e.target.value;
+                                    setPreviewData(newData);
+                                  }}
+                                  placeholder="Nghĩa ví dụ"
+                                  className="text-slate-500 dark:text-slate-400 italic text-[10px] bg-transparent border-b border-slate-200 dark:border-slate-700 hover:border-black dark:hover:border-white focus:border-black dark:focus:border-white outline-none w-full"
+                                />
+                              </div>
                             </td>
-                            <td className="p-4 text-center">
+                            <td className="p-4 text-center align-top">
                               <input
                                 type="number"
                                 min="1"

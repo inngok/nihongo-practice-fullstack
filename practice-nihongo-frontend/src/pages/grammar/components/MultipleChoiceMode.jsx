@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import ExplanationText from '../../../components/ExplanationText';
 import { cleanOption } from '../utils/grammarHelpers';
 
 export default function MultipleChoiceMode({
@@ -190,10 +191,10 @@ export default function MultipleChoiceMode({
         {mcChecked && (
           <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800 animate-in fade-in text-center">
             <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-slate-500">GIẢI THÍCH</p>
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
               <span className="font-bold text-slate-900 dark:text-white mr-2">{activeData[currentIndex]?.quiz.answer}</span>
-              {activeData[currentIndex]?.explanation || "Cấu trúc này có nghĩa là: " + activeData[currentIndex]?.meaning}
-            </p>
+              {activeData[currentIndex]?.explanation ? <ExplanationText text={activeData[currentIndex].explanation} /> : "Cấu trúc này có nghĩa là: " + activeData[currentIndex]?.meaning}
+            </div>
           </div>
         )}
       </div>

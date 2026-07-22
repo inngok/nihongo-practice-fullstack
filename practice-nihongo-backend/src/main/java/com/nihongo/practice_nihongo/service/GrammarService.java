@@ -35,6 +35,7 @@ public class GrammarService {
         if (grammarDetails.getExplanation() != null) grammar.setExplanation(grammarDetails.getExplanation());
         if (grammarDetails.getExampleSentence() != null) grammar.setExampleSentence(grammarDetails.getExampleSentence());
         if (grammarDetails.getExampleMeaning() != null) grammar.setExampleMeaning(grammarDetails.getExampleMeaning());
+        if (grammarDetails.getQuizSentence() != null) grammar.setQuizSentence(grammarDetails.getQuizSentence());
         if (grammarDetails.getLevel() != null) grammar.setLevel(grammarDetails.getLevel());
         if (grammarDetails.getBook() != null) grammar.setBook(grammarDetails.getBook());
         if (grammarDetails.getWeek() != null) grammar.setWeek(grammarDetails.getWeek());

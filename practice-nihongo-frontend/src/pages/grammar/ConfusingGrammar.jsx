@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import apiClient from '../../api/apiClient';
 import { message } from 'antd';
+import ExplanationText from '../../components/ExplanationText';
 
 export default function ConfusingGrammar() {
   const navigate = useNavigate();
@@ -174,7 +175,7 @@ export default function ConfusingGrammar() {
                             SO SÁNH BẢN CHẤT & SẮC THÁI
                           </h3>
                           <div className="text-sm text-slate-650 dark:text-slate-350 leading-relaxed font-semibold space-y-3 whitespace-pre-line">
-                            {selectedGroup.explanation}
+                            <ExplanationText text={selectedGroup.explanation} />
                           </div>
                         </div>
                       )}

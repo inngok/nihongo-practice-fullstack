@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import ExplanationText from '../../../components/ExplanationText';
 
 export default function QuizMode({
   activeData,
@@ -150,7 +151,7 @@ export default function QuizMode({
                   <p className="text-xs mt-2 font-medium italic opacity-90 border-t border-slate-100/10 dark:border-slate-800/20 pt-2">Dịch: {activeData[currentIndex].quiz.translation}</p>
                 )}
                 {activeData[currentIndex]?.explanation && (
-                  <p className="text-xs mt-2 opacity-80">{activeData[currentIndex].explanation}</p>
+                  <ExplanationText text={activeData[currentIndex].explanation} className="text-xs mt-2 opacity-80" />
                 )}
               </div>
             </div>

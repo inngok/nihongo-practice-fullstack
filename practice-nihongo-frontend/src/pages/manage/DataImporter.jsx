@@ -23,6 +23,7 @@ export default function DataImporter() {
   const [duplicateItems, setDuplicateItems] = useState([]);
   const [nonDuplicateItems, setNonDuplicateItems] = useState([]);
   const [aiUsage, setAiUsage] = useState(null);
+  const [viewMode, setViewMode] = useState('table');
 
   const fetchAiUsage = async () => {
     try {
@@ -581,23 +582,101 @@ export default function DataImporter() {
               <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                 2. Kiểm tra & Lưu trữ
               </h2>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(jsonData);
-                  messageApi.success('Đã copy JSON');
-                }}
-                className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white"
-              >
-                Copy JSON
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded transition-all ${viewMode === 'table' ? 'bg-slate-900 dark:bg-white text-white dark:text-black' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                >
+                  Bảng
+                </button>
+                <button
+                  onClick={() => setViewMode('json')}
+                  className={`px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded transition-all ${viewMode === 'json' ? 'bg-slate-900 dark:bg-white text-white dark:text-black' : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'}`}
+                >
+                  JSON
+                </button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(jsonData);
+                    messageApi.success('Đã copy JSON');
+                  }}
+                  className="px-3 py-1 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest hover:text-slate-900 dark:hover:text-white"
+                >
+                  Copy JSON
+                </button>
+              </div>
             </div>
             
-            <textarea
-              value={jsonData}
-              onChange={(e) => setJsonData(e.target.value)}
-              placeholder="Kết quả JSON sẽ hiện ở đây..."
-              className="flex-grow w-full min-h-[350px] p-5 font-mono text-xs bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-xl border border-slate-100 dark:border-slate-800 outline-none focus:border-slate-300 dark:focus:border-slate-600 transition-all"
-            ></textarea>
+            {viewMode === 'json' ? (
+              <textarea
+                value={jsonData}
+                onChange={(e) => setJsonData(e.target.value)}
+                placeholder="Kết quả JSON sẽ hiện ở đây..."
+                className="flex-grow w-full min-h-[350px] p-5 font-mono text-xs bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-xl border border-slate-100 dark:border-slate-800 outline-none focus:border-slate-300 dark:focus:border-slate-600 transition-all"
+              ></textarea>
+            ) : (
+              <div className="flex-grow w-full min-h-[350px] overflow-auto border border-slate-100 dark:border-slate-800 rounded-xl">
+                {(() => {
+                  if (!jsonData.trim()) {
+                    return <div className="p-8 text-center text-slate-400 dark:text-slate-500 font-medium">Chưa có dữ liệu</div>;
+                  }
+                  try {
+                    const parsed = JSON.parse(jsonData);
+                    if (!Array.isArray(parsed) || parsed.length === 0) return <div className="p-8 text-center text-slate-400 dark:text-slate-500 font-medium">Không có bản ghi nào.</div>;
+                    
+                    const keys = Array.from(new Set(parsed.flatMap(Object.keys)));
+                    
+                    return (
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead className="bg-slate-50 dark:bg-slate-900/80 sticky top-0 z-10">
+                          <tr>
+                            <th className="p-3 font-bold uppercase tracking-wider text-[10px] text-slate-500 border-b border-slate-200 dark:border-slate-800">STT</th>
+                            {keys.map(k => (
+                              <th key={k} className="p-3 font-bold uppercase tracking-wider text-[10px] text-slate-500 border-b border-slate-200 dark:border-slate-800">{k}</th>
+                            ))}
+                            <th className="p-3 font-bold uppercase tracking-wider text-[10px] text-slate-500 border-b border-slate-200 dark:border-slate-800 text-center">Xóa</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {parsed.map((item, idx) => (
+                            <tr key={idx} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                              <td className="p-3 text-slate-500 font-medium">{idx + 1}</td>
+                              {keys.map(k => (
+                                <td key={k} className="p-2">
+                                  <input 
+                                    type="text"
+                                    value={item[k] !== undefined && item[k] !== null ? item[k] : ''}
+                                    onChange={(e) => {
+                                      const newParsed = [...parsed];
+                                      newParsed[idx][k] = e.target.value;
+                                      setJsonData(JSON.stringify(newParsed, null, 2));
+                                    }}
+                                    className="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-slate-400 dark:hover:border-slate-700 dark:focus:border-slate-500 p-1.5 rounded outline-none transition-colors text-slate-700 dark:text-slate-300"
+                                  />
+                                </td>
+                              ))}
+                              <td className="p-2 text-center">
+                                <button
+                                  onClick={() => {
+                                    const newParsed = parsed.filter((_, i) => i !== idx);
+                                    setJsonData(JSON.stringify(newParsed, null, 2));
+                                  }}
+                                  className="text-red-400 hover:text-red-600 dark:text-red-500 dark:hover:text-red-400 transition-colors p-1"
+                                >
+                                  ×
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    );
+                  } catch (e) {
+                    return <div className="p-8 text-center text-red-500 font-medium">Lỗi phân tích JSON. Vui lòng chuyển sang tab JSON để sửa.</div>;
+                  }
+                })()}
+              </div>
+            )}
 
             <div className="mt-8 space-y-4">
               <div className="grid grid-cols-3 gap-4">

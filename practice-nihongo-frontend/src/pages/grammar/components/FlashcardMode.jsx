@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
+import ExplanationText from '../../../components/ExplanationText';
 
 export default function FlashcardMode({
   activeData,
@@ -110,9 +111,9 @@ export default function FlashcardMode({
             </h3>
 
             {activeData[currentIndex]?.explanation && (
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400 max-w-md mb-6 leading-relaxed whitespace-pre-line">
-                {activeData[currentIndex]?.explanation}
-              </p>
+              <div className="text-sm font-medium text-slate-600 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
+                <ExplanationText text={activeData[currentIndex]?.explanation} />
+              </div>
             )}
 
             {activeData[currentIndex]?.exampleSentence && (() => {
