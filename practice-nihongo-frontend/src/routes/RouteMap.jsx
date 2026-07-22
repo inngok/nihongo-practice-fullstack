@@ -228,7 +228,7 @@ export default function RouteMap() {
 
           <Route path="exam-jlpt">
             <Route index element={<ExamJLPT />} />
-            <Route path="past-vocab" element={<JlptPastVocab />} />
+            <Route path="past-vocab/:level" element={<JlptPastVocab />} />
             <Route path="speaking" element={<SpeakingExercise />} />
           </Route>
 

@@ -8,6 +8,7 @@ import { UploadCloud, CheckCircle } from 'lucide-react';
 export default function JlptPastVocabManager() {
   const [examMonth, setExamMonth] = useState('7');
   const [examYear, setExamYear] = useState(new Date().getFullYear().toString());
+  const [level, setLevel] = useState('N3');
   const [jsonData, setJsonData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
@@ -36,7 +37,7 @@ export default function JlptPastVocabManager() {
         const wb = XLSX.read(bstr, { type: 'binary' });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws);
+        const data = XLSX.utils.sheet_to_json(ws, { defval: "" });
         
         if (data.length === 0) {
           return messageApi.warning('File không có dữ liệu');
@@ -45,14 +46,30 @@ export default function JlptPastVocabManager() {
         // Standardize headers to support Vietnamese & English forms & trailing spaces
         const normalizedData = data.map(rawItem => {
             const item = {};
+            const values = []; // for fallback
             for (let k in rawItem) {
-               item[k.trim().toLowerCase()] = rawItem[k];
+               if (rawItem[k] !== undefined && rawItem[k] !== null && String(rawItem[k]).trim() !== '') {
+                   values.push(rawItem[k]);
+               }
+               const cleanKey = k.replace(/[\s_]+/g, '').toLowerCase();
+               item[cleanKey] = rawItem[k];
             }
             
-            const word = item['từ vựng'] || item['tuvung'] || item['character'] || item['word'] || item['kanji'] || item['từ'] || '';
-            const kanji = item['hán tự'] || item['hantu'] || item['cách đọc'] || item['reading'] || item['âm đọc'] || item['cách_đọc'] || '';
-            const meaning = item['ý nghĩa'] || item['nghĩa tiếng việt'] || item['nghĩa'] || item['meaning'] || item['nghia'] || '';
+            let word = item['từvựng'] || item['tuvung'] || item['character'] || item['word'] || item['kanji'] || item['từ'] || item['vocab'] || item['vocabulary'] || item['chữ'] || '';
+            let kanji = item['hántự'] || item['hantu'] || item['cáchđọc'] || item['reading'] || item['âmđọc'] || item['hiragana'] || item['phiênâm'] || item['cáchđọc'] || '';
+            let meaning = item['ýnghĩa'] || item['nghĩatiếngviệt'] || item['nghĩa'] || item['meaning'] || item['nghia'] || item['tiếngviệt'] || '';
             
+            // Tự động nhận diện nếu không khớp bất kỳ cột nào nhưng có dữ liệu (ít nhất 2 cột)
+            if (!word && !kanji && !meaning && values.length >= 2) {
+                word = values[0] || '';
+                if (values.length >= 3) {
+                    kanji = values[1] || '';
+                    meaning = values[2] || '';
+                } else {
+                    meaning = values[1] || '';
+                }
+            }
+
             // Nếu word (Kanji) trống nhưng có cách đọc (từ chỉ có Hiragana), lấy luôn cách đọc làm word
             const finalWord = String(word).trim() || String(kanji).trim();
             const finalKanji = String(kanji).trim();
@@ -97,6 +114,7 @@ export default function JlptPastVocabManager() {
         },
         body: JSON.stringify({
             examPeriod: period,
+            level: level,
             vocabs: jsonData
         }),
       });
@@ -108,7 +126,35 @@ export default function JlptPastVocabManager() {
       messageApi.success(`Import thành công ${jsonData.length} từ vựng cho đợt thi ${period}!`);
       setJsonData([]);
     } catch (error) {
-      messageApi.error(`Lỗi khi import: ${error.message}`);
+      messageApi.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteImport = async () => {
+    if (!examMonth || !examYear) {
+        return messageApi.error('Vui lòng chọn tháng và điền năm thi (VD: Tháng 7, Năm 2024)');
+    }
+    const period = `${examMonth}/${examYear}`;
+    
+    if (!window.confirm(`Bạn có chắc chắn muốn HOÀN TÁC (xóa) toàn bộ dữ liệu import của đợt thi ${period} (${level}) không?`)) {
+        return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/jlpt-vocabs/import?examPeriod=${period}&level=${level}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server lỗi: ${response.status}`);
+      }
+
+      messageApi.success(`Đã xóa thành công toàn bộ dữ liệu của đợt thi ${period} (${level})!`);
+    } catch (error) {
+      messageApi.error(`Lỗi khi xóa: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -137,6 +183,22 @@ export default function JlptPastVocabManager() {
                 </h2>
                 
                 <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                        <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-450 mb-2">Cấp độ (Level)</label>
+                        <Select
+                            placeholder="Cấp độ"
+                            className="w-full h-12 custom-select"
+                            onChange={setLevel}
+                            value={level}
+                            options={[
+                                { value: 'N1', label: 'N1' },
+                                { value: 'N2', label: 'N2' },
+                                { value: 'N3', label: 'N3' },
+                                { value: 'N4', label: 'N4' },
+                                { value: 'N5', label: 'N5' }
+                            ]}
+                        />
+                    </div>
                     <div className="flex-1">
                         <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-450 mb-2">Tháng thi</label>
                         <Select
@@ -187,16 +249,23 @@ export default function JlptPastVocabManager() {
             </div>
         </div>
 
-        <div className="mt-8">
+        <div className="mt-8 flex flex-col md:flex-row gap-4">
             <button
                 onClick={handleImport}
-                disabled={isLoading || jsonData.length === 0 || !examMonth || !examYear}
-                className="w-full py-5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-black dark:hover:bg-slate-100 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center animate-all"
+                disabled={isLoading || jsonData.length === 0 || !examMonth || !examYear || !level}
+                className="flex-1 py-5 bg-slate-900 dark:bg-white text-white dark:text-black rounded-xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-black dark:hover:bg-slate-100 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center animate-all"
             >
                 {isLoading && (
                     <div className="w-4 h-4 border-2 border-white/30 dark:border-black/30 border-t-white dark:border-t-black rounded-full animate-spin mr-3"></div>
                 )}
-                {isLoading ? 'Đang Import...' : 'Xác nhận Import lên Database'}
+                {isLoading ? 'Đang Xử Lý...' : 'Xác nhận Import'}
+            </button>
+            <button
+                onClick={handleDeleteImport}
+                disabled={isLoading || !examMonth || !examYear || !level}
+                className="md:w-64 py-5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-red-100 dark:hover:bg-red-900/40 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex justify-center items-center"
+            >
+                Hoàn tác (Xóa) Import
             </button>
         </div>
 

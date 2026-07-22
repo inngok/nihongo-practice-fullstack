@@ -37,8 +37,8 @@ public class JlptPastVocabController {
 
     @Operation(summary = "Lấy danh sách từ vựng JLPT đã ra đề")
     @GetMapping
-    public ResponseEntity<List<JlptPastVocab>> getAll() {
-        return ResponseEntity.ok(service.getAllVocabs());
+    public ResponseEntity<List<JlptPastVocab>> getAll(@RequestParam(required = false) String level) {
+        return ResponseEntity.ok(service.getAllVocabs(level));
     }
 
     @Operation(summary = "Import dữ liệu từ vựng JLPT (Chỉ Admin)")
@@ -48,11 +48,26 @@ public class JlptPastVocabController {
         if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         if (!"ADMIN".equalsIgnoreCase(currentUser.getRole())) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
-        if (request.getExamPeriod() == null || request.getExamPeriod().trim().isEmpty() || request.getVocabs() == null) {
+        if (request.getExamPeriod() == null || request.getExamPeriod().trim().isEmpty() || request.getVocabs() == null || request.getLevel() == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        service.importVocabs(request.getVocabs(), request.getExamPeriod());
+        service.importVocabs(request.getVocabs(), request.getExamPeriod(), request.getLevel());
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Xóa dữ liệu import (Hoàn tác import)")
+    @DeleteMapping("/import")
+    public ResponseEntity<Void> undoImport(@RequestParam String examPeriod, @RequestParam String level) {
+        User currentUser = getCurrentUser();
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (!"ADMIN".equalsIgnoreCase(currentUser.getRole())) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        if (examPeriod == null || examPeriod.trim().isEmpty() || level == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        service.deleteByExamPeriodAndLevel(examPeriod, level);
         return ResponseEntity.ok().build();
     }
 }

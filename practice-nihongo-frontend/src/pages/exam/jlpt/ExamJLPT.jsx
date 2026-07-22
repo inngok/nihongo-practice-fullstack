@@ -4,10 +4,17 @@ import { ChevronLeft } from 'lucide-react';
 
 const examModules = [
   {
-    id: 'past-vocab',
+    id: 'past-vocab-n3',
     title: "Từ Vựng Đã Thi N3",
-    description: "Khám phá danh sách các từ vựng và Hán tự thường xuyên xuất hiện trong các kỳ thi JLPT thật.",
-    path: "/exam-jlpt/past-vocab",
+    description: "Khám phá danh sách các từ vựng và Hán tự thường xuyên xuất hiện trong các kỳ thi JLPT N3 thật.",
+    path: "/exam-jlpt/past-vocab/N3",
+    status: "ready"
+  },
+  {
+    id: 'past-vocab-n2',
+    title: "Từ Vựng Đã Thi N2",
+    description: "Khám phá danh sách các từ vựng và Hán tự thường xuyên xuất hiện trong các kỳ thi JLPT N2 thật.",
+    path: "/exam-jlpt/past-vocab/N2",
     status: "ready"
   },
   {

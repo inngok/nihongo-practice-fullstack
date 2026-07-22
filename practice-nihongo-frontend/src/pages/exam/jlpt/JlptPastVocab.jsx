@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../../../config';
 import { Flame, Star, Search, RefreshCw, ChevronLeft, Calendar } from 'lucide-react';
 import { message, Select } from 'antd';
-import { Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 
 export default function JlptPastVocab() {
+  const { level } = useParams(); // Get level from route (e.g. N2, N3)
   const [vocabs, setVocabs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,12 +14,15 @@ export default function JlptPastVocab() {
   
   useEffect(() => {
     fetchVocabs();
-  }, []);
+  }, [level]); // Re-fetch when level param changes
 
   const fetchVocabs = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/jlpt-vocabs`);
+      const url = level 
+        ? `${API_BASE_URL}/jlpt-vocabs?level=${level}` 
+        : `${API_BASE_URL}/jlpt-vocabs`;
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Không thể tải dữ liệu từ vựng JLPT');
       }
@@ -85,10 +89,10 @@ export default function JlptPastVocab() {
           <div className="space-y-1.5">
             <span className="text-[9px] tracking-[0.3em] font-bold text-slate-350 dark:text-slate-500 uppercase block">Đề thi thực tế</span>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tighter leading-tight italic uppercase">
-              Từ Vựng JLPT Đã Thi
+              Từ Vựng JLPT Đã Thi {level || ''}
             </h1>
             <p className="text-slate-400 dark:text-slate-500 font-medium text-xs md:text-sm max-w-xl italic leading-relaxed">
-              Tổng hợp các từ vựng và chữ Hán đã từng xuất hiện trong đề thi JLPT thực tế.
+              Tổng hợp các từ vựng và chữ Hán đã từng xuất hiện trong đề thi JLPT {level || ''} thực tế.
             </p>
           </div>
           
