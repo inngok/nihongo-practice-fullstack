@@ -3,12 +3,14 @@ import { Check, X, Eye, Volume2, VolumeX } from 'lucide-react';
 
 export default function VocabMultipleChoiceMode({
   studyData,
+  fullData,
   currentIndex,
   setCurrentIndex,
   handleResetProgress,
   setShowResults,
   isShuffle,
-  setIsShuffle
+  setIsShuffle,
+  handleCorrectAnswer
 }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [showReading, setShowReading] = useState(false);
@@ -19,7 +21,8 @@ export default function VocabMultipleChoiceMode({
   const options = useMemo(() => {
     if (!currentItem || studyData.length === 0) return [];
     
-    const wrongOptions = studyData.filter(item => item.id !== currentItem.id);
+    const pool = (fullData && fullData.length > 3) ? fullData : studyData;
+    const wrongOptions = pool.filter(item => item.id !== currentItem.id);
     const shuffledWrongPool = [...wrongOptions];
     for (let i = shuffledWrongPool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -39,7 +42,7 @@ export default function VocabMultipleChoiceMode({
     }
     
     return shuffledCombined;
-  }, [currentIndex, currentItem, studyData]);
+  }, [currentIndex, currentItem, studyData, fullData]);
 
   useEffect(() => {
     setSelectedOption(null);
@@ -63,6 +66,10 @@ export default function VocabMultipleChoiceMode({
     setSelectedOption(option);
 
     setShowReading(true);
+    
+    if (option.isCorrect && handleCorrectAnswer) {
+      handleCorrectAnswer(option.id);
+    }
     
     if (autoPlayAudio) {
       playAudio();

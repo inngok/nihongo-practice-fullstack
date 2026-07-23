@@ -31,12 +31,12 @@ export default function VocabResultsModal({
             Học lại từ đầu
           </button>
 
-          {activeMode === 'flashcard' && flashcardSubMode === 'memorize' && completedIdsLength < total && (
+          {completedIdsLength < total && (
             <button
               onClick={handleStudyUnmemorized}
               className="w-full py-3.5 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
             >
-              Học lại {total - completedIdsLength} từ chưa thuộc
+              Chỉ làm lại câu sai ({total - completedIdsLength})
             </button>
           )}
         </div>

@@ -23,6 +23,22 @@ export const cleanOption = (text) => {
   return cleaned.trim() || text;
 };
 
+export const extractMissingText = (sentence, quizSentence, fallbackPattern) => {
+  if (sentence && quizSentence && quizSentence.includes('_____')) {
+    const parts = quizSentence.split('_____');
+    if (parts.length === 2) {
+      const prefix = parts[0];
+      const suffix = parts[1];
+      if (sentence.startsWith(prefix) && sentence.endsWith(suffix)) {
+        const missing = sentence.substring(prefix.length, sentence.length - suffix.length);
+        if (missing.trim()) return missing;
+      }
+    }
+  }
+  return cleanOption(fallbackPattern);
+};
+
+
 export const getQuizSentence = (sentence, quizSentence, pattern) => {
   // 1. Auto-generate the blank to perfectly match the cleaned option
   if (sentence && pattern) {

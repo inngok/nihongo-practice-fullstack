@@ -263,25 +263,29 @@ export default function VocabStudy() {
       userInput.trim() === currentItem.meaning;
 
     if (isCorrect) {
-      setScore(prev => prev + 1);
       setFeedback('correct');
-      if (!completedIds.includes(currentItem.id)) {
-        setCompletedIds(prev => [...prev, currentItem.id]);
-      }
+      handleCorrectAnswer(currentItem.id);
     } else {
       setFeedback('incorrect');
     }
   };
+
+  const handleCorrectAnswer = useCallback((itemId) => {
+    setCompletedIds(prev => {
+      if (!prev.includes(itemId)) {
+        setScore(s => s + 1);
+        return [...prev, itemId];
+      }
+      return prev;
+    });
+  }, []);
 
   const handleSwipe = (direction) => {
     if (!studyData[currentIndex]) return;
     const currentItem = studyData[currentIndex];
 
     if (direction === 'right') {
-      setScore(prev => prev + 1);
-      if (!completedIds.includes(currentItem.id)) {
-        setCompletedIds(prev => [...prev, currentItem.id]);
-      }
+      handleCorrectAnswer(currentItem.id);
     } else if (direction === 'left') {
       addToLocalReview(currentItem);
     }
@@ -546,12 +550,14 @@ export default function VocabStudy() {
               {activeMode === 'multiple_choice' && (
                 <VocabMultipleChoiceMode
                   studyData={studyData}
+                  fullData={activeData}
                   currentIndex={currentIndex}
                   setCurrentIndex={setCurrentIndex}
                   handleResetProgress={handleResetProgress}
                   setShowResults={setShowResults}
                   isShuffle={isShuffle}
                   setIsShuffle={setIsShuffle}
+                  handleCorrectAnswer={handleCorrectAnswer}
                 />
               )}
               </React.Suspense>

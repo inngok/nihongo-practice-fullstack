@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft, Volume2, Mic, Play, Pause } from 'lucide-react';
 import ExplanationText from '../../../components/ExplanationText';
-import { cleanOption } from '../utils/grammarHelpers';
+import { cleanOption, extractMissingText } from '../utils/grammarHelpers';
 
 export default function ListeningMode({
   activeData,
@@ -78,11 +78,12 @@ export default function ListeningMode({
       return;
     }
 
-    const currentAnswer = activeData[currentIndex]?.quiz?.answer || '';
+    const currentItem = activeData[currentIndex];
+    const currentAnswer = extractMissingText(currentItem?.quiz?.sentence, currentItem?.quiz?.quizSentence, currentItem?.quiz?.answer) || '';
     const cleanAnswer = currentAnswer.replace(/[～~]/g, '').trim().toLowerCase();
     const cleanInput = quizInput.replace(/[～~]/g, '').trim().toLowerCase();
 
-    const targetClean = cleanOption(currentAnswer).toLowerCase();
+    const targetClean = cleanAnswer;
 
     if (cleanInput.length > 0 && (cleanInput === targetClean || cleanAnswer.includes(cleanInput))) {
       setQuizStatus('correct');
@@ -201,7 +202,8 @@ export default function ListeningMode({
                 <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-70">
                   {quizStatus === 'correct' ? 'CHÍNH XÁC!' : quizStatus === 'incorrect' ? 'CHƯA CHÍNH XÁC - ĐÁP ÁN' : 'ĐÁP ÁN'}
                 </p>
-                <p className="text-xl font-bold">{activeData[currentIndex]?.quiz.answer}</p>
+                <p className="text-xl font-bold">{extractMissingText(activeData[currentIndex]?.quiz?.sentence, activeData[currentIndex]?.quiz?.quizSentence, activeData[currentIndex]?.quiz?.answer)}</p>
+                <p className="text-xs font-bold opacity-70 mt-1">Cấu trúc: {activeData[currentIndex]?.quiz.answer}</p>
                 {activeData[currentIndex]?.quiz.translation && (
                   <p className="text-xs mt-2 font-medium italic opacity-90 border-t border-slate-100/10 dark:border-slate-800/20 pt-2">Dịch: {activeData[currentIndex].quiz.translation}</p>
                 )}
