@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import ExplanationText from '../../../components/ExplanationText';
-import { extractMissingText } from '../utils/grammarHelpers';
+import { extractMissingText, getQuizSentence } from '../utils/grammarHelpers';
 
 export default function QuizMode({
   activeData,
@@ -12,7 +12,6 @@ export default function QuizMode({
   handleResetProgress,
   handlePrev,
   handleNext,
-  getQuizSentence
 }) {
   const [quizInput, setQuizInput] = useState('');
   const [quizStatus, setQuizStatus] = useState('idle'); // idle, hint, correct, incorrect, revealed
@@ -21,6 +20,12 @@ export default function QuizMode({
     setQuizInput('');
     setQuizStatus('idle');
   }, [currentIndex]);
+
+  const getCorrectAnswer = () => {
+    const item = activeData[currentIndex];
+    if (!item?.quiz) return '';
+    return extractMissingText(item.quiz.sentence, item.quiz.quizSentence, item.quiz.answer);
+  };
 
   const handleQuizSubmit = () => {
     if (quizStatus === 'correct' || quizStatus === 'revealed' || quizStatus === 'incorrect') {
@@ -37,9 +42,8 @@ export default function QuizMode({
       return;
     }
 
-    const currentItem = activeData[currentIndex];
-    const currentAnswer = extractMissingText(currentItem?.quiz?.sentence, currentItem?.quiz?.quizSentence, currentItem?.quiz?.answer) || '';
-    const cleanAnswer = currentAnswer.replace(/[～~]/g, '').trim().toLowerCase();
+    const correctAnswer = getCorrectAnswer();
+    const cleanAnswer = correctAnswer.replace(/[～~]/g, '').trim().toLowerCase();
     const cleanInput = quizInput.replace(/[～~]/g, '').trim().toLowerCase();
 
     if (cleanInput.length > 0 && (cleanInput === cleanAnswer || cleanAnswer.includes(cleanInput))) {
@@ -55,6 +59,9 @@ export default function QuizMode({
       handleQuizSubmit();
     }
   };
+
+  const correctAnswer = getCorrectAnswer();
+  const currentItem = activeData[currentIndex];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl mx-auto pb-24 sm:pb-0">
@@ -113,7 +120,7 @@ export default function QuizMode({
 
         <div className="space-y-6 mb-10">
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-relaxed">
-            {activeData[currentIndex] && getQuizSentence(activeData[currentIndex].quiz.sentence, activeData[currentIndex].quiz.quizSentence, activeData[currentIndex].quiz.answer)}
+            {currentItem && getQuizSentence(currentItem.quiz.sentence, currentItem.quiz.quizSentence, currentItem.quiz.answer)}
           </h2>
         </div>
 
@@ -124,7 +131,7 @@ export default function QuizMode({
             onChange={(e) => setQuizInput(e.target.value)}
             onKeyDown={handleQuizKeyDown}
             readOnly={quizStatus === 'correct' || quizStatus === 'revealed' || quizStatus === 'incorrect'}
-            placeholder="Nhập ngữ pháp..."
+            placeholder="Nhập đáp án..."
             className={`w-full text-center px-6 py-4 bg-slate-50 dark:bg-slate-950 border-2 rounded-2xl outline-none font-bold text-lg transition-all
               ${quizStatus === 'correct' ? 'border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30' :
                 quizStatus === 'incorrect' ? 'border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-950/30' :
@@ -135,7 +142,7 @@ export default function QuizMode({
 
           {quizStatus === 'hint' && (
             <div className="p-3 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-medium animate-in fade-in">
-              Gợi ý: Cấu trúc này có nghĩa là "{activeData[currentIndex]?.meaning}"
+              Gợi ý: Cấu trúc này có nghĩa là "{currentItem?.meaning}"
             </div>
           )}
 
@@ -148,13 +155,13 @@ export default function QuizMode({
                 <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-70">
                   {quizStatus === 'correct' ? 'CHÍNH XÁC!' : quizStatus === 'incorrect' ? 'CHƯA CHÍNH XÁC - ĐÁP ÁN' : 'ĐÁP ÁN'}
                 </p>
-                <p className="text-xl font-bold">{extractMissingText(activeData[currentIndex]?.quiz?.sentence, activeData[currentIndex]?.quiz?.quizSentence, activeData[currentIndex]?.quiz?.answer)}</p>
-                <p className="text-xs font-bold opacity-70 mt-1">Cấu trúc: {activeData[currentIndex]?.quiz.answer}</p>
-                {activeData[currentIndex]?.quiz.translation && (
-                  <p className="text-xs mt-2 font-medium italic opacity-90 border-t border-slate-100/10 dark:border-slate-800/20 pt-2">Dịch: {activeData[currentIndex].quiz.translation}</p>
+                <p className="text-xl font-bold">{correctAnswer}</p>
+                <p className="text-xs font-bold opacity-70 mt-1">Cấu trúc: {currentItem?.pattern || currentItem?.quiz.answer}</p>
+                {currentItem?.quiz.translation && (
+                  <p className="text-xs mt-2 font-medium italic opacity-90 border-t border-slate-100/10 dark:border-slate-800/20 pt-2">Dịch: {currentItem.quiz.translation}</p>
                 )}
-                {activeData[currentIndex]?.explanation && (
-                  <ExplanationText text={activeData[currentIndex].explanation} className="text-xs mt-2 opacity-80" />
+                {currentItem?.explanation && (
+                  <ExplanationText text={currentItem.explanation} className="text-xs mt-2 opacity-80" />
                 )}
               </div>
             </div>

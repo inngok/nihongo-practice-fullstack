@@ -9,7 +9,7 @@ import FlashcardMode from './components/FlashcardMode';
 import QuizMode from './components/QuizMode';
 import MultipleChoiceMode from './components/MultipleChoiceMode';
 import ListeningMode from './components/ListeningMode';
-import { getQuizSentence, prepareActiveData } from './utils/grammarHelpers';
+import { prepareActiveData } from './utils/grammarHelpers';
 
 export default function StudyPage() {
   const { bookId } = useParams();
@@ -260,7 +260,6 @@ export default function StudyPage() {
                   handleResetProgress={handleResetProgress}
                   handlePrev={handlePrev}
                   handleNext={handleNext}
-                  getQuizSentence={getQuizSentence}
                 />
               ) : activeMode === 'multiple_choice' ? (
                 <MultipleChoiceMode
@@ -273,7 +272,6 @@ export default function StudyPage() {
                   handleResetProgress={handleResetProgress}
                   handlePrev={handlePrev}
                   handleNext={handleNext}
-                  getQuizSentence={getQuizSentence}
                 />
               ) : activeMode === 'listening' ? (
                 <ListeningMode
@@ -285,7 +283,6 @@ export default function StudyPage() {
                   handleResetProgress={handleResetProgress}
                   handlePrev={handlePrev}
                   handleNext={handleNext}
-                  getQuizSentence={getQuizSentence}
                 />
               ) : (
                 <div className="py-40 text-center space-y-6">

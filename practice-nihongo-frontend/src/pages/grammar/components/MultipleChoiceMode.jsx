@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 import ExplanationText from '../../../components/ExplanationText';
-import { cleanOption, extractMissingText } from '../utils/grammarHelpers';
+import { extractMissingText, getQuizSentence } from '../utils/grammarHelpers';
 
 export default function MultipleChoiceMode({
   activeData,
@@ -13,44 +13,81 @@ export default function MultipleChoiceMode({
   handleResetProgress,
   handlePrev,
   handleNext,
-  getQuizSentence
 }) {
   const [mcOptions, setMcOptions] = useState([]);
   const [mcSelected, setMcSelected] = useState(null);
   const [mcChecked, setMcChecked] = useState(false);
 
+  // Pre-compute all possible answers from the full grammar data set
+  const allAnswers = useMemo(() => {
+    const answers = [];
+    grammarData.forEach(item => {
+      if (!item.quiz?.answer) return;
+      const sentences = (item.quiz.sentence || '').split('\n').map(s => s.trim()).filter(Boolean);
+      const quizSentences = (item.quiz.quizSentence || '').split('\n').map(s => s.trim()).filter(Boolean);
+
+      if (quizSentences.length > 0) {
+        quizSentences.forEach((qs, i) => {
+          // Match quiz sentence to its full sentence
+          const parts = qs.split(/_+/).map(p => p.trim()).filter(Boolean);
+          let matched = '';
+          if (parts.length > 0) {
+            const matchIdx = sentences.findIndex(s => {
+              let lastIdx = 0;
+              for (const part of parts) {
+                const currentIdx = s.indexOf(part, lastIdx);
+                if (currentIdx === -1) return false;
+                lastIdx = currentIdx + part.length;
+              }
+              return true;
+            });
+            if (matchIdx !== -1) matched = sentences[matchIdx];
+          }
+          const answer = extractMissingText(matched, qs, item.quiz.answer);
+          if (answer) answers.push(answer);
+        });
+      } else if (sentences.length > 0) {
+        sentences.forEach(s => {
+          const answer = extractMissingText(s, '', item.quiz.answer);
+          if (answer) answers.push(answer);
+        });
+      }
+    });
+    return [...new Set(answers)];
+  }, [grammarData]);
+
+  // Get the correct answer for the current question
+  const getCorrectAnswer = () => {
+    const item = activeData[currentIndex];
+    if (!item?.quiz) return '';
+    return extractMissingText(item.quiz.sentence, item.quiz.quizSentence, item.quiz.answer);
+  };
+
   useEffect(() => {
     if (activeData[currentIndex]) {
-      const currentItem = activeData[currentIndex];
-      const correctOptionRaw = currentItem?.quiz.answer;
-      if (!correctOptionRaw) return;
+      const correctAnswer = getCorrectAnswer();
+      if (!correctAnswer) return;
 
-      const correctCleaned = extractMissingText(currentItem.quiz.sentence, currentItem.quiz.quizSentence, correctOptionRaw);
-
-      const allExtractedAnswers = Array.from(new Set(grammarData.map(item => {
-        if (!item.quiz?.answer) return null;
-        return extractMissingText(item.quiz.sentence, item.quiz.quizSentence, item.quiz.answer);
-      }).filter(Boolean)));
+      // Pick distractors with similar length to the correct answer
+      const correctLen = correctAnswer.length;
+      let pool = allAnswers.filter(a => a !== correctAnswer);
       
-      let otherCleanedOptions = [];
-      let seen = new Set();
-      seen.add(correctCleaned);
-
-      for (let cleaned of allExtractedAnswers) {
-        if (!seen.has(cleaned)) {
-          seen.add(cleaned);
-          otherCleanedOptions.push(cleaned);
-        }
+      // Try progressively wider length ranges until we have at least 3
+      let wrongOptions = [];
+      for (let tolerance = 2; tolerance <= correctLen + 5; tolerance++) {
+        wrongOptions = pool.filter(a => Math.abs(a.length - correctLen) <= tolerance);
+        if (wrongOptions.length >= 3) break;
       }
+      if (wrongOptions.length < 3) wrongOptions = pool;
+      wrongOptions = wrongOptions.sort(() => Math.random() - 0.5).slice(0, 3);
 
-      otherCleanedOptions = otherCleanedOptions.sort(() => 0.5 - Math.random()).slice(0, 3);
-      const allOptions = [correctCleaned, ...otherCleanedOptions].sort(() => 0.5 - Math.random());
+      const allOptions = [correctAnswer, ...wrongOptions].sort(() => 0.5 - Math.random());
 
       setMcOptions(allOptions);
       setMcSelected(null);
       setMcChecked(false);
     }
-  }, [currentIndex, activeData, grammarData]);
+  }, [currentIndex, activeData, allAnswers]);
 
   useEffect(() => {
     if (mcOptions.length === 0) return;
@@ -89,6 +126,11 @@ export default function MultipleChoiceMode({
       }
     }
   };
+
+  const correctAnswer = getCorrectAnswer();
+  const isCorrectSelected = mcChecked && mcSelected === correctAnswer;
+  const isWrongSelected = mcChecked && mcSelected !== correctAnswer;
+  const currentItem = activeData[currentIndex];
 
   return (
     <div className="space-y-4 sm:space-y-8 animate-in fade-in duration-500 max-w-3xl mx-auto pb-32">
@@ -134,10 +176,10 @@ export default function MultipleChoiceMode({
 
       {/* MC Card */}
       <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-3xl sm:rounded-[2.5rem] p-5 sm:p-12 shadow-sm relative overflow-hidden">
-        {mcChecked && mcSelected === extractMissingText(activeData[currentIndex]?.quiz.sentence, activeData[currentIndex]?.quiz.quizSentence, activeData[currentIndex]?.quiz.answer) && (
+        {isCorrectSelected && (
           <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-500 animate-pulse"></div>
         )}
-        {mcChecked && mcSelected !== extractMissingText(activeData[currentIndex]?.quiz.sentence, activeData[currentIndex]?.quiz.quizSentence, activeData[currentIndex]?.quiz.answer) && (
+        {isWrongSelected && (
           <div className="absolute top-0 left-0 right-0 h-1 bg-rose-500 animate-pulse"></div>
         )}
 
@@ -148,11 +190,11 @@ export default function MultipleChoiceMode({
 
           <div className="space-y-4 sm:space-y-6">
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white leading-relaxed">
-              {activeData[currentIndex] && getQuizSentence(activeData[currentIndex].quiz.sentence, activeData[currentIndex].quiz.quizSentence, activeData[currentIndex].quiz.answer)}
+              {currentItem && getQuizSentence(currentItem.quiz.sentence, currentItem.quiz.quizSentence, currentItem.quiz.answer)}
             </h2>
             {mcChecked && (
               <p className="text-sm italic text-slate-500 dark:text-slate-400 whitespace-pre-wrap animate-in fade-in">
-                {activeData[currentIndex]?.quiz.translation}
+                {currentItem?.quiz.translation}
               </p>
             )}
           </div>
@@ -160,7 +202,7 @@ export default function MultipleChoiceMode({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-2xl mx-auto">
           {mcOptions.map((opt, idx) => {
-            const isCorrect = opt === extractMissingText(activeData[currentIndex]?.quiz.sentence, activeData[currentIndex]?.quiz.quizSentence, activeData[currentIndex]?.quiz.answer);
+            const isCorrect = opt === correctAnswer;
             const isSelected = mcSelected === opt;
             let btnClass = "border-slate-200 dark:border-slate-800 hover:border-black dark:hover:border-white text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-950";
 
@@ -192,10 +234,18 @@ export default function MultipleChoiceMode({
 
         {mcChecked && (
           <div className="mt-8 p-4 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800 animate-in fade-in text-center">
-            <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-slate-500">GIẢI THÍCH</p>
-            <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              <span className="font-bold text-slate-900 dark:text-white mr-2">{activeData[currentIndex]?.quiz.answer}</span>
-              {activeData[currentIndex]?.explanation ? <ExplanationText text={activeData[currentIndex].explanation} /> : "Cấu trúc này có nghĩa là: " + activeData[currentIndex]?.meaning}
+            <p className="text-[10px] font-black uppercase tracking-widest mb-2 text-slate-500">GIẢI THÍCH</p>
+            <div className="space-y-2">
+              <p className="text-lg font-bold text-slate-900 dark:text-white">{correctAnswer}</p>
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Cấu trúc: {currentItem?.pattern || currentItem?.quiz.answer}</p>
+              {currentItem?.meaning && (
+                <p className="text-xs text-slate-500 dark:text-slate-400">Nghĩa: {currentItem.meaning}</p>
+              )}
+              {currentItem?.explanation && (
+                <div className="text-sm font-medium text-slate-700 dark:text-slate-300 mt-2">
+                  <ExplanationText text={currentItem.explanation} />
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -23,14 +23,47 @@ export const cleanOption = (text) => {
   return cleaned.trim() || text;
 };
 
+/**
+ * Extract the missing text by comparing the full sentence against
+ * the quizSentence (which has '_____' as placeholder).
+ *
+ * Algorithm:
+ *   1. Split quizSentence by '_____' → [prefix, suffix]
+ *   2. Find prefix in sentence, find suffix in sentence
+ *   3. The substring between them is the answer
+ *
+ * Falls back to cleanOption(fallbackPattern) when extraction fails.
+ */
 export const extractMissingText = (sentence, quizSentence, fallbackPattern) => {
   if (sentence && quizSentence && quizSentence.includes('_____')) {
-    const parts = quizSentence.split('_____');
+    const parts = quizSentence.split(/_+/);
     if (parts.length === 2) {
       const prefix = parts[0];
       const suffix = parts[1];
-      if (sentence.startsWith(prefix) && sentence.endsWith(suffix)) {
-        const missing = sentence.substring(prefix.length, sentence.length - suffix.length);
+
+      // Both prefix and suffix must match exactly
+      if (prefix === '' && suffix === '') {
+        // The entire sentence is the answer
+        return sentence;
+      }
+
+      let startIdx = -1;
+      let endIdx = -1;
+
+      if (prefix === '') {
+        startIdx = 0;
+      } else if (sentence.startsWith(prefix)) {
+        startIdx = prefix.length;
+      }
+
+      if (suffix === '') {
+        endIdx = sentence.length;
+      } else if (sentence.endsWith(suffix)) {
+        endIdx = sentence.length - suffix.length;
+      }
+
+      if (startIdx !== -1 && endIdx !== -1 && startIdx <= endIdx) {
+        const missing = sentence.substring(startIdx, endIdx);
         if (missing.trim()) return missing;
       }
     }
@@ -38,28 +71,20 @@ export const extractMissingText = (sentence, quizSentence, fallbackPattern) => {
   return cleanOption(fallbackPattern);
 };
 
-
+/**
+ * Render a quiz sentence with a blank ('_____') in place of the answer.
+ *
+ * Priority:
+ *   1. Use quizSentence from DB (the canonical blank)
+ *   2. Auto-generate blank by finding the extracted missing text in sentence
+ *   3. Fallback: show the sentence with a generic blank
+ */
 export const getQuizSentence = (sentence, quizSentence, pattern) => {
-  // 1. Auto-generate the blank to perfectly match the cleaned option
-  if (sentence && pattern) {
-    const cleanPattern = cleanOption(pattern);
-    if (cleanPattern && sentence.includes(cleanPattern)) {
-      const parts = sentence.split(cleanPattern);
-      return (
-        <span className="whitespace-pre-wrap">
-          {parts[0]}
-          <span className="text-slate-400 dark:text-slate-500 mx-1">_____</span>
-          {parts.slice(1).join(cleanPattern)}
-        </span>
-      );
-    }
-  }
-
-  // 2. Fallback to DB provided quizSentence
-  if (quizSentence && quizSentence.includes("_____")) {
+  // 1. Always prefer the DB-provided quizSentence
+  if (quizSentence && quizSentence.includes('_____')) {
     return (
       <span className="whitespace-pre-wrap">
-        {quizSentence.split("_____").map((part, index, array) => (
+        {quizSentence.split(/_+/).map((part, index, array) => (
           <span key={index}>
             {part}
             {index < array.length - 1 && <span className="text-slate-400 dark:text-slate-500 mx-1">_____</span>}
@@ -69,6 +94,24 @@ export const getQuizSentence = (sentence, quizSentence, pattern) => {
     );
   }
 
+  // 2. Auto-generate blank from the extracted missing text
+  if (sentence && pattern) {
+    const missingText = extractMissingText(sentence, quizSentence, pattern);
+    if (missingText && sentence.includes(missingText)) {
+      const idx = sentence.indexOf(missingText);
+      const before = sentence.substring(0, idx);
+      const after = sentence.substring(idx + missingText.length);
+      return (
+        <span className="whitespace-pre-wrap">
+          {before}
+          <span className="text-slate-400 dark:text-slate-500 mx-1">_____</span>
+          {after}
+        </span>
+      );
+    }
+  }
+
+  // 3. Fallback
   return <span className="whitespace-pre-wrap">{sentence || ''} <span className="text-slate-400 dark:text-slate-500 mx-1">_____</span></span>;
 };
 
