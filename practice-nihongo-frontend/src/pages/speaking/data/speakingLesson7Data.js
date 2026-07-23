@@ -65,7 +65,7 @@ export const speakingLesson7Data = {
         time: "来週(らいしゅう)の土曜日(どようび)と日曜日(にちようび)の午前(ごぜん)10時(じ)",
         feature_topic: "学生(がくせい)のイベント",
         feature_result: "自分(じぶん)たちで作(つく)った作品(さくひん)や食(た)べ物(もの)を売(う)ってもいい",
-        purpose_topic: "チケット1枚(まい)",
+        purpose_topic: "売(う)り上(あ)げ1000円(えん)",
         purpose_result: "100円(えん)が地域(ちいき)の子(こ)どもたちのために使(つか)われる"
       },
       replacementsVi: {
@@ -74,7 +74,7 @@ export const speakingLesson7Data = {
         time: "10 giờ sáng thứ 7 và chủ nhật tuần sau",
         feature_topic: "sự kiện của sinh viên",
         feature_result: "được phép bán các tác phẩm hoặc đồ ăn tự làm",
-        purpose_topic: "1 vé",
+        purpose_topic: "1000 yên doanh thu",
         purpose_result: "100 yên sẽ được dùng cho trẻ em trong khu vực"
       },
       lineOverrides: {}
@@ -183,18 +183,18 @@ export const speakingLesson7Data = {
         event_name: "ボランティア活動(かつどう)",
         location: "近(ちか)くの海岸(かいがん)",
         time: "毎月(まいげつ)第(だい)2日曜日(にちようび)の午前(ごぜん)7時(じ)から9時(じ)",
-        feature_topic: "ゴミ拾(ひろ)い",
+        feature_topic: "ボランティア",
         feature_result: "海(うみ)がきれいになって気持(きも)ちいい",
-        purpose_topic: "参加(さんか)1回(かい)",
+        purpose_topic: "参加者(さんかしゃ)1人(ひとり)",
         purpose_result: "環境保護(かんきょうほご)の証明書(しょうめいしょ)がもらえる"
       },
       replacementsVi: {
         event_name: "hoạt động tình nguyện",
         location: "bãi biển gần đây",
         time: "7 giờ đến 9 giờ sáng chủ nhật tuần thứ 2 mỗi tháng",
-        feature_topic: "nhặt rác",
+        feature_topic: "hoạt động tình nguyện",
         feature_result: "biển trở nên sạch đẹp và cảm thấy rất dễ chịu",
-        purpose_topic: "1 lần tham gia",
+        purpose_topic: "1 người tham gia",
         purpose_result: "sẽ nhận được giấy chứng nhận bảo vệ môi trường"
       },
       lineOverrides: {}
@@ -246,7 +246,7 @@ export const speakingLesson7Data = {
         event_name: "ボランティア活動(かつどう)",
         location: "山(やま)",
         time: "来月(らいげつ)の土曜日(どようび)の午前(ごぜん)8時(じ)から12時(じ)",
-        feature_topic: "木(き)を植(う)える活動(かつどう)",
+        feature_topic: "ボランティア",
         feature_result: "楽(たの)しく自然(しぜん)が守(まも)れる",
         purpose_topic: "参加者(さんかしゃ)1人(ひとり)",
         purpose_result: "昼(ひる)ご飯(はん)が無料(むりょう)でもらえる"
@@ -255,7 +255,7 @@ export const speakingLesson7Data = {
         event_name: "hoạt động tình nguyện",
         location: "trên núi",
         time: "8 giờ đến 12 giờ trưa thứ 7 tháng sau",
-        feature_topic: "hoạt động trồng cây",
+        feature_topic: "hoạt động tình nguyện",
         feature_result: "có thể bảo vệ thiên nhiên một cách vui vẻ",
         purpose_topic: "1 người tham gia",
         purpose_result: "sẽ được nhận bữa trưa miễn phí"
@@ -276,7 +276,7 @@ export const speakingLesson7Data = {
         event_name: "ボランティア活動(かつどう)",
         location: "こども食堂(しょくどう)",
         time: "毎週土曜日(まいしゅうどようび)の午前(ごぜん)10時(じ)から午後(ごご)1時(じ)",
-        feature_topic: "食堂(しょくどう)の手伝(てつだ)い",
+        feature_topic: "ボランティア",
         feature_result: "子(こ)どもたちの笑顔(えがお)が見(み)られて楽(たの)しい",
         purpose_topic: "参加者(さんかしゃ)1人(ひとり)",
         purpose_result: "無料(むりょう)で料理教室(りょうりきょうしつ)に参加(さんか)できる"
@@ -285,7 +285,7 @@ export const speakingLesson7Data = {
         event_name: "hoạt động tình nguyện",
         location: "quán ăn trẻ em",
         time: "10 giờ sáng đến 1 giờ chiều thứ 7 hàng tuần",
-        feature_topic: "việc phụ giúp quán ăn",
+        feature_topic: "hoạt động tình nguyện",
         feature_result: "rất vui vì được nhìn thấy nụ cười của trẻ em",
         purpose_topic: "1 người tham gia",
         purpose_result: "sẽ được tham gia lớp học nấu ăn miễn phí"

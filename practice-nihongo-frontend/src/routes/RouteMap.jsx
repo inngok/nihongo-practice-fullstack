@@ -203,7 +203,7 @@ export default function RouteMap() {
           <Route path="grammar">
             <Route index element={<Grammar />} />
             <Route path="study" element={<GrammarStudyWrapper />} />
-            <Route path="confusing" element={<ConfusingGrammar />} />
+            <Route path="confusing" element={<AdminRoute><ConfusingGrammar /></AdminRoute>} />
             <Route path="keigo" element={<KeigoPage />} />
           </Route>
 

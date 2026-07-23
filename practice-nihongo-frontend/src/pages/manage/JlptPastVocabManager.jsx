@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { message, Select, Modal } from 'antd';
-// XLSX được lazy import khi user upload file — không load trong bundle chính
+import { ThunderboltOutlined } from '@ant-design/icons';
 import { API_BASE_URL } from '../../config';
-import { UploadCloud, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 
 export default function JlptPastVocabManager() {
   const [examMonth, setExamMonth] = useState('7');
@@ -12,113 +12,47 @@ export default function JlptPastVocabManager() {
   const [jsonData, setJsonData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
-  const fileInputRef = useRef(null);
+  const [bulkInput, setBulkInput] = useState('');
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
   const { fetchWithAuth } = useAuth();
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Tự động nhận diện Tháng & Năm từ tên file
-    const fileStr = file.name.toLowerCase();
-    const yearMatch = fileStr.match(/20\d{2}/);
-    if (yearMatch) setExamYear(yearMatch[0]);
-
-    if (/(\bt12\b|\bthang ?12\b|\btháng ?12\b|\b12\b|_12_|-12-|12-|-12|_12)/.test(fileStr)) {
-       setExamMonth('12');
-    } else if (/(\bt0?7\b|\bthang ?0?7\b|\btháng ?0?7\b|\b0?7\b|_0?7_|-0?7-|0?7-|-0?7|_0?7)/.test(fileStr)) {
-       setExamMonth('7');
-    }
-
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      try {
-        const bstr = evt.target.result;
-        // Dynamic import — chỉ tải thư viện xlsx khi thực sự cần
-        const XLSX = await import('xlsx');
-        const wb = XLSX.read(bstr, { type: 'binary' });
-        const wsname = wb.SheetNames[0];
-        const ws = wb.Sheets[wsname];
-        // Dùng header:1 để lấy raw rows, rồi tự xử lý header
-        const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
-
-        if (rawRows.length < 2) {
-          return messageApi.warning('File không có dữ liệu');
-        }
-
-        // Dòng đầu là header, tìm index các cột cần thiết
-        const headers = rawRows[0].map(h => String(h).replace(/[\s_]+/g, '').toLowerCase());
-        const colWord    = headers.findIndex(h => ['từvựng','tuvung','word','kanji','character','vocab','vocabulary','chữ','từ'].includes(h)) ;
-        const colReading = headers.findIndex(h => ['cáchđọc','cáchđọc/từđồngnghĩa','reading','hántự','hantu','hiragana','phiênâm','âmđọc'].includes(h));
-        const colMeaning = headers.findIndex(h => ['ýnghĩa','nghĩa','meaning','nghia','tiếngviệt','nghĩatiếngviệt'].includes(h));
-
-        // Fallback: nếu không match header nào, dùng cột theo vị trí (cột 2, 3, 4 — bỏ qua Năm + STT)
-        const iWord    = colWord    >= 0 ? colWord    : 2;
-        const iReading = colReading >= 0 ? colReading : 3;
-        const iMeaning = colMeaning >= 0 ? colMeaning : 4;
-
-        const results = [];
-
-        for (let r = 1; r < rawRows.length; r++) {
-          const row = rawRows[r];
-          let wordRaw    = String(row[iWord]    ?? '').trim();
-          let readingRaw = String(row[iReading] ?? '').trim();
-          let meaningRaw = String(row[iMeaning] ?? '').trim();
-
-          if (!meaningRaw && readingRaw) {
-            const hasJapanese = /[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/.test(readingRaw);
-            if (!hasJapanese) {
-              meaningRaw = readingRaw;
-              readingRaw = '';
-            }
-          }
-
-          if (!wordRaw) continue;
-
-          // --- Tách các từ bị gộp chung vào 1 ô ---
-          // Pattern trong file: "từ1 SỐ từ2" — số thứ tự nằm giữa 2 từ
-          // Ví dụ: "締め切った 20 ぞろぞろ", "勘定 25 騒がしい"
-          const wordParts = wordRaw.split(/\s+\d+\s+/);
-
-          // Tách reading: cách nhau bởi bất kỳ khoảng trắng nào (do tiếng Nhật không dùng dấu cách giữa từ)
-          const readingParts = readingRaw.split(/\s+/);
-
-          // Tách meaning: tìm ranh giới giữa 2 nghĩa bằng chữ cái viết hoa đứng đầu cụm mới
-          let meaningParts;
-          if (wordParts.length > 1) {
-            // Tách tại vị trí khoảng trắng trước chữ hoa bắt đầu câu nghĩa tiếp theo
-            const meaningSplitMatch = meaningRaw.match(/^(.+?)\s{1,}([A-ZẮẰẲẴẶĂẤẦẨẪẬÁÀẢÃẠĐÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘỚỜỞỠỢÚÙỦŨỤỨỪỬỮỰY].+)$/);
-            if (meaningSplitMatch) {
-              meaningParts = [meaningSplitMatch[1], meaningSplitMatch[2]];
-            } else {
-              meaningParts = [meaningRaw];
-            }
-          } else {
-            meaningParts = [meaningRaw];
-          }
-
-          for (let i = 0; i < wordParts.length; i++) {
-            const word    = wordParts[i]?.trim()    || '';
-            const reading = (readingParts[i] || readingParts[0] || '').trim();
-            const meaning = (meaningParts[i] || meaningParts[0] || '').trim();
-            if (word) {
-              results.push({ word, kanji: reading, meaning });
-            }
-          }
-        }
-
-        if (results.length === 0) {
-            return messageApi.error('Không tìm thấy cột hợp lệ (ví dụ: Từ vựng, Cách đọc, Ý nghĩa) trong file.');
-        }
-
-        setJsonData(results);
-        messageApi.success(`Đã đọc ${results.length} từ vựng từ file!`);
-      } catch (err) {
-        messageApi.error('Lỗi khi đọc file: ' + err.message);
+  const handleBulkAiProcess = async () => {
+    if (!bulkInput.trim()) return messageApi.warning('Vui lòng dán nội dung từ vựng thô');
+    setIsAiProcessing(true);
+    const hide = messageApi.loading('AI đang xử lý danh sách từ vựng...', 0);
+    try {
+      const res = await fetchWithAuth(`${API_BASE_URL}/ai/generate-bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: bulkInput, type: 'VOCABULARY' })
+      });
+      
+      if (!res.ok) {
+        throw new Error(`Server lỗi: ${res.status}`);
       }
-    };
-    reader.readAsBinaryString(file);
-    e.target.value = '';
+      
+      const data = await res.json();
+      
+      // Map AI general vocabulary format { word, reading, meaning }
+      // to JLPT format { word, kanji (acts as reading), meaning }
+      const mappedData = data.map(item => ({
+        word: item.word || '',
+        kanji: item.reading || item.hanviet || '', // prioritize reading, fallback to hanviet if it's kanji
+        meaning: item.meaning || ''
+      })).filter(item => item.word); // remove empty entries
+      
+      if (mappedData.length === 0) {
+        return messageApi.error('Không tìm thấy từ vựng nào hợp lệ.');
+      }
+
+      setJsonData(mappedData);
+      messageApi.success(`AI đã phân tích xong ${mappedData.length} từ vựng!`);
+    } catch (err) {
+      messageApi.error('Lỗi khi AI phân tích: ' + err.message);
+    } finally {
+      setIsAiProcessing(false);
+      hide();
+    }
   };
 
   const handleImport = async () => {
@@ -257,20 +191,29 @@ export default function JlptPastVocabManager() {
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-8">
-                <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-6">
-                    2. Tải File Excel/CSV
+            <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 flex flex-col">
+                <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-6 flex items-center gap-2">
+                    <ThunderboltOutlined className="text-amber-500" />
+                    2. AI Phân Tích Dữ Liệu
                 </h2>
 
-                <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full h-32 flex flex-col items-center justify-center gap-2 border border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600 rounded-xl bg-slate-50/50 dark:bg-slate-900/40 hover:bg-white dark:hover:bg-slate-900 transition-all group shadow-sm active:scale-95"
-                >
-                    <UploadCloud size={24} className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white transition-colors" />
-                    <span className="font-bold text-xs uppercase tracking-widest text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white mt-2">Upload File Dữ Liệu</span>
-                    <span className="text-[9px] font-medium text-slate-400 normal-case font-sans">Hỗ trợ .xlsx, .csv (cột: KANJI, CÁCH ĐỌC, Ý NGHĨA)</span>
-                </button>
-                <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx, .xls, .csv" className="hidden" />
+                <div className="flex-grow flex flex-col gap-4">
+                    <textarea
+                        value={bulkInput}
+                        onChange={e => setBulkInput(e.target.value)}
+                        placeholder="Dán dữ liệu thô vào đây (ví dụ: copy từ PDF, Web... AI sẽ tự động tách cột Cách đọc, Ý nghĩa)."
+                        className="w-full h-32 p-4 bg-slate-50/50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-sm resize-none focus:ring-1 focus:ring-slate-400 transition-all custom-scrollbar placeholder:text-slate-400 text-slate-700 dark:text-slate-200"
+                    />
+                    
+                    <button
+                        onClick={handleBulkAiProcess}
+                        disabled={isAiProcessing || !bulkInput.trim()}
+                        className="w-full py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-all disabled:opacity-50 flex justify-center items-center gap-2"
+                    >
+                        {isAiProcessing ? <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" /> : <ThunderboltOutlined />}
+                        {isAiProcessing ? 'ĐANG PHÂN TÍCH...' : 'AI XỬ LÝ NHANH'}
+                    </button>
+                </div>
 
                 {jsonData.length > 0 && (
                     <div className="mt-4 flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold text-sm bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-xl">

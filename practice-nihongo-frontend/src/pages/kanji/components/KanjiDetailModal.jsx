@@ -43,7 +43,7 @@ export default function KanjiDetailModal({
             {selectedKanji.character}
           </div>
           <div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-widest">
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-widest leading-normal">
               {selectedKanji.hanviet || 'CHƯA CÓ'}
             </h3>
             <p className="text-sm text-slate-500 font-medium italic mt-2">

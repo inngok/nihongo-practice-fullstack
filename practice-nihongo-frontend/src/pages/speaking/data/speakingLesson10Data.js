@@ -65,7 +65,7 @@ export const speakingLesson10Data = {
         seat_location: "入(い)り口(ぐち)の傘立(かさた)て",
         place_left: "そこ",
         action_left: "置(お)いた",
-        reason: "食事(しょくじ)に行(い)っ",
+        reason: "さっきまでい",
         transportation: "バス"
       },
       replacementsVi: {
@@ -75,12 +75,12 @@ export const speakingLesson10Data = {
         seat_location: "chỗ để ô ở cửa ra vào",
         place_left: "đó",
         action_left: "đặt ở",
-        reason: "đến dùng bữa",
+        reason: "ở đó đến lúc nãy",
         transportation: "xe buýt"
       },
       lineOverrides: {
-        6: { role: 'B', text: "店内のどの辺りに置かれましたか。", textHiragana: "店内(てんない)のどの辺(あた)りに置(お)かれましたか。", translation: "Quý khách đã để ở khu vực nào trong quán ạ?" },
-        7: { role: 'A', text: "入り口の傘立てに置いた{{ように思うんですが}}、もしかしたら、倒れて下に落ちているかもしれません。", textHiragana: "入(い)り口(ぐち)の傘立(かさた)てに置(お)いた{{ように思(おも)うんですが}}、もしかしたら、倒(たお)れて下(した)に落(お)ちているかもしれません。", translation: "Tôi nghĩ là đã để ở chỗ để ô ở cửa ra vào, nhưng biết đâu nó bị đổ và rơi xuống dưới.", isUser: true }
+        1: { role: 'A', text: "もしもし、今日そちらに行った者なんですが。", textHiragana: "もしもし、今日(きょう)そちらに行(い)った者(もの)なんですが。", translation: "Alo, tôi là người đã đến đó vào hôm nay.", isUser: true },
+        6: { role: 'B', text: "店内のどの辺りに置かれましたか。", textHiragana: "店内(てんない)のどの辺(あた)りに置(お)かれましたか。", translation: "Quý khách đã để ở khu vực nào trong quán ạ?" }
       }
     },
     {
@@ -100,7 +100,7 @@ export const speakingLesson10Data = {
         seat_location: "3番(ばん)の部屋(へや)",
         place_left: "ソファの上(うえ)",
         action_left: "置(お)いた",
-        reason: "遊(あそ)びに行(い)っ",
+        reason: "さっきまでい",
         transportation: "バス"
       },
       replacementsVi: {
@@ -110,11 +110,11 @@ export const speakingLesson10Data = {
         seat_location: "phòng số 3",
         place_left: "trên ghế sofa",
         action_left: "đặt ở",
-        reason: "đến chơi",
+        reason: "ở đó đến lúc nãy",
         transportation: "xe buýt"
       },
       lineOverrides: {
-        1: { role: 'A', text: "もしもし、今日そちらを利用した者なんですが。", textHiragana: "もしもし、今日(きょう)そちらを利用(りよう)した者(もの)なんですが。", translation: "Alo, tôi là người đã sử dụng dịch vụ ở đó vào hôm nay.", isUser: true },
+        1: { role: 'A', text: "もしもし、今日そちらに行った者なんですが。", textHiragana: "もしもし、今日(きょう)そちらに行(い)った者(もの)なんですが。", translation: "Alo, tôi là người đã đến đó vào hôm nay.", isUser: true },
         6: { role: 'B', text: "何番のお部屋をご利用でしたか。", textHiragana: "何番(なんばん)のお部屋(へや)をご利用(りよう)でしたか。", translation: "Quý khách đã sử dụng phòng số mấy ạ?" }
       }
     },
@@ -135,7 +135,7 @@ export const speakingLesson10Data = {
         seat_location: "502号室(ごうしつ)",
         place_left: "ベッドの横(よこ)のテーブルの上(うえ)",
         action_left: "置(お)いた",
-        reason: "泊(と)まりに行(い)っ",
+        reason: "さっきまでい",
         transportation: "バス"
       },
       replacementsVi: {
@@ -145,11 +145,11 @@ export const speakingLesson10Data = {
         seat_location: "phòng 502",
         place_left: "trên bàn cạnh giường",
         action_left: "đặt ở",
-        reason: "đến trọ",
+        reason: "ở đó đến lúc nãy",
         transportation: "xe buýt"
       },
       lineOverrides: {
-        1: { role: 'A', text: "もしもし、今日そちらに泊まった者なんですが。", textHiragana: "もしもし、今日(きょう)そちらに泊(と)まった者(もの)なんですが。", translation: "Alo, tôi là người đã ở trọ tại đó vào hôm nay.", isUser: true },
+        1: { role: 'A', text: "もしもし、今日そちらに行った者なんですが。", textHiragana: "もしもし、今日(きょう)そちらに行(い)った者(もの)なんですが。", translation: "Alo, tôi là người đã đến đó vào hôm nay.", isUser: true },
         6: { role: 'B', text: "何号室にお泊まりでしたか。", textHiragana: "何号室(なんごうしつ)にお泊(と)まりでしたか。", translation: "Quý khách đã ở phòng số mấy ạ?" }
       }
     },
@@ -170,7 +170,7 @@ export const speakingLesson10Data = {
         seat_location: "右(みぎ)の窓側(まどがわ)の席(せき)",
         place_left: "テーブルの上(うえ)",
         action_left: "置(お)いた",
-        reason: "お茶(ちゃ)をしに行(い)っ",
+        reason: "さっきまでい",
         transportation: "バス"
       },
       replacementsVi: {
@@ -180,7 +180,7 @@ export const speakingLesson10Data = {
         seat_location: "ghế cạnh cửa sổ bên phải",
         place_left: "trên bàn",
         action_left: "đặt ở",
-        reason: "đến uống trà",
+        reason: "ở đó đến lúc nãy",
         transportation: "xe buýt"
       },
       lineOverrides: {

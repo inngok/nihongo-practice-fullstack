@@ -54,8 +54,11 @@ export default function DetailedKanjiCard({ kanji, handleOpenDetail, handleAddFl
 
           <div className="flex-1 min-w-0 pt-1">
              <div className="flex flex-col mb-4 sm:mb-6">
-                <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest mb-1">Ý NGHĨA</span>
-                <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white uppercase truncate">{kanji.hanviet || 'CHƯA CÓ'}</h2>
+                <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest mb-1.5 sm:mb-2">HÁN VIỆT - Ý NGHĨA</span>
+                <div className="flex items-baseline gap-2 sm:gap-3 flex-wrap">
+                   <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white uppercase leading-normal pt-1">{kanji.hanviet || 'CHƯA CÓ'}</h2>
+                   <p className="text-sm sm:text-base font-medium text-slate-500 dark:text-slate-400">{kanji.meaning ? `(${kanji.meaning})` : ''}</p>
+                </div>
              </div>
 
              <div className="flex gap-8 sm:gap-16">

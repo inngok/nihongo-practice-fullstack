@@ -46,6 +46,17 @@ export default function VocabMultipleChoiceMode({
     setShowReading(false);
   }, [currentIndex]);
 
+  const playAudio = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const text = currentItem.reading || currentItem.hiragana || currentItem.word;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ja-JP';
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
   const handleSelect = (option) => {
     if (selectedOption) return;
 
@@ -54,14 +65,7 @@ export default function VocabMultipleChoiceMode({
     setShowReading(true);
     
     if (autoPlayAudio) {
-      const text = currentItem.word;
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'ja-JP';
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
-      }
+      playAudio();
     }
   };
 
@@ -117,9 +121,23 @@ export default function VocabMultipleChoiceMode({
       <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-3xl sm:rounded-[3rem] p-4 sm:p-12 text-center shadow-sm">
         <div className="mb-6 sm:mb-10 space-y-2 sm:space-y-4">
           <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">Chọn nghĩa đúng của từ sau</span>
-          <h2 className="text-3xl sm:text-5xl md:text-6xl font-medium font-kanji text-slate-900 dark:text-white select-all break-all whitespace-pre-wrap leading-tight">
-            {currentItem.word}
-          </h2>
+          <div className="flex items-center justify-center">
+            <div className="relative">
+              <h2 className="text-3xl sm:text-5xl md:text-6xl font-medium font-kanji text-slate-900 dark:text-white select-all break-all whitespace-pre-wrap leading-tight">
+                {currentItem.word}
+              </h2>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  playAudio();
+                }}
+                className={`absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-3 p-2 sm:p-3 shrink-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-all duration-300 ${selectedOption ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}
+                title="Nghe phát âm"
+              >
+                <Volume2 size={24} className="sm:w-7 sm:h-7" />
+              </button>
+            </div>
+          </div>
           {currentItem.reading && (
              <div className="flex justify-center pt-2">
                <button 

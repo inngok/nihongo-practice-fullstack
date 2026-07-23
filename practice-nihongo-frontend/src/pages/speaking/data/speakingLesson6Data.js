@@ -110,8 +110,8 @@ export const speakingLesson6Data = {
         reason_excuse: "忙(いそが)しい",
         cause: "疲(つか)れ",
         condition: "疲(つか)れやすい",
-        suggestion1_example: "ニンニク",
-        suggestion1_type: "栄養(えいよう)のある物(もの)",
+        suggestion1_example: "スープ",
+        suggestion1_type: "温(あたた)かい物(もの)",
         context: "スタミナ料理(りょうり)",
         suggestion2: "ウナギ",
         suggestion2_verb: "食(た)べる",
@@ -125,8 +125,8 @@ export const speakingLesson6Data = {
         reason_excuse: "bận rộn",
         cause: "sự mệt mỏi",
         condition: "dễ bị mệt",
-        suggestion1_example: "tỏi",
-        suggestion1_type: "đồ ăn bổ dưỡng",
+        suggestion1_example: "súp",
+        suggestion1_type: "đồ ăn ấm",
         context: "món ăn bồi bổ thể lực (stamina)",
         suggestion2: "lươn",
         suggestion2_verb: "ăn",
@@ -240,11 +240,11 @@ export const speakingLesson6Data = {
         reason_excuse: "忙(いそが)しい",
         cause: "ストレス",
         condition: "寝(ね)られない",
-        suggestion1_example: "ホットミルク",
+        suggestion1_example: "温(あたた)かいミルク",
         suggestion1_type: "温(あたた)かい飲(の)み物(もの)",
         context: "睡眠(すいみん)にいい方法(ほうほう)",
-        suggestion2: "アロマ",
-        suggestion2_verb: "使(つか)う",
+        suggestion2: "お風呂(ふろ)",
+        suggestion2_verb: "入(はい)る",
         benefit: "リラックス効果(こうか)",
         context_short: "寝(ね)られないとき"
       },
@@ -255,16 +255,17 @@ export const speakingLesson6Data = {
         reason_excuse: "bận rộn",
         cause: "căng thẳng",
         condition: "không ngủ được",
-        suggestion1_example: "sữa nóng",
+        suggestion1_example: "sữa ấm",
         suggestion1_type: "đồ uống ấm",
         context: "phương pháp tốt cho giấc ngủ",
-        suggestion2: "tinh dầu",
-        suggestion2_verb: "dùng",
+        suggestion2: "bồn tắm",
+        suggestion2_verb: "ngâm",
         benefit: "hiệu quả thư giãn",
         context_short: "khi không ngủ được"
       },
       lineOverrides: {
-        4: { role: 'A', text: "夜遅くまで[reason]ばかり[reason_verb]いるんじゃない？", textHiragana: "夜遅(よるおそ)くまで[reason]ばかり[reason_verb]いるんじゃない？", translation: "Chắc lại toàn [reason_verb] [reason] cho đến tận đêm khuya chứ gì?", isUser: true }
+        4: { role: 'A', text: "夜遅くまで[reason]ばかり[reason_verb]いるんじゃない？", textHiragana: "夜遅(よるおそ)くまで[reason]ばかり[reason_verb]いるんじゃない？", translation: "Chắc lại toàn [reason_verb] [reason] cho đến tận đêm khuya chứ gì?", isUser: true },
+        8: { role: 'A', text: "そう。それに、日本では[context]{{として}}[suggestion2]にゆっくり[suggestion2_verb]よ。[suggestion2]は[benefit]があるからね。[context_short]は[suggestion2]{{に限る}}って言われてるんだよ。", textHiragana: "そう。それに、日本(にほん)では[context]{{として}}[suggestion2]にゆっくり[suggestion2_verb]よ。[suggestion2]は[benefit]があるからね。[context_short]は[suggestion2]{{に限(かぎ)る}}って言(い)われてるんだよ。", translation: "Ừ. Với lại, ở Nhật Bản, mọi người thường thong thả [suggestion2_verb] [suggestion2] như là [context]. Bởi vì [suggestion2] có [benefit] mà. Người ta bảo [context_short] là cứ phải [suggestion2] mới là nhất đấy.", isUser: true }
       }
     },
     {
@@ -330,8 +331,8 @@ export const speakingLesson6Data = {
         suggestion1_example: "温(あたた)かいミルク",
         suggestion1_type: "飲(の)み物(もの)",
         context: "ぐっすり眠(ねむ)る方法(ほうほう)",
-        suggestion2: "静(しず)かな音楽(おんがく)",
-        suggestion2_verb: "聴(き)く",
+        suggestion2: "お風呂(ふろ)",
+        suggestion2_verb: "入(はい)る",
         benefit: "リラックス効果(こうか)",
         context_short: "眠(ねむ)れないとき"
       },
@@ -345,14 +346,15 @@ export const speakingLesson6Data = {
         suggestion1_example: "sữa nóng",
         suggestion1_type: "đồ uống",
         context: "cách để ngủ ngon",
-        suggestion2: "nhạc nhẹ nhàng",
-        suggestion2_verb: "nghe",
+        suggestion2: "bồn tắm",
+        suggestion2_verb: "ngâm",
         benefit: "hiệu quả thư giãn",
         context_short: "khi không ngủ được"
       },
       lineOverrides: {
         3: { role: 'B', text: "うーん。それに、最近[symptom]て。", textHiragana: "うーん。それに、最近[symptom]て。", translation: "Ừm... Hơn nữa, dạo này tớ [symptom]." },
-        4: { role: 'A', text: "夜遅くまで[reason]ばかり[reason_verb]いるんじゃない？", textHiragana: "夜遅(よるおそ)くまで[reason]ばかり[reason_verb]いるんじゃない？", translation: "Chắc lại toàn [reason_verb] [reason] cho đến tận đêm khuya chứ gì?", isUser: true }
+        4: { role: 'A', text: "夜遅くまで[reason]ばかり[reason_verb]いるんじゃない？", textHiragana: "夜遅(よるおそ)くまで[reason]ばかり[reason_verb]いるんじゃない？", translation: "Chắc lại toàn [reason_verb] [reason] cho đến tận đêm khuya chứ gì?", isUser: true },
+        8: { role: 'A', text: "そう。それに、日本では[context]{{として}}[suggestion2]にゆっくり[suggestion2_verb]よ。[suggestion2]は[benefit]があるからね。[context_short]は[suggestion2]{{に限る}}って言われてるんだよ。", textHiragana: "そう。それに、日本(にほん)では[context]{{として}}[suggestion2]にゆっくり[suggestion2_verb]よ。[suggestion2]は[benefit]があるからね。[context_short]は[suggestion2]{{に限(かぎ)る}}って言(い)われてるんだよ。", translation: "Ừ. Với lại, ở Nhật Bản, mọi người thường thong thả [suggestion2_verb] [suggestion2] như là [context]. Bởi vì [suggestion2] có [benefit] mà. Người ta bảo [context_short] là cứ phải [suggestion2] mới là nhất đấy.", isUser: true }
       }
     },
     {
