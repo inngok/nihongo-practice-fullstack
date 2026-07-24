@@ -10,6 +10,7 @@ export default function KanjiVocabQuizView({ kanjiVocabs }) {
   const [completedIds, setCompletedIds] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
+  const [showVietnameseFirst, setShowVietnameseFirst] = useState(false);
 
   useEffect(() => {
     if (!kanjiVocabs || kanjiVocabs.length < 4) return;
@@ -83,6 +84,8 @@ export default function KanjiVocabQuizView({ kanjiVocabs }) {
         isShuffle={isShuffle}
         setIsShuffle={setIsShuffle}
         handleCorrectAnswer={handleCorrectAnswer}
+        showVietnameseFirst={showVietnameseFirst}
+        setShowVietnameseFirst={setShowVietnameseFirst}
       />
 
       {showResults && (

@@ -10,7 +10,9 @@ export default function VocabMultipleChoiceMode({
   setShowResults,
   isShuffle,
   setIsShuffle,
-  handleCorrectAnswer
+  handleCorrectAnswer,
+  showVietnameseFirst,
+  setShowVietnameseFirst
 }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [showReading, setShowReading] = useState(false);
@@ -49,10 +51,10 @@ export default function VocabMultipleChoiceMode({
     setShowReading(false);
   }, [currentIndex]);
 
-  const playAudio = () => {
+  const playAudio = (customText = null) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      const text = currentItem.reading || currentItem.hiragana || currentItem.word;
+      const text = customText || currentItem.reading || currentItem.hiragana || currentItem.word;
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ja-JP';
       utterance.rate = 0.9;
@@ -72,7 +74,7 @@ export default function VocabMultipleChoiceMode({
     }
     
     if (autoPlayAudio) {
-      playAudio();
+      playAudio(showVietnameseFirst ? (option.reading || option.hiragana || option.word) : null);
     }
   };
 
@@ -115,6 +117,15 @@ export default function VocabMultipleChoiceMode({
           </button>
         </div>
         <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-0">
+          <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap hidden sm:inline">VIỆT <span className="lowercase">v</span> NHẬT</span>
+          <button
+            onClick={() => setShowVietnameseFirst(!showVietnameseFirst)}
+            className={`relative shrink-0 w-8 sm:w-11 h-4 sm:h-6 rounded-full transition-all duration-300 mr-2 ${showVietnameseFirst ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+            title="Đổi chiều Việt - Nhật"
+          >
+            <div className={`absolute top-0.5 sm:top-1 w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
+          </button>
+          
           <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">XÁO TRỘN</span>
           <button
             onClick={() => setIsShuffle(!isShuffle)}
@@ -127,25 +138,29 @@ export default function VocabMultipleChoiceMode({
 
       <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-3xl sm:rounded-[3rem] p-4 sm:p-12 text-center shadow-sm">
         <div className="mb-6 sm:mb-10 space-y-2 sm:space-y-4">
-          <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">Chọn nghĩa đúng của từ sau</span>
+          <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">
+            {showVietnameseFirst ? 'Chọn từ đúng cho nghĩa sau' : 'Chọn nghĩa đúng của từ sau'}
+          </span>
           <div className="flex items-center justify-center">
             <div className="relative">
-              <h2 className="text-3xl sm:text-5xl md:text-6xl font-medium font-kanji text-slate-900 dark:text-white select-all break-all whitespace-pre-wrap leading-tight">
-                {currentItem.word}
+              <h2 className={`font-medium text-slate-900 dark:text-white select-all break-all whitespace-pre-wrap leading-tight ${showVietnameseFirst ? 'text-2xl sm:text-4xl md:text-5xl italic font-sans' : 'text-3xl sm:text-5xl md:text-6xl font-kanji'}`}>
+                {showVietnameseFirst ? currentItem.meaning : currentItem.word}
               </h2>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  playAudio();
-                }}
-                className={`absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-3 p-2 sm:p-3 shrink-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-all duration-300 ${selectedOption ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}
-                title="Nghe phát âm"
-              >
-                <Volume2 size={24} className="sm:w-7 sm:h-7" />
-              </button>
+              {!showVietnameseFirst && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playAudio();
+                  }}
+                  className={`absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-3 p-2 sm:p-3 shrink-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-all duration-300 ${selectedOption ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}
+                  title="Nghe phát âm"
+                >
+                  <Volume2 size={24} className="sm:w-7 sm:h-7" />
+                </button>
+              )}
             </div>
           </div>
-          {currentItem.reading && (
+          {!showVietnameseFirst && currentItem.reading && (
              <div className="flex justify-center pt-2">
                <button 
                  onClick={() => setShowReading(!showReading)}
@@ -202,9 +217,16 @@ export default function VocabMultipleChoiceMode({
                      selectedOption && isSelected && !isCorrectOption ? <X size={14} className="text-white" /> :
                      <span className="text-[9px] sm:text-[10px] font-black">{String.fromCharCode(65 + idx)}</span>}
                   </div>
-                  <span className="text-sm sm:text-lg font-bold">
-                    {option.meaning?.normalize('NFC')}
-                  </span>
+                  <div className="flex flex-col items-start gap-1">
+                    <span className={`font-bold ${showVietnameseFirst ? 'text-xl sm:text-2xl font-kanji' : 'text-sm sm:text-lg'}`}>
+                      {showVietnameseFirst ? option.word : option.meaning?.normalize('NFC')}
+                    </span>
+                    {showVietnameseFirst && showReading && selectedOption && option.reading && (
+                      <span className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 font-medium">
+                        {option.reading}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </button>
             );

@@ -280,8 +280,7 @@ const parseExamples = (examplesStr) => {
           {/* Premium Capsule Mode Switcher */}
           <div className="bg-slate-50/70 dark:bg-slate-900/50 p-1.5 rounded-2xl flex flex-wrap items-center border border-slate-100/50 dark:border-slate-800/50 self-start shadow-inner gap-1 max-w-full">
             <button onClick={() => setActiveMode('list')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'list' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Danh sách</button>
-            <button onClick={() => setActiveMode('flashcard')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'flashcard' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Flashcard</button>
-            <button onClick={() => setActiveMode('vocab')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'vocab' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Từ vựng</button>
+            <button onClick={() => setActiveMode('flashcard')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'flashcard' || activeMode === 'vocab' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Flashcard</button>
             <button onClick={() => setActiveMode('quiz')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'quiz' || activeMode === 'vocab_quiz' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Trắc nghiệm</button>
             <button onClick={() => setActiveMode('typing')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'typing' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Gõ phím</button>
             <button onClick={() => setActiveMode('drawing')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'drawing' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Luyện viết</button>
@@ -300,6 +299,34 @@ const parseExamples = (examplesStr) => {
             handleAddFlashcard={handleAddFlashcard}
             addedKanjiIds={addedKanjiIds}
           />
+        )}
+
+        {/* --- VIEW 2 & 6: FLASHCARD & VOCAB SUB-SWITCHER --- */}
+        {(activeMode === 'flashcard' || activeMode === 'vocab') && (
+          <div className="flex justify-center mb-6 animate-fadeIn">
+            <div className="bg-slate-100/80 p-1 rounded-2xl flex items-center border border-slate-200/40 shadow-inner">
+              <button
+                onClick={() => setActiveMode('flashcard')}
+                className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                  activeMode === 'flashcard'
+                    ? 'bg-white text-slate-900 shadow-md border border-slate-200/10'
+                    : 'text-slate-400 hover:text-slate-800'
+                }`}
+              >
+                Flashcard Hán tự
+              </button>
+              <button
+                onClick={() => setActiveMode('vocab')}
+                className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                  activeMode === 'vocab'
+                    ? 'bg-white text-slate-900 shadow-md border border-slate-200/10'
+                    : 'text-slate-400 hover:text-slate-800'
+                }`}
+              >
+                Flashcard Từ vựng
+              </button>
+            </div>
+          </div>
         )}
 
         {/* --- VIEW 6: VOCAB STUDY VIEW --- */}

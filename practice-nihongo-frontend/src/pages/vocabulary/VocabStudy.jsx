@@ -558,6 +558,8 @@ export default function VocabStudy() {
                   isShuffle={isShuffle}
                   setIsShuffle={setIsShuffle}
                   handleCorrectAnswer={handleCorrectAnswer}
+                  showVietnameseFirst={showVietnameseFirst}
+                  setShowVietnameseFirst={setShowVietnameseFirst}
                 />
               )}
               </React.Suspense>
