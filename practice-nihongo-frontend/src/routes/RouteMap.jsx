@@ -34,7 +34,7 @@ const Flashcards = lazy(() => import("../pages/flashcard/Flashcards"));
 
 // Exams & Specialized
 const ExamJLPT = lazy(() => import("../pages/exam/jlpt/ExamJLPT"));
-
+const ListeningDemo = lazy(() => import("../pages/exam/ListeningDemo"));
 
 const Tips = lazy(() => import("../pages/tips/Tips"));
 const AiChat = lazy(() => import("../pages/ai-chat/AiChat"));
@@ -230,6 +230,7 @@ export default function RouteMap() {
             <Route index element={<ExamJLPT />} />
             <Route path="past-vocab/:level" element={<JlptPastVocab />} />
             <Route path="speaking" element={<SpeakingExercise />} />
+            <Route path="listening" element={<ListeningDemo />} />
           </Route>
 
 

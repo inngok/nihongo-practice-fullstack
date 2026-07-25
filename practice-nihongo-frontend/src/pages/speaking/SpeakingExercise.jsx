@@ -61,19 +61,19 @@ export default function SpeakingExercise() {
       // Replace Kanji(hiragana) with just Kanji
       let cleanText = text.replace(/\[|\]/g, '');
       cleanText = cleanText.replace(/([\u4E00-\u9FAF\u3005]+)\([\u3040-\u309F]+\)/g, '$1');
-      
+
       const utterance = new SpeechSynthesisUtterance(cleanText);
-      
+
       // Try to find better Japanese voices
       const voices = window.speechSynthesis.getVoices();
       const jpVoices = voices.filter(v => v.lang === 'ja-JP' || v.lang === 'ja_JP');
-      
+
       if (jpVoices.length > 0) {
         // Ưu tiên các giọng đọc tự nhiên (Natural/Premium/Nanami/Keita của Windows/Edge) 
         // hoặc Google Nhật Bản nếu có.
-        const bestVoice = jpVoices.find(v => v.name.includes('Natural') || v.name.includes('Premium') || v.name.includes('Nanami') || v.name.includes('Keita')) 
-                          || jpVoices.find(v => v.name.includes('Google')) 
-                          || jpVoices[0];
+        const bestVoice = jpVoices.find(v => v.name.includes('Natural') || v.name.includes('Premium') || v.name.includes('Nanami') || v.name.includes('Keita'))
+          || jpVoices.find(v => v.name.includes('Google'))
+          || jpVoices[0];
         utterance.voice = bestVoice;
       }
 
@@ -204,8 +204,8 @@ export default function SpeakingExercise() {
                   key={lesson.lessonId}
                   onClick={() => handleLessonChange(lesson.lessonId)}
                   className={`px-4 py-2 text-sm font-bold whitespace-nowrap transition-all duration-300 border-b-2 ${activeLessonId === lesson.lessonId
-                      ? 'border-black dark:border-white text-black dark:text-white font-black'
-                      : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600'
+                    ? 'border-black dark:border-white text-black dark:text-white font-black'
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-600'
                     }`}
                 >
                   Bài {lesson.lessonId}
@@ -220,8 +220,8 @@ export default function SpeakingExercise() {
                   key={scenario.id}
                   onClick={() => handleScenarioChange(scenario.id)}
                   className={`px-6 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-300 flex items-center gap-2 ${activeScenarioId === scenario.id
-                      ? 'bg-black dark:bg-white text-white dark:text-black shadow-md'
-                      : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:border-black dark:hover:border-white hover:text-black dark:text-white font-black'
+                    ? 'bg-black dark:bg-white text-white dark:text-black shadow-md'
+                    : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:border-black dark:hover:border-white hover:text-black dark:text-white font-black'
                     }`}
                 >
                   {scenario.title}
@@ -241,42 +241,100 @@ export default function SpeakingExercise() {
               <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4 border-b border-slate-100 dark:border-slate-800/50 pb-3">
                 Thông tin tình huống
               </h2>
-              
+
               {activeScenario.audioUrl && (
                 <div className="mb-6">
                   <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">
                     Audio hội thoại gốc
                   </span>
-                  <audio 
-                    controls 
-                    src={activeScenario.audioUrl} 
+                  <audio
+                    controls
+                    src={activeScenario.audioUrl}
                     className="w-full rounded-full"
                   />
                 </div>
               )}
 
-              <div className="mb-6 space-y-3">
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/50">
-                  <p 
-                    className="text-slate-800 dark:text-slate-200 text-sm leading-relaxed font-medium mb-3"
-                    dangerouslySetInnerHTML={{ __html: activeScenario.jpDescription }}
-                  />
-                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
+              <div className="mb-6 space-y-6">
+                {/* General Description (for base scenarios) */}
+                {activeScenario.jpDescription && (
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm relative">
                     <p 
-                      className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed italic"
-                      dangerouslySetInnerHTML={{ __html: activeScenario.viDescription }}
+                      className="text-slate-800 dark:text-slate-200 text-[15px] leading-relaxed font-medium mb-3"
+                      dangerouslySetInnerHTML={{ __html: activeScenario.jpDescription }}
                     />
+                    {activeScenario.viDescription && (
+                      <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
+                        <p 
+                          className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed italic"
+                          dangerouslySetInnerHTML={{ __html: activeScenario.viDescription }}
+                        />
+                      </div>
+                    )}
                   </div>
-                </div>
-              </div>
+                )}
 
-              <div className="space-y-4">
-                {activeScenario.details.map((detail, idx) => (
-                  <div key={idx} className="flex flex-col gap-1">
-                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{detail.label}</span>
-                    <span className="text-slate-800 dark:text-slate-200 font-medium">{detail.value}</span>
+                {/* Box A */}
+                {activeScenario.personA && (
+                  <div className="border-2 border-slate-800 dark:border-slate-300 p-5 bg-white dark:bg-slate-900 shadow-sm relative">
+                    <div className="font-serif text-lg font-bold text-slate-800 dark:text-slate-200 mb-2">A</div>
+                    <p 
+                      className="text-slate-800 dark:text-slate-200 text-[15px] leading-relaxed font-medium mb-4"
+                      dangerouslySetInnerHTML={{ __html: activeScenario.personA }}
+                    />
+                    
+                    {activeScenario.personA_details && activeScenario.personA_details.length > 0 && (
+                      <div className="mb-4 space-y-1">
+                        {activeScenario.personA_details.map((detail, idx) => (
+                          <div key={idx} className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
+                            <span className="font-bold">＊ {detail.label}： </span>
+                            <span>{detail.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {activeScenario.personA_vi && (
+                      <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
+                        <p 
+                          className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed italic"
+                          dangerouslySetInnerHTML={{ __html: activeScenario.personA_vi }}
+                        />
+                      </div>
+                    )}
                   </div>
-                ))}
+                )}
+
+                {/* Box B */}
+                {activeScenario.personB && (
+                  <div className="border-2 border-slate-800 dark:border-slate-300 p-5 bg-white dark:bg-slate-900 shadow-sm relative">
+                    <div className="font-serif text-lg font-bold text-slate-800 dark:text-slate-200 mb-3">B</div>
+                    <p 
+                      className="text-slate-800 dark:text-slate-200 text-[15px] leading-relaxed font-medium mb-4"
+                      dangerouslySetInnerHTML={{ __html: activeScenario.personB }}
+                    />
+                    
+                    {activeScenario.personB_details && activeScenario.personB_details.length > 0 && (
+                      <div className="mb-4 space-y-1">
+                        {activeScenario.personB_details.map((detail, idx) => (
+                          <div key={idx} className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
+                            <span className="font-bold">＊ {detail.label}： </span>
+                            <span>{detail.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {activeScenario.personB_vi && (
+                      <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
+                        <p 
+                          className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed italic"
+                          dangerouslySetInnerHTML={{ __html: activeScenario.personB_vi }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -329,28 +387,28 @@ export default function SpeakingExercise() {
                   }).join('');
 
                   const isHidden = (practiceLevel === 'all' || (practiceLevel === 'user' && isUser)) && !revealedLines[index];
-                const maskKeywords = practiceLevel === 'keywords' && !revealedLines[index];
+                  const maskKeywords = practiceLevel === 'keywords' && !revealedLines[index];
 
                   return (
                     <div key={index} className={`flex gap-4 ${isUser ? '' : 'opacity-80'}`}>
                       <div className="flex-shrink-0 mt-1">
                         <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-sm ${isUser
-                            ? 'bg-black text-white dark:bg-white dark:text-black text-black dark:text-white font-black shadow-sm'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                          ? 'bg-black text-white dark:bg-white dark:text-black text-black dark:text-white font-black shadow-sm'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                           }`}>
                           {isUser ? <User className="w-5 h-5" /> : turn.role}
                         </div>
                       </div>
 
                       <div className={`flex-1 p-4 rounded-2xl border transition-all duration-300 relative group ${isUser
-                          ? 'bg-slate-50 dark:bg-slate-800/50 border-black dark:border-white border-2'
-                          : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800/50'
+                        ? 'bg-slate-50 dark:bg-slate-800/50 border-black dark:border-white border-2'
+                        : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800/50'
                         }`}>
                         <div className={`${isHidden ? 'bg-slate-200 dark:bg-slate-700 text-transparent blur-[4px] select-none rounded-lg' : ''} transition-all duration-300`}>
                           <p className={`text-lg md:text-xl transition-all duration-300 ${showHiragana[index] ? 'leading-[2.75rem] md:leading-[3rem]' : 'leading-relaxed'} ${isUser ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>
                             {renderTextWithReplacements(showHiragana[index] && turn.textHiragana ? turn.textHiragana : turn.text, activeScenario.replacements, maskKeywords, showHiragana[index])}
                           </p>
-                          
+
                           {showTranslation[index] && turn.translation && (
                             <div className="mt-3">
                               <div className="text-slate-500 dark:text-slate-400 text-sm md:text-base font-medium italic px-3 py-2 bg-slate-100 dark:bg-slate-800/50 rounded-lg">
@@ -373,7 +431,7 @@ export default function SpeakingExercise() {
                             <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest flex items-center gap-1">
                               {isUser ? 'Vai của bạn' : 'Đối thoại'}
                             </div>
-                            
+
                             <div className="flex items-center gap-2">
                               {turn.translation && (
                                 <button
@@ -393,7 +451,7 @@ export default function SpeakingExercise() {
                                   あ
                                 </button>
                               )}
-                              
+
                               {practiceLevel !== 'none' && isUser && (
                                 <button onClick={() => toggleReveal(index)} className="w-8 h-8 rounded-full bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center hover:bg-slate-50 dark:bg-slate-800/50 hover:scale-110 transition-all duration-300" title="Ẩn lời thoại">
                                   <EyeOff className="w-4 h-4" />

@@ -25,6 +25,13 @@ const examModules = [
     description: "Luyện tập hội thoại tiếng Nhật theo tình huống thực tế bằng dữ liệu mô phỏng.",
     path: "/exam-jlpt/speaking",
     status: "ready"
+  },
+  {
+    id: 'listening',
+    title: " Luyện nghe(JPD326)",
+    description: "Luyện nghe tiếng Nhật nghe và đọc đoạn script.",
+    path: "/exam-jlpt/listening",
+    status: "ready"
   }
 ];
 
