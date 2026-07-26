@@ -27,6 +27,7 @@ export default function StudyPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const unitParam = searchParams.get('unit');
   const [selectedLesson, setSelectedLesson] = useState(unitParam || '');
+  const [selectedDay, setSelectedDay] = useState('');
 
   const uniqueLessons = useMemo(() => {
     const lessons = new Set();
@@ -36,9 +37,19 @@ export default function StudyPage() {
     return Array.from(lessons).sort((a, b) => a - b);
   }, [grammarData]);
 
+  const uniqueDays = useMemo(() => {
+    const days = new Set();
+    grammarData.forEach(g => {
+      if (!selectedLesson || String(g.unit) === String(selectedLesson)) {
+        if (g.day) days.add(g.day);
+      }
+    });
+    return Array.from(days).sort((a, b) => parseInt(a) - parseInt(b));
+  }, [grammarData, selectedLesson]);
+
   const activeData = useMemo(() => {
-    return prepareActiveData(grammarData, selectedLesson, activeMode, isShuffle);
-  }, [grammarData, isShuffle, selectedLesson, activeMode]);
+    return prepareActiveData(grammarData, selectedLesson, selectedDay, activeMode, isShuffle);
+  }, [grammarData, isShuffle, selectedLesson, selectedDay, activeMode]);
 
   useEffect(() => {
     fetchGrammar();
@@ -233,6 +244,9 @@ export default function StudyPage() {
                   uniqueLessons={uniqueLessons}
                   selectedLesson={selectedLesson}
                   setSelectedLesson={setSelectedLesson}
+                  uniqueDays={uniqueDays}
+                  selectedDay={selectedDay}
+                  setSelectedDay={setSelectedDay}
                   searchTerm={searchTerm}
                   setSearchTerm={setSearchTerm}
                   toggleExpand={toggleExpand}

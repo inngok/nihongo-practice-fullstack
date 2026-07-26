@@ -11,6 +11,9 @@ export default function StudyMenu({
   uniqueLessons,
   selectedLesson,
   setSelectedLesson,
+  uniqueDays,
+  selectedDay,
+  setSelectedDay,
   searchTerm,
   setSearchTerm,
   toggleExpand,
@@ -71,6 +74,7 @@ export default function StudyMenu({
               <button
                 onClick={() => {
                   setSelectedLesson('');
+                  setSelectedDay('');
                   setCurrentIndex(0);
                 }}
                 className={`px-5 py-2 rounded-2xl text-[11px] font-black transition-all ${
@@ -86,6 +90,7 @@ export default function StudyMenu({
                   key={lesson}
                   onClick={() => {
                     setSelectedLesson(lesson);
+                    setSelectedDay('');
                     setCurrentIndex(0);
                   }}
                   className={`px-5 py-2 rounded-2xl text-[11px] font-black transition-all ${
@@ -95,6 +100,43 @@ export default function StudyMenu({
                   }`}
                 >
                   BÀI {lesson}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {selectedLesson && uniqueDays && uniqueDays.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em]">CHỌN NGÀY HỌC</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  setSelectedDay('');
+                  setCurrentIndex(0);
+                }}
+                className={`px-5 py-2 rounded-2xl text-[11px] font-black transition-all ${
+                  selectedDay === ''
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105' 
+                    : 'bg-slate-50 text-slate-400 dark:bg-slate-900 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                TẤT CẢ
+              </button>
+              {uniqueDays.map(day => (
+                <button
+                  key={day}
+                  onClick={() => {
+                    setSelectedDay(day);
+                    setCurrentIndex(0);
+                  }}
+                  className={`px-5 py-2 rounded-2xl text-[11px] font-black transition-all ${
+                    selectedDay === day 
+                      ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105' 
+                      : 'bg-slate-50 text-slate-400 dark:bg-slate-900 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+                >
+                  NGÀY {day}
                 </button>
               ))}
             </div>

@@ -115,20 +115,27 @@ export const getQuizSentence = (sentence, quizSentence, pattern) => {
   return <span className="whitespace-pre-wrap">{sentence || ''} <span className="text-slate-400 dark:text-slate-500 mx-1">_____</span></span>;
 };
 
-export const prepareActiveData = (grammarData, selectedLesson, activeMode, isShuffle) => {
+export const prepareActiveData = (grammarData, selectedLesson, selectedDay, activeMode, isShuffle) => {
   let data = grammarData;
   if (selectedLesson) {
     data = data.filter(item => item.unit && item.unit.toString() === selectedLesson.toString());
+  }
+  if (selectedDay) {
+    data = data.filter(item => item.day && item.day.toString() === selectedDay.toString());
   }
 
   data = [...data].sort((a, b) => {
     const unitA = parseInt(a.unit) || 0;
     const unitB = parseInt(b.unit) || 0;
     if (unitA !== unitB) return unitA - unitB;
-    // respect curriculum sortOrder first, fall back to day
-    const sortA = a.sortOrder != null ? a.sortOrder : (parseInt(a.day) || 0);
-    const sortB = b.sortOrder != null ? b.sortOrder : (parseInt(b.day) || 0);
-    return sortA - sortB;
+
+    const sortA = typeof a.sortOrder === 'number' ? a.sortOrder : 0;
+    const sortB = typeof b.sortOrder === 'number' ? b.sortOrder : 0;
+    if (sortA !== sortB) return sortA - sortB;
+
+    const dayA = parseInt(a.day) || 0;
+    const dayB = parseInt(b.day) || 0;
+    return dayA - dayB;
   });
 
   if (activeMode === 'quiz' || activeMode === 'multiple_choice' || activeMode === 'listening') {

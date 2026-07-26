@@ -1,6 +1,6 @@
 export const track28 = {
   id: "28",
-  title: "28 Track 28",
+  title: "Track 28",
   audioSrc: "/audio/listening/Chukyu-Lesson 6/28 Track 28.mp3",
   script: [
     {
