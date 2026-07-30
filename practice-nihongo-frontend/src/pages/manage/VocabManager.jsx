@@ -271,6 +271,7 @@ export default function VocabManager() {
       for (const id of selectedIds) {
         await vocabService.update(id, {
           week: bulkUpdateData.week || undefined,
+          day: bulkUpdateData.day || undefined,
           book: bulkUpdateData.bookId ? { id: parseInt(bulkUpdateData.bookId) } : undefined
         });
       }

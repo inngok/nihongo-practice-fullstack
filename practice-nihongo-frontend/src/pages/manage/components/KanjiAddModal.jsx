@@ -407,7 +407,7 @@ export default function KanjiAddModal({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="space-y-2">
                 <label className="text-[10px] font-medium uppercase tracking-widest text-slate-400 px-1 block">Giáo trình</label>
                 <Select
@@ -424,11 +424,22 @@ export default function KanjiAddModal({
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-medium uppercase tracking-widest text-slate-400 px-1">Bài số</label>
+                <label className="text-[10px] font-medium uppercase tracking-widest text-slate-400 px-1">Bài số (Week)</label>
                 <input
                   type="number"
                   name="week"
                   value={formData.week}
+                  onChange={handleInputChange}
+                  placeholder="VD: 1, 2..."
+                  className="w-full px-1 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-xs outline-none transition-all"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-medium uppercase tracking-widest text-slate-400 px-1">Ngày (Day)</label>
+                <input
+                  type="number"
+                  name="day"
+                  value={formData.day}
                   onChange={handleInputChange}
                   placeholder="VD: 1, 2..."
                   className="w-full px-1 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-xs outline-none transition-all"

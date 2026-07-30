@@ -31,7 +31,7 @@ export default function VocabBulkUpdateModal({
         </div>
         <div className="grid grid-cols-2 gap-6">
           <div className="space-y-2">
-            <label className="text-[9px] font-bold uppercase text-slate-400">Bài</label>
+            <label className="text-[9px] font-bold uppercase text-slate-400">Bài (Week)</label>
             <input 
               type="number" 
               min="1" 
@@ -40,6 +40,20 @@ export default function VocabBulkUpdateModal({
                 let v = e.target.value; 
                 if(v !== '' && parseInt(v) < 1) v = '1'; 
                 setBulkUpdateData(p => ({ ...p, week: v })) 
+              }} 
+              className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 font-bold" 
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[9px] font-bold uppercase text-slate-400">Ngày (Day)</label>
+            <input 
+              type="number" 
+              min="1" 
+              value={bulkUpdateData.day} 
+              onChange={e => { 
+                let v = e.target.value; 
+                if(v !== '' && parseInt(v) < 1) v = '1'; 
+                setBulkUpdateData(p => ({ ...p, day: v })) 
               }} 
               className="w-full bg-transparent border-b border-slate-100 outline-none py-1.5 font-bold" 
             />

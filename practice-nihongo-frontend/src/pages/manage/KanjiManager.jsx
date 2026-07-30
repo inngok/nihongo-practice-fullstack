@@ -72,7 +72,7 @@ export default function KanjiManager() {
   const [selectedLesson, setSelectedLesson] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
-  const [bulkUpdateData, setBulkUpdateData] = useState({ week: '', page: '', bookId: '' });
+  const [bulkUpdateData, setBulkUpdateData] = useState({ week: '', day: '', page: '', bookId: '' });
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -379,6 +379,7 @@ export default function KanjiManager() {
       await Promise.all(selectedIds.map(id =>
         kanjiService.update(id, {
           week: bulkUpdateData.week || undefined,
+          day: bulkUpdateData.day || undefined,
           page: bulkUpdateData.page || undefined,
           book: bulkUpdateData.bookId ? { id: parseInt(bulkUpdateData.bookId) } : undefined
         })

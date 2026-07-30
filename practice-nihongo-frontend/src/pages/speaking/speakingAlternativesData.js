@@ -120,9 +120,9 @@ export const speakingAlternatives = [
       "1) Hãy cho biết một từ tiếng Nhật.",
       "2) Hãy giải thích lý do."
     ],
-    answer: "一番好きな言葉は「努力」です。自分が諦めそうになった時、この言葉に励まされました。それ以来、この言葉はずっと私の心に残っています。",
-    answerHiragana: "一番(いちばん)好(す)きな言葉(ことば)は「努力(どりょく)」です。自分(じぶん)が諦(あきら)めそうになった時(とき)、この言葉(ことば)に励(はげ)まされました。それ以来(いらい)、この言葉(ことば)はずっと私(わたし)の心(こころ)に残(のこ)っています。",
-    answerTranslation: "Từ vựng tôi thích nhất là 'Nỗ lực'. Những lúc tưởng chừng như muốn bỏ cuộc, tôi đã được khích lệ bởi từ này. Kể từ đó, từ này luôn đọng lại trong tâm trí tôi.",
+    answer: "一番好きな言葉は「努力」です。日本語の勉強が大変な時、この言葉に励まされました。そのため、今でもこの言葉が心に残っています。",
+    answerHiragana: "一番(いちばん)好(す)きな言葉(ことば)は「努力(どりょく)」です。日本語(にほんご)の勉強(べんきょう)が大変(たいへん)な時(とき)、この言葉(ことば)に励(はげ)まされました。そのため、今(いま)でもこの言葉(ことば)が心(こころ)に残(のこ)っています。",
+    answerTranslation: "Từ tôi thích nhất là 'Nỗ lực'. Những lúc việc học tiếng Nhật khó khăn, tôi đã được khích lệ bởi từ này. Vì vậy, cho đến bây giờ từ này vẫn luôn đọng lại trong tâm trí tôi.",
     grammarUsed: "～に励まされました / ～が心に残っています"
   },
   {
@@ -156,9 +156,9 @@ export const speakingAlternatives = [
       "1) Ở quê hương bạn, nơi nào nổi tiếng?",
       "2) Có thể làm gì ở đó?"
     ],
-    answer: "ホーチミン市といえば、活気ある雰囲気とフランス建築が有名です。毎年多くの外国人が観光に訪れています。特に、色々な美味しいストリートフードを味わうのがおすすめです。ぜひ足を伸ばしてみてください。",
-    answerHiragana: "ホーチミン市(し)といえば、活気(かっき)ある雰囲気(ふんいき)とフランス建築(けんちく)が有名(ゆうめい)です。毎年(まいとし)多(おお)くの外国人(がいこくじん)が観光(かんこう)に訪(おとず)れています。特(とく)に、色々(いろいろ)な美味(おい)しいストリートフードを味(あじ)わうのがおすすめです。ぜひ足(あし)を伸(の)ばしてみてください。",
-    answerTranslation: "Nhắc đến thành phố Hồ Chí Minh là nhắc đến bầu không khí náo nhiệt và những công trình kiến trúc kiểu Pháp nổi tiếng. Mỗi năm có rất nhiều người nước ngoài đến thăm quan. Đặc biệt, tôi khuyên bạn nên thưởng thức các món ăn đường phố thơm ngon đa dạng. Nhất định hãy ghé qua thử nhé.",
+    answer: "ホーチミン市といえば、サイゴン大教会や中央郵便局などのフランス建築が有名です。毎年多くの外国人が観光に訪れています。また、ベンタイン市場へ足を伸ばして、美味しいストリートフードを味わうのがおすすめです。",
+    answerHiragana: "ホーチミン市(し)といえば、サイゴン大教会(だいきょうかい)や中央郵便局(ちゅうおうゆうびんきょく)などのフランス建築(けんちく)が有名(ゆうめい)です。毎年(まいとし)多(おお)くの外国人(がいこくじん)が観光(かんこう)に訪(おとず)れています。また、ベンタイン市場(いちば)へ足(あし)を伸(の)ばして、美味(おい)しいストリートフードを味(あじ)わうのがおすすめです。",
+    answerTranslation: "Nhắc đến thành phố Hồ Chí Minh là nhắc đến các công trình kiến trúc kiểu Pháp nổi tiếng như Nhà thờ Đức Bà hay Bưu điện Trung tâm. Mỗi năm có rất nhiều người nước ngoài đến thăm quan. Ngoài ra, tôi khuyên bạn nên ghé qua chợ Bến Thành để thưởng thức các món ăn đường phố thơm ngon.",
     grammarUsed: "～といえば～が有名だ / 訪れている / 味わう / 足を伸ばす"
   },
   {
@@ -174,9 +174,9 @@ export const speakingAlternatives = [
       "1) Điều thú vị có thể làm ở Hà Nội trong 1 ngày là gì?",
       "2) Làm thế nào để có thể trải nghiệm được?"
     ],
-    answer: "ハノイで1日だけなら、旧市街へ足を伸ばすのがおすすめです。有名な観光地として知られています。にぎやかな景色を見ながら、ストリートフードを食べ歩くのが楽しいと思います。",
-    answerHiragana: "ハノイで1日(いちにち)だけなら、旧市街(きゅうしがい)へ足(あし)を伸(の)ばすのがおすすめです。有名(ゆうめい)な観光地(かんこうち)として知(し)られています。にぎやかな景色(けしき)を見(み)ながら、ストリートフードを食(た)べ歩(ある)くのが楽(たの)しいと思(おも)います。",
-    answerTranslation: "Nếu chỉ có 1 ngày ở Hà Nội, tôi khuyên bạn nên ghé qua Khu phố cổ. Nơi đó được biết đến như một địa điểm du lịch nổi tiếng. Tôi nghĩ việc vừa ngắm khung cảnh náo nhiệt vừa thưởng thức các món ăn đường phố sẽ rất vui.",
+    answer: "ハノイで1日だけなら、ホアンキエム湖と旧市街へ足を伸ばすのがおすすめです。有名な観光地として知られています。ホアンキエム湖の美しい景色を見ながら、旧市街でフォーやエッグコーヒーを食べ歩くのが楽しいと思います。",
+    answerHiragana: "ハノイで1日(いちにち)だけなら、ホアンキエム湖(こ)と旧市街(きゅうしがい)へ足(あし)を伸(の)ばすのがおすすめです。有名(ゆうめい)な観光地(かんこうち)として知(し)られています。ホアンキエム湖(こ)の美(うつく)しい景色(けしき)を見(み)ながら、旧市街(きゅうしがい)でフォーやエッグコーヒーを食(た)べ歩(ある)くのが楽(たの)しいと思(おも)います。",
+    answerTranslation: "Nếu chỉ có 1 ngày ở Hà Nội, tôi khuyên bạn nên ghé qua Hồ Hoàn Kiếm và Khu phố cổ. Nơi đó được biết đến như một địa điểm du lịch nổi tiếng. Tôi nghĩ việc vừa ngắm khung cảnh đẹp của Hồ Hoàn Kiếm vừa đi dạo ăn thử phở hay cà phê trứng ở khu phố cổ sẽ rất vui.",
     grammarUsed: "足を伸ばす / 景色 / ～として知られている / 食べ歩く"
   },
   {
