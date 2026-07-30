@@ -13,6 +13,7 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
   const [previewData, setPreviewData] = useState([]);
   const [selectedBookId, setSelectedBookId] = useState(initialBookId || '');
   const [week, setWeek] = useState('');
+  const [day, setDay] = useState('');
   
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,6 +45,7 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
 
     const bookIdInt = parseInt(selectedBookId);
     const weekInt = week ? parseInt(week) : null;
+    const dayInt = day ? parseInt(day) : null;
 
     const duplicates = [];
     const newItems = [];
@@ -77,6 +79,7 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
               await vocabService.update(isDup.existingId, {
                 ...isDup,
                 week: weekInt,
+                day: dayInt,
                 book: { id: bookIdInt },
                 sortOrder
               });
@@ -85,6 +88,7 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
               await vocabService.create({
                 ...rest,
                 week: weekInt,
+                day: dayInt,
                 book: { id: bookIdInt },
                 sortOrder
               });
@@ -93,6 +97,7 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
             await vocabService.create({
               ...itm,
               week: weekInt,
+              day: dayInt,
               book: { id: bookIdInt },
               sortOrder
             });
@@ -213,6 +218,21 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
                   setWeek(v);
                 }}
                 placeholder="Bài..."
+                className="w-full bg-transparent outline-none text-xs font-semibold text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
+              />
+            </div>
+            <div className="w-20 border-l border-slate-200/60 dark:border-slate-800 pl-3">
+              <input
+                type="number"
+                min="1"
+                name="day"
+                value={day}
+                onChange={(e) => {
+                  let v = e.target.value;
+                  if (v !== '' && parseInt(v) < 1) v = '1';
+                  setDay(v);
+                }}
+                placeholder="Ngày..."
                 className="w-full bg-transparent outline-none text-xs font-semibold text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
               />
             </div>

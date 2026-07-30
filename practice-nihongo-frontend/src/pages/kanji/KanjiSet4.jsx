@@ -14,6 +14,8 @@ import KanjiFlashcardView from './components/KanjiFlashcardView';
 import KanjiQuizView from './components/KanjiQuizView';
 import KanjiVocabQuizView from './components/KanjiVocabQuizView';
 import KanjiTypingView from './components/KanjiTypingView';
+const KanjiStudyHeader = React.lazy(() => import('./components/KanjiStudyHeader'));
+const KanjiStudyControls = React.lazy(() => import('./components/KanjiStudyControls'));
 
 export default function KanjiSet4() {
   const navigate = useNavigate();
@@ -24,7 +26,8 @@ export default function KanjiSet4() {
   const [kanjis, setKanjis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPageFilter, setSelectedPageFilter] = useState('all');
+  const [selectedWeek, setSelectedWeek] = useState('');
+  const [selectedDay, setSelectedDay] = useState('');
   const [selectedKanji, setSelectedKanji] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [addedKanjiIds, setAddedKanjiIds] = useState(new Set());
@@ -108,33 +111,47 @@ const parseExamples = (examplesStr) => {
     }
   };
 
-  // Declarative Virtual Paging array builder
-  const uniquePages = React.useMemo(() => {
+  const filterType = React.useMemo(() => {
     const dbWeeks = new Set(kanjis.map(k => k.week).filter(w => w !== null && w !== undefined));
-    if (dbWeeks.size > 0) {
-      return Array.from(dbWeeks).sort((a, b) => a - b).map(w => `week_${w}`);
-    }
+    if (dbWeeks.size > 0) return 'week';
     const dbPages = new Set(kanjis.map(k => k.page).filter(p => p !== null && p !== undefined));
-    if (dbPages.size > 0) {
-      return Array.from(dbPages).sort((a, b) => a - b).map(p => `page_${p}`);
+    if (dbPages.size > 0) return 'page';
+    return 'virtual';
+  }, [kanjis]);
+
+  const uniqueWeeks = React.useMemo(() => {
+    if (filterType === 'week') {
+      const dbWeeks = new Set(kanjis.map(k => k.week).filter(w => w !== null && w !== undefined));
+      return Array.from(dbWeeks).sort((a, b) => a - b);
+    }
+    if (filterType === 'page') {
+      const dbPages = new Set(kanjis.map(k => k.page).filter(p => p !== null && p !== undefined));
+      return Array.from(dbPages).sort((a, b) => a - b);
     }
     const numPages = Math.ceil(kanjis.length / 80);
-    return Array.from({ length: numPages }, (_, i) => i + 1).map(p => `virtual_${p}`);
-  }, [kanjis]);
+    return Array.from({ length: numPages }, (_, i) => i + 1);
+  }, [kanjis, filterType]);
+
+  const uniqueDays = React.useMemo(() => {
+    if (filterType !== 'week' || selectedWeek === '') return [];
+    const days = new Set(kanjis.filter(k => k.week === selectedWeek && k.day).map(k => k.day));
+    return Array.from(days).sort((a, b) => a - b);
+  }, [kanjis, selectedWeek, filterType]);
 
   // Functional matching & clean page slice mapping
   const filteredKanjis = React.useMemo(() => {
     let result = kanjis;
 
-    if (selectedPageFilter !== 'all') {
-      const [type, valStr] = selectedPageFilter.split('_');
-      const val = Number(valStr);
-      if (type === 'week') {
-         result = kanjis.filter(k => k.week === val);
-      } else if (type === 'page') {
-         result = kanjis.filter(k => k.page === val);
-      } else if (type === 'virtual') {
-         result = kanjis.slice((val - 1) * 80, val * 80);
+    if (selectedWeek !== '') {
+      if (filterType === 'week') {
+         result = result.filter(k => k.week === selectedWeek);
+         if (selectedDay !== '') {
+           result = result.filter(k => k.day === selectedDay);
+         }
+      } else if (filterType === 'page') {
+         result = result.filter(k => k.page === selectedWeek);
+      } else if (filterType === 'virtual') {
+         result = kanjis.slice((selectedWeek - 1) * 80, selectedWeek * 80);
       }
     }
 
@@ -148,7 +165,7 @@ const parseExamples = (examplesStr) => {
     }
 
     return result;
-  }, [kanjis, selectedPageFilter, searchQuery, activeMode]);
+  }, [kanjis, selectedWeek, selectedDay, filterType, searchQuery, activeMode]);
 
   const kanjiVocabs = React.useMemo(() => {
     let vocabs = [];
@@ -164,7 +181,7 @@ const parseExamples = (examplesStr) => {
     setFlashcardIndex(0);
     setVocabIndex(0);
     setIsFlipped(false);
-  }, [activeMode, selectedPageFilter, kanjis]);
+  }, [activeMode, selectedWeek, selectedDay, kanjis]);
 
   // Keyboard navigation mapping
   useEffect(() => {
@@ -234,58 +251,24 @@ const parseExamples = (examplesStr) => {
           </button>
         </div>
 
-        {/* Dynamic Page Pills Grid */}
-        <div className="flex flex-wrap items-center gap-2.5 mb-10 max-w-4xl">
-          <span className="text-[10px] font-black tracking-[0.25em] text-slate-300 dark:text-slate-700 uppercase mr-4">
-            {formattedBookCode}
-          </span>
-          <button
-            onClick={() => setSelectedPageFilter('all')}
-            className={`w-10 h-10 text-[9px] font-black tracking-wider uppercase rounded-full transition-all flex items-center justify-center shrink-0 ${
-              selectedPageFilter === 'all'
-                ? 'bg-slate-950 text-white dark:bg-white dark:text-black shadow-sm'
-                : 'bg-slate-50 text-slate-400 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-500 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800'
-            }`}
-          >
-            ALL
-          </button>
-          {uniquePages.map(p => {
-            const [type, val] = p.split('_');
-            const label = val;
-            return (
-              <button
-                key={p}
-                onClick={() => setSelectedPageFilter(p)}
-                className={`w-10 h-10 text-[10px] font-black tracking-wider uppercase rounded-full transition-all flex items-center justify-center shrink-0 ${
-                  selectedPageFilter === p
-                    ? 'bg-slate-950 text-white dark:bg-white dark:text-black shadow-sm'
-                    : 'bg-slate-50 text-slate-400 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-500 dark:hover:bg-slate-800 border border-slate-100 dark:border-slate-800'
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
+        <React.Suspense fallback={<div className="h-40 animate-pulse bg-slate-100 dark:bg-slate-900 rounded-3xl mb-8"></div>}>
+          <KanjiStudyControls
+            filterType={filterType}
+            uniqueWeeks={uniqueWeeks}
+            selectedWeek={selectedWeek}
+            setSelectedWeek={setSelectedWeek}
+            uniqueDays={uniqueDays}
+            selectedDay={selectedDay}
+            setSelectedDay={setSelectedDay}
+          />
 
-        {/* Header Title & Study Modes Swapper Container */}
-        <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-6 mb-12 pb-6 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex-1">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-slate-950 dark:text-white tracking-tight leading-tight md:leading-tight lg:leading-tight">
-              <span className="mr-3">{book ? book.title : 'Đang tải...'}</span>
-              <span className="text-base font-medium text-slate-400 dark:text-slate-600 whitespace-nowrap inline-block">({kanjis.length} chữ)</span>
-            </h1>
-          </div>
-
-          {/* Premium Capsule Mode Switcher */}
-          <div className="bg-slate-50/70 dark:bg-slate-900/50 p-1.5 rounded-2xl flex flex-wrap items-center border border-slate-100/50 dark:border-slate-800/50 self-start shadow-inner gap-1 max-w-full">
-            <button onClick={() => setActiveMode('list')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'list' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Danh sách</button>
-            <button onClick={() => setActiveMode('flashcard')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'flashcard' || activeMode === 'vocab' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Flashcard</button>
-            <button onClick={() => setActiveMode('quiz')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'quiz' || activeMode === 'vocab_quiz' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Trắc nghiệm</button>
-            <button onClick={() => setActiveMode('typing')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'typing' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Gõ phím</button>
-            <button onClick={() => setActiveMode('drawing')} className={`px-4 md:px-5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeMode === 'drawing' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-400 dark:text-slate-500 hover:text-black dark:hover:text-white'}`}>Luyện viết</button>
-          </div>
-        </div>
+          <KanjiStudyHeader
+            book={book}
+            kanjis={kanjis}
+            activeMode={activeMode}
+            setActiveMode={setActiveMode}
+          />
+        </React.Suspense>
 
         {/* --- VIEW 1: DANH SÁCH (TYPOGRAPHIC GRID) --- */}
         {activeMode === 'list' && (

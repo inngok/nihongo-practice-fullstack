@@ -56,11 +56,6 @@ export default function DetailedKanjiCard({ kanji, handleOpenDetail, handleAddFl
              <div className="flex flex-col mb-4 sm:mb-6">
                 <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
                   <span className="text-[9px] sm:text-[10px] font-bold text-slate-300 dark:text-slate-600 uppercase tracking-widest">HÁN VIỆT - Ý NGHĨA</span>
-                  {kanji.day && (
-                    <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-[9px] font-bold text-slate-500 dark:text-slate-400 rounded uppercase tracking-widest">
-                      Bài {kanji.week || 1}.{kanji.day}
-                    </span>
-                  )}
                 </div>
                 <div className="flex items-baseline gap-2 sm:gap-3 flex-wrap">
                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white uppercase leading-normal pt-1">{kanji.hanviet || 'CHƯA CÓ'}</h2>

@@ -38,15 +38,6 @@ export default function VocabListMode({ activeData, searchTerm, setSearchTerm, c
       </div>
 
       <div className="flex flex-col bg-white dark:bg-slate-950/50 rounded-[2rem] overflow-hidden border border-slate-50 dark:border-slate-900 shadow-sm">
-        {/* Header Row */}
-        <div className={`hidden sm:grid p-4 md:px-7 md:py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 text-[10px] font-black text-slate-400 uppercase tracking-widest ${
-          showHanViet ? 'grid-cols-[1fr_auto_auto_1fr]' : 'grid-cols-[1fr_auto_1fr]'
-        }`}>
-          <div className="pl-14">Từ vựng</div>
-          <div className="w-24 text-center">Bài học</div>
-          {showHanViet && <div className="w-24 text-center">Hán Việt</div>}
-          <div className="text-right pr-4">Ý nghĩa</div>
-        </div>
 
         {activeData
           .filter(i => {
@@ -59,9 +50,8 @@ export default function VocabListMode({ activeData, searchTerm, setSearchTerm, c
           .map((item, idx) => (
             <div
               key={item.id}
-              className={`group grid grid-cols-1 gap-4 p-5 md:p-7 hover:bg-slate-50/80 dark:hover:bg-slate-900/50 transition-all border-b border-slate-50 dark:border-slate-900 last:border-none items-center ${
-                showHanViet ? 'sm:grid-cols-[1fr_auto_auto_1fr]' : 'sm:grid-cols-[1fr_auto_1fr]'
-              }`}
+              className={`group grid grid-cols-1 gap-4 p-5 md:p-7 hover:bg-slate-50/80 dark:hover:bg-slate-900/50 transition-all border-b border-slate-50 dark:border-slate-900 last:border-none items-center ${showHanViet ? 'sm:grid-cols-[1fr_auto_1fr]' : 'sm:grid-cols-[1fr_1fr]'
+                }`}
             >
               {/* Left Column: Index + Kanji + Reading */}
               <div className="flex items-center gap-4 md:gap-8 min-w-0">
@@ -79,20 +69,9 @@ export default function VocabListMode({ activeData, searchTerm, setSearchTerm, c
                 </div>
               </div>
 
-              {/* Day Column */}
-              <div className="hidden sm:flex justify-center px-4 w-24">
-                {item.day ? (
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center whitespace-nowrap">
-                    {item.week || item.unit || item.lesson || 1}.{item.day}
-                  </span>
-                ) : (
-                  <span className="text-slate-200 dark:text-slate-800 select-none">-</span>
-                )}
-              </div>
-
               {/* Middle Column: Han Viet */}
               {showHanViet && (
-                <div className="hidden sm:flex justify-center px-4 w-24 border-l border-slate-100 dark:border-slate-800">
+                <div className="hidden sm:flex justify-center px-4 w-24">
                   {item.hanviet ? (
                     <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center">
                       {item.hanviet}
@@ -107,18 +86,13 @@ export default function VocabListMode({ activeData, searchTerm, setSearchTerm, c
               <div className="flex items-center justify-start sm:justify-end gap-4 pl-10 sm:pl-0">
                 {/* On mobile, show Day and Han Viet if enabled */}
                 <div className="sm:hidden flex flex-col gap-1 mr-auto pl-2">
-                  {item.day && (
-                    <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                      Bài {item.week || item.unit || item.lesson || 1}.{item.day}
-                    </span>
-                  )}
                   {showHanViet && item.hanviet && (
                     <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                       {item.hanviet}
                     </span>
                   )}
                 </div>
-                
+
                 <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] md:text-[11px] font-medium rounded-full uppercase tracking-wider group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black transition-all text-right break-words line-clamp-2">
                   {item.meaning}
                 </div>
