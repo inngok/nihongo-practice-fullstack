@@ -23,7 +23,7 @@ export default function KanjiQuizView({ filteredKanjis, progressKey }) {
     if (!currentUser || !actualProgressKey || filteredKanjis.length < 4) return;
     
     isProgressLoading.current = true;
-    fetchWithAuth(`${API_BASE_URL}/progress/${actualProgressKey}`)
+    fetchWithAuth(`${API_BASE_URL}/progress/${actualProgressKey}?t=${Date.now()}`)
       .then(res => res.json())
       .then(resData => {
         isProgressLoading.current = false;

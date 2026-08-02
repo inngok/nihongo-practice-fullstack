@@ -191,7 +191,7 @@ const parseExamples = (examplesStr) => {
     }
     
     isProgressLoading.current = true;
-    fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`)
+    fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}?t=${Date.now()}`)
       .then(res => res.json())
       .then(resData => {
         isProgressLoading.current = false;

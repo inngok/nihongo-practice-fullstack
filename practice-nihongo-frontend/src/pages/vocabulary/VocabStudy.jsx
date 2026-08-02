@@ -252,7 +252,7 @@ export default function VocabStudy() {
   useEffect(() => {
     if (!currentUser || activeData.length === 0 || !bookId) return;
     
-    fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`)
+    fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}?t=${Date.now()}`)
       .then(res => res.json())
       .then(resData => {
         if (!resData.data) return;

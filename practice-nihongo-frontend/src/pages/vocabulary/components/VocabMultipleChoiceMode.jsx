@@ -55,9 +55,16 @@ export default function VocabMultipleChoiceMode({
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const text = customText || currentItem.reading || currentItem.hiragana || currentItem.word;
+      if (!text) return;
+      
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ja-JP';
-      utterance.rate = 0.9;
+      utterance.rate = 0.85;
+      
+      const voices = window.speechSynthesis.getVoices();
+      const jaVoice = voices.find(v => v.lang === 'ja-JP' && (v.name.includes('Google') || v.name.includes('Premium')));
+      if (jaVoice) utterance.voice = jaVoice;
+      
       window.speechSynthesis.speak(utterance);
     }
   };
