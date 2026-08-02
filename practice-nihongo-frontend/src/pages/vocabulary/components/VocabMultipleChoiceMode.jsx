@@ -91,8 +91,8 @@ export default function VocabMultipleChoiceMode({
   return (
     <div className="flex flex-col gap-4 sm:gap-8 animate-in fade-in duration-500 max-w-4xl mx-auto w-full">
       {/* Control Buttons */}
-      <div className="flex justify-between items-center gap-4 px-2 sticky bottom-4 z-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md py-3 sm:py-0 rounded-2xl sm:static sm:bg-transparent sm:backdrop-blur-none shadow-sm sm:shadow-none border border-slate-100 dark:border-slate-800 sm:border-none">
-        <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-2 w-full">
+        <div className="flex flex-wrap items-center justify-center gap-3 w-full sm:w-auto">
           <button
             onClick={() => setAutoPlayAudio(!autoPlayAudio)}
             className={`p-2 rounded-lg transition-all border ${autoPlayAudio ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 border-indigo-100 dark:border-indigo-900' : 'bg-slate-50 dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-slate-800 hover:text-slate-600'}`}
@@ -116,23 +116,30 @@ export default function VocabMultipleChoiceMode({
             HỌC LẠI
           </button>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-0">
-          <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap hidden sm:inline">VIỆT <span className="lowercase">v</span> NHẬT</span>
-          <button
-            onClick={() => setShowVietnameseFirst(!showVietnameseFirst)}
-            className={`relative shrink-0 w-8 sm:w-11 h-4 sm:h-6 rounded-full transition-all duration-300 mr-2 ${showVietnameseFirst ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-            title="Đổi chiều Việt - Nhật"
-          >
-            <div className={`absolute top-0.5 sm:top-1 w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
-          </button>
+        
+        <div className="flex items-center justify-center gap-4 w-full sm:w-auto bg-slate-50 dark:bg-slate-900/50 p-2 sm:p-0 rounded-xl sm:bg-transparent">
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">VIỆT <span className="lowercase">v</span> NHẬT</span>
+            <button
+              onClick={() => setShowVietnameseFirst(!showVietnameseFirst)}
+              className={`relative shrink-0 w-9 sm:w-11 h-5 sm:h-6 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+              title="Đổi chiều Việt - Nhật"
+            >
+              <div className={`absolute top-0.5 sm:top-1 w-4 h-4 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
+            </button>
+          </div>
           
-          <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">XÁO TRỘN</span>
-          <button
-            onClick={() => setIsShuffle(!isShuffle)}
-            className={`relative shrink-0 w-8 sm:w-11 h-4 sm:h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-          >
-            <div className={`absolute top-0.5 sm:top-1 w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-300 ${isShuffle ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
-          </button>
+          <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">XÁO TRỘN</span>
+            <button
+              onClick={() => setIsShuffle(!isShuffle)}
+              className={`relative shrink-0 w-9 sm:w-11 h-5 sm:h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+            >
+              <div className={`absolute top-0.5 sm:top-1 w-4 h-4 rounded-full transition-all duration-300 ${isShuffle ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
+            </button>
+          </div>
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import kanjiService from '../../api/kanjiService';
 import bookService from '../../api/bookService';
 import flashcardService from '../../api/flashcardService';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config';
 import { message, Modal } from 'antd';
 import { HeartOutlined, HeartFilled } from '@ant-design/icons';
 import KanjiCanvas from './KanjiCanvas';
@@ -21,6 +22,7 @@ export default function KanjiSet4() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const bookId = searchParams.get('bookId');
+  const { currentUser, fetchWithAuth } = useAuth();
 
   const [book, setBook] = useState(null);
   const [kanjis, setKanjis] = useState([]);
@@ -176,12 +178,62 @@ const parseExamples = (examplesStr) => {
     return vocabs;
   }, [filteredKanjis]);
 
-  // Reset indices declarative listener
+  const progressKey = `kanjiset4_${bookId}_${selectedWeek}_${selectedDay}`;
+  const isProgressLoading = useRef(false);
+
+  // Restore progress from backend
   useEffect(() => {
-    setFlashcardIndex(0);
-    setVocabIndex(0);
-    setIsFlipped(false);
-  }, [activeMode, selectedWeek, selectedDay, kanjis]);
+    if (!currentUser || kanjis.length === 0 || !bookId) {
+      setFlashcardIndex(0);
+      setVocabIndex(0);
+      setIsFlipped(false);
+      return;
+    }
+    
+    isProgressLoading.current = true;
+    fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`)
+      .then(res => res.json())
+      .then(resData => {
+        isProgressLoading.current = false;
+        if (resData.data) {
+          try {
+            const state = JSON.parse(resData.data);
+            if (state.activeMode !== undefined) setActiveMode(state.activeMode);
+            if (state.flashcardIndex !== undefined) setFlashcardIndex(state.flashcardIndex);
+            if (state.vocabIndex !== undefined) setVocabIndex(state.vocabIndex);
+            setIsFlipped(false);
+            return;
+          } catch(e) {}
+        }
+        
+        // Fallback to reset if no data
+        setFlashcardIndex(0);
+        setVocabIndex(0);
+        setIsFlipped(false);
+      }).catch(() => {
+        isProgressLoading.current = false;
+        setFlashcardIndex(0);
+        setVocabIndex(0);
+        setIsFlipped(false);
+      });
+  }, [progressKey, currentUser, kanjis.length, bookId]);
+
+  // Debounced save progress
+  useEffect(() => {
+    if (!currentUser || !bookId || kanjis.length === 0 || isProgressLoading.current) return;
+    if (activeMode === 'list') return; // Don't save list mode
+
+    const timer = setTimeout(() => {
+      if (isProgressLoading.current) return;
+      const state = { activeMode, flashcardIndex, vocabIndex };
+      fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: JSON.stringify(state) })
+      }).catch(() => {});
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [activeMode, flashcardIndex, vocabIndex, progressKey, currentUser, kanjis.length, bookId]);
 
   // Keyboard navigation mapping
   useEffect(() => {
@@ -365,13 +417,14 @@ const parseExamples = (examplesStr) => {
         )}
 
         {activeMode === 'quiz' && (
-          <KanjiQuizView filteredKanjis={filteredKanjis} />
+          <KanjiQuizView filteredKanjis={filteredKanjis} progressKey={progressKey} />
         )}
 
         {/* --- VIEW 7: TRẮC NGHIỆM TỪ VỰNG --- */}
         {activeMode === 'vocab_quiz' && (
           <KanjiVocabQuizView
             kanjiVocabs={kanjiVocabs}
+            progressKey={progressKey}
           />
         )}
 

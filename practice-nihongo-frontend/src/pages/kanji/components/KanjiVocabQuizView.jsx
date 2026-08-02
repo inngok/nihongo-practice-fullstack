@@ -1,8 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import VocabMultipleChoiceMode from '../../vocabulary/components/VocabMultipleChoiceMode';
 import VocabResultsModal from '../../vocabulary/components/VocabResultsModal';
+import { useAuth } from '../../../context/AuthContext';
+import { API_BASE_URL } from '../../../config';
 
-export default function KanjiVocabQuizView({ kanjiVocabs }) {
+export default function KanjiVocabQuizView({ kanjiVocabs, progressKey }) {
+  const { currentUser, fetchWithAuth } = useAuth();
+  const actualProgressKey = progressKey ? `${progressKey}_vocab_quiz` : null;
+  const isProgressLoading = useRef(false);
+
   const [studyData, setStudyData] = useState([]);
   const [fullData, setFullData] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -11,6 +17,45 @@ export default function KanjiVocabQuizView({ kanjiVocabs }) {
   const [showResults, setShowResults] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
   const [showVietnameseFirst, setShowVietnameseFirst] = useState(false);
+
+  // Restore progress from backend
+  useEffect(() => {
+    if (!currentUser || !actualProgressKey || !kanjiVocabs || kanjiVocabs.length < 4) return;
+    
+    isProgressLoading.current = true;
+    fetchWithAuth(`${API_BASE_URL}/progress/${actualProgressKey}`)
+      .then(res => res.json())
+      .then(resData => {
+        isProgressLoading.current = false;
+        if (resData.data) {
+          try {
+            const state = JSON.parse(resData.data);
+            if (state.currentIndex !== undefined) setCurrentIndex(state.currentIndex);
+            if (state.score !== undefined) setScore(state.score);
+            if (state.completedIds !== undefined) setCompletedIds(state.completedIds);
+            if (state.isShuffle !== undefined) setIsShuffle(state.isShuffle);
+          } catch(e) {}
+        }
+      }).catch(() => {
+        isProgressLoading.current = false;
+      });
+  }, [actualProgressKey, currentUser, kanjiVocabs]);
+
+  // Debounced save progress
+  useEffect(() => {
+    if (!currentUser || !actualProgressKey || !kanjiVocabs || kanjiVocabs.length < 4 || isProgressLoading.current) return;
+    
+    const timer = setTimeout(() => {
+      if (isProgressLoading.current) return;
+      const state = { currentIndex, score, completedIds, isShuffle };
+      fetchWithAuth(`${API_BASE_URL}/progress/${actualProgressKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: JSON.stringify(state) })
+      }).catch(() => {});
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [currentIndex, score, completedIds, isShuffle, actualProgressKey, currentUser, kanjiVocabs]);
 
   useEffect(() => {
     if (!kanjiVocabs || kanjiVocabs.length < 4) return;

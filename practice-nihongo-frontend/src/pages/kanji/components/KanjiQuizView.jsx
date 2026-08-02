@@ -1,20 +1,75 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../../../context/AuthContext';
+import { API_BASE_URL } from '../../../config';
 
 const normalizeText = (str) => {
   if (!str) return '';
   return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
 };
 
-export default function KanjiQuizView({ filteredKanjis }) {
+export default function KanjiQuizView({ filteredKanjis, progressKey }) {
+  const { currentUser, fetchWithAuth } = useAuth();
+  const actualProgressKey = progressKey ? `${progressKey}_quiz` : null;
+  const isProgressLoading = useRef(false);
+
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [quizIndex, setQuizIndex] = useState(0);
   const [quizScore, setQuizScore] = useState(0);
   const [quizFinished, setQuizFinished] = useState(false);
   const [quizSelectedOption, setQuizSelectedOption] = useState(null);
 
+  // Restore progress from backend
   useEffect(() => {
-    generateQuiz();
-  }, [filteredKanjis]);
+    if (!currentUser || !actualProgressKey || filteredKanjis.length < 4) return;
+    
+    isProgressLoading.current = true;
+    fetchWithAuth(`${API_BASE_URL}/progress/${actualProgressKey}`)
+      .then(res => res.json())
+      .then(resData => {
+        isProgressLoading.current = false;
+        if (resData.data) {
+          try {
+            const state = JSON.parse(resData.data);
+            if (state.quizIndex !== undefined) setQuizIndex(state.quizIndex);
+            if (state.quizScore !== undefined) setQuizScore(state.quizScore);
+            // If we have saved questions, we can restore them so the quiz doesn't reshuffle
+            if (state.quizQuestions && state.quizQuestions.length === filteredKanjis.length) {
+              setQuizQuestions(state.quizQuestions);
+            } else {
+              generateQuiz(); // generate new if lengths don't match
+            }
+            return;
+          } catch(e) {}
+        }
+        generateQuiz(); // Generate if no state
+      }).catch(() => {
+        isProgressLoading.current = false;
+        generateQuiz();
+      });
+  }, [actualProgressKey, currentUser, filteredKanjis]);
+
+  // Debounced save progress
+  useEffect(() => {
+    if (!currentUser || !actualProgressKey || filteredKanjis.length < 4 || isProgressLoading.current || quizQuestions.length === 0) return;
+    
+    const timer = setTimeout(() => {
+      if (isProgressLoading.current) return;
+      const state = { quizIndex, quizScore, quizQuestions };
+      fetchWithAuth(`${API_BASE_URL}/progress/${actualProgressKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: JSON.stringify(state) })
+      }).catch(() => {});
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [quizIndex, quizScore, quizQuestions, actualProgressKey, currentUser, filteredKanjis]);
+
+  // Initial generation if we aren't loading progress
+  useEffect(() => {
+    if (!currentUser || !actualProgressKey) {
+      generateQuiz();
+    }
+  }, [filteredKanjis, currentUser, actualProgressKey]);
 
   const generateQuiz = () => {
     if (filteredKanjis.length < 4) {

@@ -94,11 +94,22 @@ export default function VocabStudy() {
         
       if (stored.some(i => i.id === vocabItem.id)) return;
       
-      stored.push({
-        ...vocabItem,
-        reviewAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-      });
-      localStorage.setItem('vocab_review_failed', JSON.stringify(stored));
+      const newStored = [
+        ...stored,
+        {
+          ...vocabItem,
+          reviewAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        }
+      ];
+      localStorage.setItem('vocab_review_failed', JSON.stringify(newStored));
+
+      if (currentUser) {
+        fetchWithAuth(`${API_BASE_URL}/progress/vocab_review_failed`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: JSON.stringify(newStored) })
+        }).catch(() => {});
+      }
     } catch (e) {
       console.error(e);
     }
@@ -108,7 +119,21 @@ export default function VocabStudy() {
     if (bookId) {
       fetchVocab();
     }
-  }, [bookId]);
+    
+    // Sync vocab_review_failed from backend
+    if (currentUser) {
+      fetchWithAuth(`${API_BASE_URL}/progress/vocab_review_failed`)
+        .then(res => res.json())
+        .then(resData => {
+          if (resData.data) {
+            try {
+              const state = JSON.parse(resData.data);
+              localStorage.setItem('vocab_review_failed', JSON.stringify(state));
+            } catch(e) {}
+          }
+        }).catch(() => {});
+    }
+  }, [bookId, currentUser]);
 
   useEffect(() => {
     const handleDataChanged = () => {
@@ -236,6 +261,8 @@ export default function VocabStudy() {
           if (state.currentIndex !== undefined && state.currentIndex < activeData.length) {
             setCurrentIndex(state.currentIndex);
           }
+          if (state.score !== undefined) setScore(state.score);
+          if (state.completedIds !== undefined) setCompletedIds(state.completedIds);
         } catch (e) { }
       }).catch(() => { });
   }, [bookId, selectedUnit, activeData.length, currentUser]);
@@ -245,7 +272,7 @@ export default function VocabStudy() {
     
     // debounce: only save progress 2s after the user stops changing state
     const timer = setTimeout(() => {
-      const state = { currentIndex, activeMode };
+      const state = { currentIndex, activeMode, score, completedIds };
       fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -254,7 +281,7 @@ export default function VocabStudy() {
     }, 2000);
     
     return () => clearTimeout(timer);
-  }, [currentIndex, activeMode, bookId, selectedUnit, currentUser]);
+  }, [currentIndex, activeMode, score, completedIds, bookId, selectedUnit, currentUser]);
 
   useEffect(() => {
     if (studyData.length > 0 && currentIndex >= studyData.length) {
