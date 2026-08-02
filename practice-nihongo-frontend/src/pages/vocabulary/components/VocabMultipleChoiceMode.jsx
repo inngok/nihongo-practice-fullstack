@@ -52,20 +52,38 @@ export default function VocabMultipleChoiceMode({
   }, [currentIndex]);
 
   const playAudio = (customText = null) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const text = customText || currentItem.reading || currentItem.hiragana || currentItem.word;
-      if (!text) return;
+    const text = customText || currentItem.reading || currentItem.hiragana || currentItem.word;
+    if (!text) return;
+    
+    try {
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ja&q=${encodeURIComponent(text)}`;
+      const audio = new Audio(url);
+      audio.playbackRate = 0.85;
       
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ja-JP';
-      utterance.rate = 0.85;
-      
-      const voices = window.speechSynthesis.getVoices();
-      const jaVoice = voices.find(v => v.lang === 'ja-JP' && (v.name.includes('Google') || v.name.includes('Premium')));
-      if (jaVoice) utterance.voice = jaVoice;
-      
-      window.speechSynthesis.speak(utterance);
+      audio.play().catch(e => {
+        console.warn("Google TTS failed, fallback to speechSynthesis:", e);
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'ja-JP';
+          utterance.rate = 0.85;
+          const voices = window.speechSynthesis.getVoices();
+          const jaVoice = voices.find(v => v.lang === 'ja-JP' && (v.name.includes('Google') || v.name.includes('Premium')));
+          if (jaVoice) utterance.voice = jaVoice;
+          window.speechSynthesis.speak(utterance);
+        }
+      });
+    } catch (error) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ja-JP';
+        utterance.rate = 0.85;
+        const voices = window.speechSynthesis.getVoices();
+        const jaVoice = voices.find(v => v.lang === 'ja-JP' && (v.name.includes('Google') || v.name.includes('Premium')));
+        if (jaVoice) utterance.voice = jaVoice;
+        window.speechSynthesis.speak(utterance);
+      }
     }
   };
 

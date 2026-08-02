@@ -407,6 +407,17 @@ export default function KanjiAddModal({
               </div>
             </div>
 
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Từ vựng (Ví dụ)</label>
+              <textarea
+                name="examples"
+                value={formData.examples || ''}
+                onChange={handleInputChange}
+                placeholder="Ví dụ: 食事(しょくじ): Bữa ăn; 食堂(しょくどう): Nhà ăn"
+                className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700 min-h-[80px] resize-y"
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="space-y-2">
                 <label className="text-[10px] font-medium uppercase tracking-widest text-slate-400 px-1 block">Giáo trình</label>
