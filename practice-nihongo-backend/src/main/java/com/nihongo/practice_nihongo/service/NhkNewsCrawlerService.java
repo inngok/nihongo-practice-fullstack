@@ -233,10 +233,12 @@ public class NhkNewsCrawlerService {
             newsArticleRepository.save(article);
             log.info("Lưu thành công bài báo: " + newsId);
 
-            try {
-                notificationService.broadcastNewArticle(article);
-            } catch (Exception ex) {
-                log.error("Lỗi khi gửi thông báo tin tức mới: ", ex);
+            if (!skipAi) {
+                try {
+                    notificationService.broadcastNewArticle(article);
+                } catch (Exception ex) {
+                    log.error("Lỗi khi gửi thông báo tin tức mới: ", ex);
+                }
             }
 
         } catch (Exception e) {

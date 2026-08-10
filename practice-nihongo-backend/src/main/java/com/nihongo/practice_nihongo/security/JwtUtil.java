@@ -12,12 +12,21 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import org.springframework.beans.factory.annotation.Value;
+import jakarta.annotation.PostConstruct;
 
 @Component
 public class JwtUtil {
 
-    private final String secretString = "antigravity_nihongo_secret_key_fixed_minimum_256_bits_for_security_hs256";
-    private final Key key = Keys.hmacShaKeyFor(secretString.getBytes());
+    @Value("${jwt.secret}")
+    private String secretString;
+
+    private Key key;
+
+    @PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(secretString.getBytes());
+    }
 
     private final long jwtExpirationMs = 86400000; 
 

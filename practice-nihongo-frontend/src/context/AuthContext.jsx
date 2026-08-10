@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }) => {
       
       if (data.requiresVerification) {
         messageApi.success({
-          content: 'Đăng ký thành công! Vui lòng kiểm tra email để nhận mã xác thực.',
+          content: data.message || 'Vui lòng kiểm tra email để nhận mã xác thực.',
           duration: 3,
           style: { marginTop: '10vh' }
         });

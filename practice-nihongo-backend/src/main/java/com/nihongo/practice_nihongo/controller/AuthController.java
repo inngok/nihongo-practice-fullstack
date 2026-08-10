@@ -23,8 +23,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Optional;
 import java.util.Map;
+import com.nihongo.practice_nihongo.service.RateLimitService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -55,6 +57,17 @@ public class AuthController {
     @Autowired
     private OtpService otpService;
 
+    @Autowired
+    private RateLimitService rateLimitService;
+
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        return ip != null ? ip.split(",")[0].trim() : "unknown";
+    }
+
     @Operation(summary = "Đăng nhập")
     @PostMapping("/login")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequest authRequest) throws Exception {
@@ -84,7 +97,11 @@ public class AuthController {
 
     @Operation(summary = "Đăng ký tài khoản mới")
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest, HttpServletRequest request) {
+        String ip = getClientIp(request);
+        if (!rateLimitService.isAllowed(ip, "register")) {
+            return ResponseEntity.status(429).body("Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau 5 phút.");
+        }
         Optional<User> existingUserOpt = userRepository.findByEmail(registerRequest.getEmail());
         if (existingUserOpt.isPresent()) {
             User existingUser = existingUserOpt.get();
@@ -121,12 +138,17 @@ public class AuthController {
 
     @Operation(summary = "Xác thực email")
     @PostMapping("/verify-email")
-    public ResponseEntity<?> verifyEmail(@RequestBody VerifyEmailRequest request) {
-        if (!otpService.validateOtp(request.getEmail(), request.getOtp())) {
+    public ResponseEntity<?> verifyEmail(@RequestBody VerifyEmailRequest body, HttpServletRequest request) {
+        String ip = getClientIp(request);
+        if (!rateLimitService.isAllowed(ip, "verify-email")) {
+            return ResponseEntity.status(429).body("Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau 5 phút.");
+        }
+        
+        if (!otpService.validateOtp(body.getEmail(), body.getOtp())) {
             return ResponseEntity.badRequest().body("Mã xác thực không hợp lệ hoặc đã hết hạn.");
         }
 
-        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        Optional<User> userOpt = userRepository.findByEmail(body.getEmail());
         if (userOpt.isEmpty()) {
             return ResponseEntity.badRequest().body("Không tìm thấy tài khoản.");
         }

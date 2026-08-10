@@ -9,14 +9,15 @@ export function NotificationProvider({ children }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
 
-  // Load notifications from local storage on mount
+  // Load notifications from local storage on mount and fetch missed ones from server
   useEffect(() => {
     const saved = localStorage.getItem('nihongo_notifications_history');
+    let localNotifs = [];
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        setNotifications(parsed);
-        setUnreadCount(parsed.filter(n => !n.read).length);
+        localNotifs = JSON.parse(saved);
+        setNotifications(localNotifs);
+        setUnreadCount(localNotifs.filter(n => !n.read).length);
       } catch (e) {
         console.error(e);
       }
@@ -24,6 +25,46 @@ export function NotificationProvider({ children }) {
       setNotifications([]);
       setUnreadCount(0);
     }
+
+    // Fetch missed notifications from backend
+    fetch('/api/notifications')
+      .then(res => res.json())
+      .then(data => {
+        setNotifications(prev => {
+          let updatedLocal = [...prev];
+          let hasNew = false;
+          
+          data.forEach(serverNotif => {
+            const exists = updatedLocal.some(local => 
+               (local.type === 'NEW_ARTICLE' && String(local.id) === String(serverNotif.referenceId)) ||
+               (local.type === 'SYSTEM' && local.title === serverNotif.title) ||
+               String(local.id) === String(serverNotif.id)
+            );
+            
+            if (!exists) {
+               hasNew = true;
+               updatedLocal.push({
+                  id: serverNotif.referenceId || serverNotif.id,
+                  title: serverNotif.type === 'NEW_ARTICLE' ? serverNotif.title.replace('Bài báo mới: ', '') : serverNotif.title,
+                  type: serverNotif.type,
+                  timestamp: serverNotif.createdAt,
+                  read: false,
+                  imageUrl: null
+               });
+            }
+          });
+          
+          if (hasNew) {
+             updatedLocal.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+             updatedLocal = updatedLocal.slice(0, 20);
+             localStorage.setItem('nihongo_notifications_history', JSON.stringify(updatedLocal));
+             setUnreadCount(updatedLocal.filter(n => !n.read).length);
+             return updatedLocal;
+          }
+          return prev;
+        });
+      })
+      .catch(err => console.error('Failed to fetch historical notifications:', err));
   }, []);
 
   const addNotification = useCallback((notif) => {
