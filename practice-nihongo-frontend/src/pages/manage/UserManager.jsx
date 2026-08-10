@@ -114,6 +114,22 @@ export default function UserManager() {
       key: 'email',
     },
     {
+      title: 'Xác thực',
+      key: 'verified',
+      render: (_, record) => {
+        const isVerified = record.verified || record.isVerified;
+        return (
+          <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+            isVerified 
+              ? 'bg-green-50 text-green-600 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800' 
+              : 'bg-red-50 text-red-600 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800'
+          }`}>
+            {isVerified ? 'ĐÃ XÁC THỰC' : 'CHƯA XÁC THỰC'}
+          </span>
+        );
+      }
+    },
+    {
       title: 'Vai trò',
       dataIndex: 'role',
       key: 'role',

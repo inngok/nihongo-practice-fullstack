@@ -70,7 +70,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/news/**", "/api/grammar/**", "/api/vocab/**", "/api/kanji/**", "/api/books/**", "/api/jlpt-vocab/**", "/api/confusing-grammar/**", "/api/notifications/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/news/**", "/api/grammars/**", "/api/vocabs/**", "/api/kanjis/**", "/api/books/**", "/api/jlpt-vocabs/**", "/api/confusing-grammars/**", "/api/notifications/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/news/**", "/api/grammars/**", "/api/vocabs/**", "/api/kanjis/**", "/api/books/**", "/api/jlpt-vocabs/**", "/api/confusing-grammars/**", "/api/notifications/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/news/**", "/api/grammars/**", "/api/vocabs/**", "/api/kanjis/**", "/api/books/**", "/api/jlpt-vocabs/**", "/api/confusing-grammars/**", "/api/notifications/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/news/**", "/api/grammars/**", "/api/vocabs/**", "/api/kanjis/**", "/api/books/**", "/api/jlpt-vocabs/**", "/api/confusing-grammars/**", "/api/notifications/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .headers(headers -> headers

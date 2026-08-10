@@ -29,6 +29,15 @@ public class BookService {
                 bookRepository.save(book);
             }
         }
+        
+        books.sort((b1, b2) -> {
+            int num1 = 0;
+            int num2 = 0;
+            try { if (b1.getNum() != null) num1 = Integer.parseInt(b1.getNum().trim()); } catch (Exception e) {}
+            try { if (b2.getNum() != null) num2 = Integer.parseInt(b2.getNum().trim()); } catch (Exception e) {}
+            return Integer.compare(num1, num2);
+        });
+        
         return books;
     }
 

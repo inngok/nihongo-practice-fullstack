@@ -173,6 +173,44 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
+  const forgotPassword = async (email) => {
+    try {
+      const response = await fetch(`${API_URL}/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Yêu cầu khôi phục mật khẩu thất bại');
+      }
+      const data = await response.json();
+      messageApi.success(data.message || 'OTP đã được gửi');
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email, otp, newPassword) => {
+    try {
+      const response = await fetch(`${API_URL}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp, newPassword }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Đặt lại mật khẩu thất bại');
+      }
+      const data = await response.json();
+      messageApi.success(data.message || 'Đặt lại mật khẩu thành công');
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   const updateProfile = async (name, password, jlptLevel) => {
     try {
       const token = localStorage.getItem('nihongo_token');
@@ -333,6 +371,8 @@ export const AuthProvider = ({ children }) => {
     register,
     verifyEmail,
     logout,
+    forgotPassword,
+    resetPassword,
     updateProfile,
     fetchWithAuth
   };

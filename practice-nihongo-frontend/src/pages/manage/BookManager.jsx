@@ -23,6 +23,7 @@ export default function BookManager() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedLevel, setSelectedLevel] = useState('ALL');
   
   // Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -77,6 +78,15 @@ export default function BookManager() {
 
   const openAddModal = () => {
     resetForm();
+    
+    let nextNum = 1;
+    if (books && books.length > 0) {
+      const maxNum = Math.max(...books.map(b => parseInt(b.num, 10) || 0));
+      nextNum = maxNum + 1;
+    }
+    const formattedNum = nextNum < 10 ? `0${nextNum}` : `${nextNum}`;
+    
+    setFormData(prev => ({ ...prev, num: formattedNum }));
     setIsModalOpen(true);
   };
 
@@ -176,13 +186,27 @@ export default function BookManager() {
             </div>
             <p className="text-slate-400 dark:text-slate-500 text-xs font-medium">Danh mục sách và tài liệu học tập hệ thống</p>
           </div>
-          <button
-            onClick={openAddModal}
-            className="bg-black text-white dark:bg-white dark:text-black px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-sm flex items-center gap-2 self-start md:self-auto"
-          >
-            <PlusOutlined className="text-[10px]" />
-            Thêm mới
-          </button>
+          <div className="flex gap-4 self-start md:self-auto">
+            <select
+              value={selectedLevel}
+              onChange={(e) => setSelectedLevel(e.target.value)}
+              className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 px-4 py-2.5 rounded-lg text-[11px] font-bold outline-none cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+            >
+              <option value="ALL">Tất cả trình độ</option>
+              <option value="N1">Trình độ N1</option>
+              <option value="N2">Trình độ N2</option>
+              <option value="N3">Trình độ N3</option>
+              <option value="N4">Trình độ N4</option>
+              <option value="N5">Trình độ N5</option>
+            </select>
+            <button
+              onClick={openAddModal}
+              className="bg-black text-white dark:bg-white dark:text-black px-6 py-2.5 rounded-lg text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-sm flex items-center gap-2"
+            >
+              <PlusOutlined className="text-[10px]" />
+              Thêm mới
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -203,8 +227,8 @@ export default function BookManager() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-850">
-                {books.length > 0 ? (
-                  books.map((item) => (
+                {(selectedLevel === 'ALL' ? books : books.filter(b => b.levelLabel === selectedLevel)).length > 0 ? (
+                  (selectedLevel === 'ALL' ? books : books.filter(b => b.levelLabel === selectedLevel)).map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-850/30 transition-colors group">
                       <td className="px-6 py-5 font-bold text-slate-300 dark:text-slate-600">#{item.num}</td>
                       <td className="px-6 py-5">

@@ -42,7 +42,7 @@ const Profile = lazy(() => import("../pages/profile/Profile"));
 const JlptPastVocab = lazy(() => import("../pages/exam/jlpt/JlptPastVocab"));
 const NewsList = lazy(() => import("../pages/news/NewsList"));
 const NewsDetail = lazy(() => import("../pages/news/NewsDetail"));
-const SpeakingExercise = lazy(() => import("../pages/speaking/SpeakingExercise"));
+
 
 // Admin Management
 const Dashboard = lazy(() => import("../pages/manage/Dashboard"));
@@ -229,7 +229,7 @@ export default function RouteMap() {
           <Route path="exam-jlpt">
             <Route index element={<ExamJLPT />} />
             <Route path="past-vocab/:level" element={<JlptPastVocab />} />
-            <Route path="speaking" element={<SpeakingExercise />} />
+
             <Route path="listening" element={<ListeningDemo />} />
           </Route>
 

@@ -23,4 +23,17 @@ public class EmailService {
 
         mailSender.send(message);
     }
+    public void sendPasswordResetOtp(String toEmail, String otp) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("Mã khôi phục mật khẩu Practice Nihongo");
+        message.setText("Chào bạn,\n\n"
+                + "Bạn đã yêu cầu khôi phục mật khẩu.\n"
+                + "Mã xác nhận (OTP) của bạn là: " + otp + "\n"
+                + "Mã này có hiệu lực trong vòng 3 phút.\n\n"
+                + "Nếu bạn không yêu cầu đổi mật khẩu, vui lòng bỏ qua email này.\n\n"
+                + "Trân trọng,\nPractice Nihongo");
+
+        mailSender.send(message);
+    }
 }

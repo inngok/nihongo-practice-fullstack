@@ -6,6 +6,8 @@ import com.nihongo.practice_nihongo.dto.RegisterRequest;
 import com.nihongo.practice_nihongo.dto.TokenRefreshRequest;
 import com.nihongo.practice_nihongo.dto.TokenRefreshResponse;
 import com.nihongo.practice_nihongo.dto.VerifyEmailRequest;
+import com.nihongo.practice_nihongo.dto.ForgotPasswordRequest;
+import com.nihongo.practice_nihongo.dto.ResetPasswordRequest;
 import com.nihongo.practice_nihongo.model.RefreshToken;
 import com.nihongo.practice_nihongo.model.User;
 import com.nihongo.practice_nihongo.repository.UserRepository;
@@ -186,5 +188,51 @@ public class AuthController {
                     return ResponseEntity.ok(new TokenRefreshResponse(token, newRefreshToken.getToken()));
                 })
                 .orElse(ResponseEntity.status(401).body(null));
+    }
+
+    @Operation(summary = "Yêu cầu khôi phục mật khẩu (Gửi OTP)")
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@jakarta.validation.Valid @RequestBody ForgotPasswordRequest request, HttpServletRequest httpRequest) {
+        String ip = getClientIp(httpRequest);
+        if (!rateLimitService.isAllowed(ip, "forgot-password")) {
+            return ResponseEntity.status(429).body("Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau 5 phút.");
+        }
+        
+        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Email không tồn tại trong hệ thống.");
+        }
+
+        try {
+            String otp = otpService.generateAndStoreOtp(request.getEmail());
+            emailService.sendPasswordResetOtp(request.getEmail(), otp);
+            return ResponseEntity.ok(Map.of("message", "Mã xác nhận khôi phục mật khẩu đã được gửi đến email của bạn."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Lỗi khi gửi email xác nhận.");
+        }
+    }
+
+    @Operation(summary = "Đặt lại mật khẩu (Sử dụng OTP)")
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@jakarta.validation.Valid @RequestBody ResetPasswordRequest request, HttpServletRequest httpRequest) {
+        String ip = getClientIp(httpRequest);
+        if (!rateLimitService.isAllowed(ip, "reset-password")) {
+            return ResponseEntity.status(429).body("Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau 5 phút.");
+        }
+
+        if (!otpService.validateOtp(request.getEmail(), request.getOtp())) {
+            return ResponseEntity.badRequest().body("Mã xác thực không hợp lệ hoặc đã hết hạn.");
+        }
+
+        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Không tìm thấy tài khoản.");
+        }
+
+        User user = userOpt.get();
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới."));
     }
 }

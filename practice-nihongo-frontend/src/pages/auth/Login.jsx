@@ -12,8 +12,11 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [otp, setOtp] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordStep, setForgotPasswordStep] = useState(1);
+  const [newPassword, setNewPassword] = useState('');
   const navigate = useNavigate();
-  const { login, register, verifyEmail } = useAuth();
+  const { login, register, verifyEmail, forgotPassword, resetPassword } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,6 +48,30 @@ export default function Login() {
     }
   };
 
+  const handleSubmitForgotPassword = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+    
+    try {
+      if (forgotPasswordStep === 1) {
+        await forgotPassword(email);
+        setForgotPasswordStep(2);
+      } else {
+        await resetPassword(email, otp, newPassword);
+        setShowForgotPassword(false);
+        setForgotPasswordStep(1);
+        setOtp('');
+        setNewPassword('');
+      }
+    } catch (err) {
+      setError(err.message || 'Đã có lỗi xảy ra.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
   return (
     <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50/50">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
@@ -54,16 +81,133 @@ export default function Login() {
 
         <div className="relative z-10">
           <h2 className="mt-2 text-center text-3xl font-black uppercase tracking-tighter text-slate-900">
-            {showOtpInput ? 'Xác thực Email' : 'Chào mừng trở lại'}
+            {showForgotPassword 
+              ? 'Khôi phục mật khẩu'
+              : showOtpInput ? 'Xác thực Email' : 'Chào mừng trở lại'}
           </h2>
           <p className="mt-2 text-center text-sm text-slate-500 font-medium">
-            {showOtpInput 
-              ? 'Vui lòng kiểm tra email và nhập mã xác thực (OTP)'
-              : 'Đăng nhập để tiếp tục hành trình học tiếng Nhật'}
+            {showForgotPassword
+              ? (forgotPasswordStep === 1 ? 'Nhập email của bạn để nhận mã khôi phục' : 'Nhập mã OTP và mật khẩu mới')
+              : showOtpInput 
+                ? 'Vui lòng kiểm tra email và nhập mã xác thực (OTP)'
+                : 'Đăng nhập để tiếp tục hành trình học tiếng Nhật'}
           </p>
         </div>
 
-        {showOtpInput ? (
+        {showForgotPassword ? (
+          <form className="mt-8 space-y-6 relative z-10" onSubmit={handleSubmitForgotPassword}>
+            {error && (
+              <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm font-medium text-center border border-red-100">
+                {error}
+              </div>
+            )}
+            
+            {forgotPasswordStep === 1 ? (
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                  Email
+                </label>
+                <input
+                  id="email-forgot"
+                  name="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 appearance-none rounded-xl relative block w-full px-4 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
+                  placeholder="Nhập email của bạn"
+                />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                    Mã xác thực (OTP)
+                  </label>
+                  <input
+                    id="otp-forgot"
+                    name="otp"
+                    type="text"
+                    required
+                    maxLength={6}
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    className="mt-1 appearance-none rounded-xl relative block w-full px-4 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all text-center tracking-[1em] font-black text-2xl"
+                    placeholder="------"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                    Mật khẩu mới
+                  </label>
+                  <div className="relative mt-1 flex items-center">
+                    <input
+                      id="new-password"
+                      name="new-password"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="appearance-none rounded-xl relative block w-full px-4 pr-10 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
+                      placeholder="Nhập mật khẩu mới"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 text-slate-400 hover:text-slate-700 text-xs focus:outline-none flex items-center justify-center cursor-pointer transition-colors"
+                    >
+                      {showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading || (forgotPasswordStep === 2 && (otp.length !== 6 || newPassword.length < 6))}
+                className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-black hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-widest"
+              >
+                {isLoading ? 'Đang xử lý...' : (forgotPasswordStep === 1 ? 'Gửi mã xác nhận' : 'Khôi phục mật khẩu')}
+              </button>
+            </div>
+            
+            <div className="mt-6 text-center text-sm font-medium text-slate-600 flex flex-col gap-3">
+              {forgotPasswordStep === 2 && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setIsLoading(true);
+                    setError('');
+                    try {
+                      await forgotPassword(email);
+                    } catch(err) {
+                      setError(err.message || 'Lỗi gửi lại mã OTP');
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  }}
+                  disabled={isLoading}
+                  className="font-bold text-black hover:text-slate-700 transition-colors bg-transparent border-none p-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Chưa nhận được mã? Gửi lại mã
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setForgotPasswordStep(1);
+                  setError('');
+                }}
+                className="font-bold text-slate-500 hover:text-slate-700 transition-colors bg-transparent border-none p-0 cursor-pointer"
+              >
+                Quay lại đăng nhập
+              </button>
+            </div>
+          </form>
+        ) : showOtpInput ? (
           <form className="mt-8 space-y-6 relative z-10" onSubmit={handleVerifyOtp}>
             {error && (
               <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm font-medium text-center border border-red-100">
@@ -211,7 +355,9 @@ export default function Login() {
                 href="#" 
                 onClick={(e) => {
                   e.preventDefault();
-                  message.info("Vui lòng liên hệ với Admin để được hỗ trợ cấp lại mật khẩu!");
+                  setShowForgotPassword(true);
+                  setForgotPasswordStep(1);
+                  setError('');
                 }}
                 className="font-bold text-slate-900 hover:text-slate-700 transition-colors"
               >
