@@ -104,9 +104,12 @@ export function NotificationProvider({ children }) {
   }, []);
 
   const clearAll = useCallback(() => {
-    setNotifications([]);
-    setUnreadCount(0);
-    localStorage.removeItem('nihongo_notifications_history');
+    setNotifications(prev => {
+      const updated = prev.map(n => ({ ...n, hidden: true, read: true }));
+      setUnreadCount(0);
+      localStorage.setItem('nihongo_notifications_history', JSON.stringify(updated));
+      return updated;
+    });
   }, []);
 
   useEffect(() => {
@@ -206,7 +209,7 @@ export function NotificationProvider({ children }) {
 
   return (
     <NotificationContext.Provider value={{
-      notifications,
+      notifications: notifications.filter(n => !n.hidden),
       unreadCount,
       markAllAsRead,
       markAsRead,

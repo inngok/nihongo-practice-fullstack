@@ -8,7 +8,8 @@ export default function Vocabulary() {
   const { currentUser } = useAuth();
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedLevel, setSelectedLevel] = useState(currentUser?.jlptLevel || 'ALL');
+  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ROLE_ADMIN' || currentUser?.role === 'admin';
+  const [selectedLevel, setSelectedLevel] = useState(isAdmin ? 'ALL' : (currentUser?.jlptLevel || 'ALL'));
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const levels = [
@@ -20,7 +21,6 @@ export default function Vocabulary() {
     { value: 'N5', label: 'Trình độ N5' },
   ];
 
-  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ROLE_ADMIN' || currentUser?.role === 'admin';
 
 
   useEffect(() => {
@@ -48,6 +48,8 @@ export default function Vocabulary() {
     if (!Array.isArray(books)) return [];
     return books.filter(book => {
       if (!isAdmin && book.publishVocab === false) return false;
+      
+      if (isAdmin) return true;
       
       if (selectedLevel === 'ALL') return true;
 

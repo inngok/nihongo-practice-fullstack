@@ -70,7 +70,7 @@ public class AuthController {
 
     @Operation(summary = "Đăng nhập")
     @PostMapping("/login")
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequest authRequest) throws Exception {
+    public ResponseEntity<?> createAuthenticationToken(@jakarta.validation.Valid @RequestBody AuthRequest authRequest) throws Exception {
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
@@ -97,7 +97,7 @@ public class AuthController {
 
     @Operation(summary = "Đăng ký tài khoản mới")
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest, HttpServletRequest request) {
+    public ResponseEntity<?> registerUser(@jakarta.validation.Valid @RequestBody RegisterRequest registerRequest, HttpServletRequest request) {
         String ip = getClientIp(request);
         if (!rateLimitService.isAllowed(ip, "register")) {
             return ResponseEntity.status(429).body("Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau 5 phút.");
