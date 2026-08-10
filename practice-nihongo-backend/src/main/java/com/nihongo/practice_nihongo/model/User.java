@@ -29,6 +29,9 @@ public class User {
     @Column(name = "jlpt_level", length = 10)
     private String jlptLevel = "N3";
 
+    @Column(name = "is_verified", nullable = false, columnDefinition = "boolean default false")
+    private boolean isVerified = false;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -36,7 +39,7 @@ public class User {
 
     public User() {}
 
-    public User(Long id, String name, String email, String password, LocalDateTime createdAt, String role, String jlptLevel) {
+    public User(Long id, String name, String email, String password, LocalDateTime createdAt, String role, String jlptLevel, boolean isVerified) {
         this.id = id;
         this.name = name;
         this.email = email;
@@ -44,6 +47,7 @@ public class User {
         this.createdAt = createdAt;
         this.role = role;
         this.jlptLevel = jlptLevel;
+        this.isVerified = isVerified;
     }
 
     // Manual Getters and Setters
@@ -61,6 +65,8 @@ public class User {
     public void setRole(String role) { this.role = role; }
     public String getJlptLevel() { return jlptLevel; }
     public void setJlptLevel(String jlptLevel) { this.jlptLevel = jlptLevel; }
+    public boolean isVerified() { return isVerified; }
+    public void setVerified(boolean verified) { isVerified = verified; }
 
     public static class UserBuilder {
         private Long id;
@@ -70,6 +76,7 @@ public class User {
         private LocalDateTime createdAt;
         private String role = "STUDENT";
         private String jlptLevel = "N3";
+        private boolean isVerified = false;
 
         public UserBuilder id(Long id) { this.id = id; return this; }
         public UserBuilder name(String name) { this.name = name; return this; }
@@ -78,9 +85,10 @@ public class User {
         public UserBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public UserBuilder role(String role) { this.role = role; return this; }
         public UserBuilder jlptLevel(String jlptLevel) { this.jlptLevel = jlptLevel; return this; }
+        public UserBuilder isVerified(boolean isVerified) { this.isVerified = isVerified; return this; }
 
         public User build() {
-            return new User(id, name, email, password, createdAt, role, jlptLevel);
+            return new User(id, name, email, password, createdAt, role, jlptLevel, isVerified);
         }
     }
 

@@ -8,6 +8,17 @@ export default function Vocabulary() {
   const { currentUser } = useAuth();
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedLevel, setSelectedLevel] = useState(currentUser?.jlptLevel || 'ALL');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const levels = [
+    { value: 'ALL', label: 'Tất cả trình độ' },
+    { value: 'N1', label: 'Trình độ N1' },
+    { value: 'N2', label: 'Trình độ N2' },
+    { value: 'N3', label: 'Trình độ N3' },
+    { value: 'N4', label: 'Trình độ N4' },
+    { value: 'N5', label: 'Trình độ N5' },
+  ];
 
   const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ROLE_ADMIN' || currentUser?.role === 'admin';
 
@@ -38,16 +49,15 @@ export default function Vocabulary() {
     return books.filter(book => {
       if (!isAdmin && book.publishVocab === false) return false;
       
-      if (isAdmin) return true;
+      if (selectedLevel === 'ALL') return true;
 
-      if (!currentUser) return true;
       const bookLevel = (book.levelLabel || '').toUpperCase();
       const bookTitle = (book.title || '').toUpperCase();
       const bookJpTitle = (book.japaneseTitle || '').toUpperCase();
-      const targetLvl = (currentUser.jlptLevel || 'N3').toUpperCase();
+      const targetLvl = selectedLevel.toUpperCase();
       return bookLevel.includes(targetLvl) || bookTitle.includes(targetLvl) || bookJpTitle.includes(targetLvl);
     });
-  }, [books, currentUser, isAdmin]);
+  }, [books, isAdmin, selectedLevel]);
 
   return (
     <div className="min-h-screen w-full bg-transparent flex flex-col items-center pt-36 md:pt-28 pb-16 px-6 font-sans relative overflow-hidden selection:bg-slate-200 dark:selection:bg-slate-800">
@@ -64,14 +74,68 @@ export default function Vocabulary() {
         </button>
 
         {/* Title Section */}
-        <div className="mb-12 md:mb-16">
-          <span className="text-[10px] font-black tracking-widest text-slate-400 dark:text-slate-500 uppercase block mb-3">LỘ TRÌNH TỪ VỰNG</span>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-4 uppercase">
-            Từ vựng
-          </h1>
-          <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 max-w-xl leading-relaxed">
-            Chọn giáo trình từ vựng phù hợp để rèn luyện vốn từ vựng tiếng Nhật của riêng bạn.
-          </p>
+        <div className="mb-12 md:mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <span className="text-[10px] font-black tracking-widest text-slate-400 dark:text-slate-500 uppercase block mb-3">LỘ TRÌNH TỪ VỰNG</span>
+            <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight mb-4 uppercase">
+              Từ vựng
+            </h1>
+            <p className="text-sm md:text-base text-slate-500 dark:text-slate-400 max-w-xl leading-relaxed">
+              Chọn giáo trình từ vựng phù hợp để rèn luyện vốn từ vựng tiếng Nhật của riêng bạn.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 min-w-[200px]">
+            <label className="text-[10px] font-black tracking-widest text-slate-400 dark:text-slate-500 uppercase">
+              Lọc theo trình độ
+            </label>
+            <div 
+              className="relative"
+              tabIndex={0}
+              onBlur={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget)) {
+                  setIsDropdownOpen(false);
+                }
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="w-full flex items-center justify-between bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-100 transition-all hover:border-slate-300 dark:hover:border-slate-700"
+              >
+                <span>{levels.find(l => l.value === selectedLevel)?.label || 'Tất cả trình độ'}</span>
+                <svg className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isDropdownOpen && (
+                <div className="absolute z-50 top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden py-1 transform opacity-100 scale-100 transition-all origin-top">
+                  {levels.map((level) => (
+                    <button
+                      key={level.value}
+                      type="button"
+                      onClick={() => {
+                        setSelectedLevel(level.value);
+                        setIsDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 text-sm font-bold transition-colors flex items-center justify-between ${
+                        selectedLevel === level.value 
+                          ? 'bg-slate-50 dark:bg-slate-800/80 text-black dark:text-white' 
+                          : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {level.label}
+                      {selectedLevel === level.value && (
+                        <svg className="w-4 h-4 text-black dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Cards Grid */}

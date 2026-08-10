@@ -10,8 +10,10 @@ export default function Login() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [otp, setOtp] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, register, verifyEmail } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,6 +30,21 @@ export default function Login() {
     }
   };
 
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      await verifyEmail(email, otp);
+      navigate('/');
+    } catch (err) {
+      setError(err.message || 'Mã xác thực không hợp lệ.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50/50">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-sm border border-slate-100 relative overflow-hidden">
@@ -37,19 +54,102 @@ export default function Login() {
 
         <div className="relative z-10">
           <h2 className="mt-2 text-center text-3xl font-black uppercase tracking-tighter text-slate-900">
-            Chào mừng trở lại
+            {showOtpInput ? 'Xác thực Email' : 'Chào mừng trở lại'}
           </h2>
           <p className="mt-2 text-center text-sm text-slate-500 font-medium">
-            Đăng nhập để tiếp tục hành trình học tiếng Nhật
+            {showOtpInput 
+              ? 'Vui lòng kiểm tra email và nhập mã xác thực (OTP)'
+              : 'Đăng nhập để tiếp tục hành trình học tiếng Nhật'}
           </p>
         </div>
 
-        <form className="mt-8 space-y-6 relative z-10" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm font-medium text-center border border-red-100">
-              {error}
+        {showOtpInput ? (
+          <form className="mt-8 space-y-6 relative z-10" onSubmit={handleVerifyOtp}>
+            {error && (
+              <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm font-medium text-center border border-red-100">
+                {error}
+              </div>
+            )}
+            <div>
+              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                Mã xác thực (OTP)
+              </label>
+              <input
+                id="otp"
+                name="otp"
+                type="text"
+                required
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                className="mt-1 appearance-none rounded-xl relative block w-full px-4 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all text-center tracking-[1em] font-black text-2xl"
+                placeholder="------"
+              />
             </div>
-          )}
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading || otp.length !== 6}
+                className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-black hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-widest"
+              >
+                {isLoading ? 'Đang xác thực...' : 'Xác nhận'}
+              </button>
+            </div>
+            <div className="mt-6 text-center text-sm font-medium text-slate-600 flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsLoading(true);
+                  setError('');
+                  try {
+                    await register('User', email, password, 'N3');
+                  } catch(err) {
+                    setError(err.message || 'Lỗi gửi lại mã OTP');
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+                disabled={isLoading}
+                className="font-bold text-black hover:text-slate-700 transition-colors bg-transparent border-none p-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Chưa nhận được mã? Gửi lại mã
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowOtpInput(false)}
+                className="font-bold text-slate-500 hover:text-slate-700 transition-colors bg-transparent border-none p-0 cursor-pointer"
+              >
+                Quay lại đăng nhập
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form className="mt-8 space-y-6 relative z-10" onSubmit={handleSubmit}>
+            {error && (
+              <div className="bg-red-50 text-red-500 p-4 rounded-xl text-sm font-medium text-center border border-red-100 flex flex-col items-center gap-3">
+                <span>{error}</span>
+                {error.includes('chưa được xác thực') && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setIsLoading(true);
+                      setError('');
+                      try {
+                        await register('User', email, password, 'N3');
+                        setShowOtpInput(true);
+                      } catch(err) {
+                        setError(err.message || 'Lỗi gửi lại mã OTP');
+                      } finally {
+                        setIsLoading(false);
+                      }
+                    }}
+                    className="px-4 py-2 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg text-xs font-bold transition-colors"
+                  >
+                    Gửi lại mã & Xác thực ngay
+                  </button>
+                )}
+              </div>
+            )}
           
           <div className="space-y-4">
             <div>
@@ -147,6 +247,7 @@ export default function Login() {
             </Link>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

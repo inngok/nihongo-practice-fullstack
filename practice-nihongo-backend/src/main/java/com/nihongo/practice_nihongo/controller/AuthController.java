@@ -5,12 +5,15 @@ import com.nihongo.practice_nihongo.dto.AuthResponse;
 import com.nihongo.practice_nihongo.dto.RegisterRequest;
 import com.nihongo.practice_nihongo.dto.TokenRefreshRequest;
 import com.nihongo.practice_nihongo.dto.TokenRefreshResponse;
+import com.nihongo.practice_nihongo.dto.VerifyEmailRequest;
 import com.nihongo.practice_nihongo.model.RefreshToken;
 import com.nihongo.practice_nihongo.model.User;
 import com.nihongo.practice_nihongo.repository.UserRepository;
 import com.nihongo.practice_nihongo.security.CustomUserDetailsService;
 import com.nihongo.practice_nihongo.security.JwtUtil;
 import com.nihongo.practice_nihongo.service.RefreshTokenService;
+import com.nihongo.practice_nihongo.service.EmailService;
+import com.nihongo.practice_nihongo.service.OtpService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
 import java.util.Optional;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -45,6 +49,12 @@ public class AuthController {
     @Autowired
     private RefreshTokenService refreshTokenService;
 
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private OtpService otpService;
+
     @Operation(summary = "Đăng nhập")
     @PostMapping("/login")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequest authRequest) throws Exception {
@@ -62,6 +72,9 @@ public class AuthController {
         Optional<User> userOpt = userRepository.findByEmail(authRequest.getEmail());
         if (userOpt.isPresent()) {
             User user = userOpt.get();
+            if (!user.isVerified()) {
+                return ResponseEntity.badRequest().body("Tài khoản chưa được xác thực. Vui lòng xác thực email.");
+            }
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
             return ResponseEntity.ok(new AuthResponse(jwt, refreshToken.getToken(), user.getId(), user.getName(), user.getEmail(), user.getRole(), user.getJlptLevel()));
         }
@@ -72,8 +85,19 @@ public class AuthController {
     @Operation(summary = "Đăng ký tài khoản mới")
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody RegisterRequest registerRequest) {
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            return ResponseEntity.badRequest().body("Email đã được sử dụng!");
+        Optional<User> existingUserOpt = userRepository.findByEmail(registerRequest.getEmail());
+        if (existingUserOpt.isPresent()) {
+            User existingUser = existingUserOpt.get();
+            if (existingUser.isVerified()) {
+                return ResponseEntity.badRequest().body("Email đã được sử dụng!");
+            }
+            try {
+                String otp = otpService.generateAndStoreOtp(registerRequest.getEmail());
+                emailService.sendOtpEmail(registerRequest.getEmail(), otp);
+                return ResponseEntity.ok(Map.of("message", "Vui lòng kiểm tra email để lấy mã xác thực.", "requiresVerification", true));
+            } catch (Exception e) {
+                return ResponseEntity.internalServerError().body("Lỗi khi gửi email xác thực.");
+            }
         }
 
         User user = User.builder()
@@ -81,11 +105,37 @@ public class AuthController {
                 .email(registerRequest.getEmail())
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
                 .jlptLevel(registerRequest.getJlptLevel() != null && !registerRequest.getJlptLevel().isEmpty() ? registerRequest.getJlptLevel() : "N3")
+                .isVerified(false)
                 .build();
 
         userRepository.save(user);
 
-        // Auto login after register
+        try {
+            String otp = otpService.generateAndStoreOtp(registerRequest.getEmail());
+            emailService.sendOtpEmail(registerRequest.getEmail(), otp);
+            return ResponseEntity.ok(Map.of("message", "Đăng ký thành công. Vui lòng kiểm tra email để lấy mã xác thực.", "requiresVerification", true));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Đăng ký thành công nhưng lỗi khi gửi email xác thực.");
+        }
+    }
+
+    @Operation(summary = "Xác thực email")
+    @PostMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestBody VerifyEmailRequest request) {
+        if (!otpService.validateOtp(request.getEmail(), request.getOtp())) {
+            return ResponseEntity.badRequest().body("Mã xác thực không hợp lệ hoặc đã hết hạn.");
+        }
+
+        Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Không tìm thấy tài khoản.");
+        }
+
+        User user = userOpt.get();
+        user.setVerified(true);
+        userRepository.save(user);
+
+        // Auto login after verify
         final UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
         final String jwt = jwtUtil.generateToken(userDetails);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());

@@ -100,6 +100,17 @@ export const AuthProvider = ({ children }) => {
       }
 
       const data = await response.json();
+      
+      if (data.requiresVerification) {
+        messageApi.success({
+          content: 'Đăng ký thành công! Vui lòng kiểm tra email để nhận mã xác thực.',
+          duration: 3,
+          style: { marginTop: '10vh' }
+        });
+        return data; // Return data so frontend can show OTP screen
+      }
+      
+      // Fallback for old behavior (if no email verification)
       const user = { id: data.id, name: data.name, email: data.email, role: data.role, jlptLevel: data.jlptLevel || 'N3' };
 
       setCurrentUser(user);
@@ -109,6 +120,38 @@ export const AuthProvider = ({ children }) => {
 
       messageApi.success({
         content: `Đăng ký thành công! Chào ${user.name}`,
+        duration: 3,
+        style: { marginTop: '10vh' }
+      });
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const verifyEmail = async (email, otp) => {
+    try {
+      const response = await fetch(`${API_URL}/verify-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Xác thực thất bại');
+      }
+
+      const data = await response.json();
+      const user = { id: data.id, name: data.name, email: data.email, role: data.role, jlptLevel: data.jlptLevel || 'N3' };
+
+      setCurrentUser(user);
+      localStorage.setItem('nihongo_user', JSON.stringify(user));
+      localStorage.setItem('nihongo_token', data.token);
+      localStorage.setItem('nihongo_refresh_token', data.refreshToken);
+
+      messageApi.success({
+        content: `Xác thực thành công! Chào mừng ${user.name}`,
         duration: 3,
         style: { marginTop: '10vh' }
       });
@@ -288,6 +331,7 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     login,
     register,
+    verifyEmail,
     logout,
     updateProfile,
     fetchWithAuth
