@@ -13,6 +13,7 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
   const [previewData, setPreviewData] = useState([]);
   const [selectedBookId, setSelectedBookId] = useState(initialBookId || '');
   const [week, setWeek] = useState('');
+  const [day, setDay] = useState('');
   
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,6 +45,7 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
 
     const bookIdInt = parseInt(selectedBookId);
     const weekInt = week ? parseInt(week) : null;
+    const dayInt = day ? parseInt(day) : null;
 
     const duplicates = [];
     const newItems = [];
@@ -65,38 +67,39 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
       setIsSaving(true);
       const hide = messageApi.loading('Đang lưu dữ liệu...', 0);
       try {
-        // allItems preserves the original selected order for sortOrder assignment
         const allItems = items;
 
-        for (const itm of newItems) {
-          const globalIdx = allItems.indexOf(itm);
-          await vocabService.create({
-            ...itm,
-            week: weekInt,
-            book: { id: bookIdInt },
-            sortOrder: globalIdx >= 0 ? globalIdx + 1 : null
-          });
-        }
+        for (let i = 0; i < allItems.length; i++) {
+          const itm = allItems[i];
+          const isDup = duplicates.find(d => d.word === itm.word);
+          const sortOrder = i + 1;
 
-        if (actionType === 'OVERWRITE') {
-          for (const dup of duplicates) {
-            const globalIdx = allItems.indexOf(dup);
-            await vocabService.update(dup.existingId, {
-              ...dup,
-              week: weekInt,
-              book: { id: bookIdInt },
-              sortOrder: globalIdx >= 0 ? globalIdx + 1 : null
-            });
-          }
-        } else if (actionType === 'ADD_NEW') {
-          for (const dup of duplicates) {
-            const globalIdx = allItems.indexOf(dup);
-            const { existingId, ...rest } = dup;
+          if (isDup) {
+            if (actionType === 'OVERWRITE') {
+              await vocabService.update(isDup.existingId, {
+                ...isDup,
+                week: weekInt,
+                day: dayInt,
+                book: { id: bookIdInt },
+                sortOrder
+              });
+            } else if (actionType === 'ADD_NEW') {
+              const { existingId, ...rest } = isDup;
+              await vocabService.create({
+                ...rest,
+                week: weekInt,
+                day: dayInt,
+                book: { id: bookIdInt },
+                sortOrder
+              });
+            }
+          } else {
             await vocabService.create({
-              ...rest,
+              ...itm,
               week: weekInt,
+              day: dayInt,
               book: { id: bookIdInt },
-              sortOrder: globalIdx >= 0 ? globalIdx + 1 : null
+              sortOrder
             });
           }
         }
@@ -215,6 +218,21 @@ export default function VocabBulkForm({ onSuccess, books, initialBookId, vocabs 
                   setWeek(v);
                 }}
                 placeholder="Bài..."
+                className="w-full bg-transparent outline-none text-xs font-semibold text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
+              />
+            </div>
+            <div className="w-20 border-l border-slate-200/60 dark:border-slate-800 pl-3">
+              <input
+                type="number"
+                min="1"
+                name="day"
+                value={day}
+                onChange={(e) => {
+                  let v = e.target.value;
+                  if (v !== '' && parseInt(v) < 1) v = '1';
+                  setDay(v);
+                }}
+                placeholder="Ngày..."
                 className="w-full bg-transparent outline-none text-xs font-semibold text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
               />
             </div>

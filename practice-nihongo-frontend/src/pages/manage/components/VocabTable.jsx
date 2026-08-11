@@ -48,6 +48,7 @@ const VocabTable = memo(function VocabTable({
                 <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Hán Việt</th>
                 <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Ý nghĩa</th>
                 <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Bài</th>
+                <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400 text-center">Ngày</th>
                 <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Sách</th>
                 <th className="pr-6 py-4 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Thao tác</th>
               </tr>
@@ -94,6 +95,7 @@ const VocabTable = memo(function VocabTable({
                   <td className="px-4 py-4 text-xs font-bold text-slate-500 uppercase">{v.hanviet || '-'}</td>
                   <td className="px-4 py-4 text-sm text-slate-600 dark:text-slate-300 font-medium">{v.meaning}</td>
                   <td className="px-4 py-4 text-center text-[10px] font-bold text-slate-400">{v.week ? `BÀI ${v.week}` : '-'}</td>
+                  <td className="px-4 py-4 text-center text-[10px] font-bold text-slate-400">{v.day ? `NGÀY ${v.day}` : '-'}</td>
                   <td className="px-4 py-4">
                     <span className="text-[9px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-1 rounded-md uppercase">
                       {v.book?.title || '-'}

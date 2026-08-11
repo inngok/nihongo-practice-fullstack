@@ -43,9 +43,9 @@ export default function KanjiBulkUpdateModal({
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Chuyển sang bài số</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Bài số (Week)</label>
             <input
               type="number"
               min="1"
@@ -56,7 +56,18 @@ export default function KanjiBulkUpdateModal({
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Cập nhật trang số</label>
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Ngày số (Day)</label>
+            <input
+              type="number"
+              min="1"
+              value={bulkUpdateData.day}
+              onChange={(e) => { let v = e.target.value; if(v !== '' && parseInt(v) < 1) v = '1'; setBulkUpdateData(prev => ({ ...prev, day: v })) }}
+              placeholder="VD: 1, 2..."
+              className="w-full px-1 py-2 bg-transparent border-b border-slate-100 dark:border-slate-800 outline-none focus:border-black dark:focus:border-white transition-all text-sm font-medium"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Trang số (Page)</label>
             <input
               type="number"
               min="1"

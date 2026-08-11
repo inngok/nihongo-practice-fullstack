@@ -5,7 +5,7 @@ import { useNotifications } from '../../context/NotificationContext';
 import { Dropdown, Badge } from 'antd';
 import { DownOutlined, SettingOutlined, UserOutlined, ImportOutlined, DatabaseOutlined, PieChartOutlined, FontSizeOutlined, BellOutlined, ClearOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
-export default function Header() {
+const HeaderComponent = () => {
   const pathname = useLocation().pathname;
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
@@ -260,4 +260,6 @@ export default function Header() {
       </div>
     </header>
   );
-}
+};
+
+export default React.memo(HeaderComponent);

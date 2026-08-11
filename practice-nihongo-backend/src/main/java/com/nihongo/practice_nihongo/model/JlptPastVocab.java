@@ -23,15 +23,19 @@ public class JlptPastVocab {
     @Column(name = "exam_history")
     private String examHistory;
 
+    @Column(name = "level", length = 10)
+    private String level;
+
     // Default constructor
     public JlptPastVocab() {}
 
-    public JlptPastVocab(String word, String kanji, String meaning, int appearanceCount, String examHistory) {
+    public JlptPastVocab(String word, String kanji, String meaning, int appearanceCount, String examHistory, String level) {
         this.word = word;
         this.kanji = kanji;
         this.meaning = meaning;
         this.appearanceCount = appearanceCount;
         this.examHistory = examHistory;
+        this.level = level;
     }
 
     public Long getId() {
@@ -80,5 +84,13 @@ public class JlptPastVocab {
 
     public void setExamHistory(String examHistory) {
         this.examHistory = examHistory;
+    }
+
+    public String getLevel() {
+        return level;
+    }
+
+    public void setLevel(String level) {
+        this.level = level;
     }
 }

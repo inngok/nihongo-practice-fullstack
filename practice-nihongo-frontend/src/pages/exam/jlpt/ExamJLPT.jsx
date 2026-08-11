@@ -1,25 +1,43 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 
 const examModules = [
   {
-    id: 'past-vocab',
+    id: 'past-vocab-n3',
     title: "Từ Vựng Đã Thi N3",
-    description: "Khám phá danh sách các từ vựng và Hán tự thường xuyên xuất hiện trong các kỳ thi JLPT thật.",
-    path: "/exam-jlpt/past-vocab",
+    description: "Khám phá danh sách các từ vựng và Hán tự thường xuyên xuất hiện trong các kỳ thi JLPT N3 thật.",
+    path: "/exam-jlpt/past-vocab/N3",
     status: "ready"
   },
   {
-    id: 'speaking',
-    title: "Luyện Nói (JPD326)",
-    description: "Luyện tập hội thoại tiếng Nhật theo tình huống thực tế bằng dữ liệu mô phỏng.",
-    path: "/exam-jlpt/speaking",
+    id: 'past-vocab-n2',
+    title: "Từ Vựng Đã Thi N2",
+    description: "Khám phá danh sách các từ vựng và Hán tự thường xuyên xuất hiện trong các kỳ thi JLPT N2 thật.",
+    path: "/exam-jlpt/past-vocab/N2",
+    status: "ready",
+    adminOnly: true
+  },
+
+  {
+    id: 'listening',
+    title: " Luyện nghe(JPD326)",
+    description: "Luyện nghe tiếng Nhật nghe và đọc đoạn script.",
+    path: "/exam-jlpt/listening",
     status: "ready"
   }
 ];
 
 export default function ExamJLPT() {
+  const { currentUser } = useAuth();
+
+  const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin';
+
+  const visibleModules = examModules.filter(
+    (module) => !module.adminOnly || isAdmin
+  );
+
   return (
     <div className="w-full h-full flex-grow bg-white flex flex-col items-center pt-36 md:pt-24 pb-12 px-6 md:px-12 relative overflow-hidden font-sans">
 
@@ -47,7 +65,7 @@ export default function ExamJLPT() {
       {/* Modules Grid */}
       <div className="w-full max-w-7xl relative z-10 py-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {examModules.map((module) => (
+          {visibleModules.map((module) => (
             <Link
               key={module.id}
               to={module.path}

@@ -38,6 +38,7 @@ export default function VocabListMode({ activeData, searchTerm, setSearchTerm, c
       </div>
 
       <div className="flex flex-col bg-white dark:bg-slate-950/50 rounded-[2rem] overflow-hidden border border-slate-50 dark:border-slate-900 shadow-sm">
+
         {activeData
           .filter(i => {
             const term = searchTerm.toLowerCase().trim();
@@ -49,9 +50,8 @@ export default function VocabListMode({ activeData, searchTerm, setSearchTerm, c
           .map((item, idx) => (
             <div
               key={item.id}
-              className={`group grid grid-cols-1 gap-4 p-5 md:p-7 hover:bg-slate-50/80 dark:hover:bg-slate-900/50 transition-all border-b border-slate-50 dark:border-slate-900 last:border-none items-center ${
-                showHanViet ? 'sm:grid-cols-[1fr_auto_1fr]' : 'sm:grid-cols-2'
-              }`}
+              className={`group grid grid-cols-1 gap-4 p-5 md:p-7 hover:bg-slate-50/80 dark:hover:bg-slate-900/50 transition-all border-b border-slate-50 dark:border-slate-900 last:border-none items-center ${showHanViet ? 'sm:grid-cols-[1fr_auto_1fr]' : 'sm:grid-cols-[1fr_1fr]'
+                }`}
             >
               {/* Left Column: Index + Kanji + Reading */}
               <div className="flex items-center gap-4 md:gap-8 min-w-0">
@@ -71,7 +71,7 @@ export default function VocabListMode({ activeData, searchTerm, setSearchTerm, c
 
               {/* Middle Column: Han Viet */}
               {showHanViet && (
-                <div className="hidden sm:flex justify-center px-4">
+                <div className="hidden sm:flex justify-center px-4 w-24">
                   {item.hanviet ? (
                     <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-center">
                       {item.hanviet}
@@ -84,12 +84,15 @@ export default function VocabListMode({ activeData, searchTerm, setSearchTerm, c
 
               {/* Right Column: Meaning */}
               <div className="flex items-center justify-start sm:justify-end gap-4 pl-10 sm:pl-0">
-                {/* On mobile, show hanviet here if enabled */}
-                {showHanViet && item.hanviet && (
-                  <span className="sm:hidden text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-2">
-                    {item.hanviet}
-                  </span>
-                )}
+                {/* On mobile, show Day and Han Viet if enabled */}
+                <div className="sm:hidden flex flex-col gap-1 mr-auto pl-2">
+                  {showHanViet && item.hanviet && (
+                    <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                      {item.hanviet}
+                    </span>
+                  )}
+                </div>
+
                 <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-[10px] md:text-[11px] font-medium rounded-full uppercase tracking-wider group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black transition-all text-right break-words line-clamp-2">
                   {item.meaning}
                 </div>

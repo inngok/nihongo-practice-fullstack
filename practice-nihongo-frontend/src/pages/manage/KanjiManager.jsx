@@ -62,7 +62,7 @@ export default function KanjiManager() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingKanji, setEditingKanji] = useState(null);
-  
+
   const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
   const [isCleaning, setIsCleaning] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
@@ -70,9 +70,10 @@ export default function KanjiManager() {
   // Filter State
   const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
   const [selectedLesson, setSelectedLesson] = useState('');
+  const [selectedDay, setSelectedDay] = useState('');
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
-  const [bulkUpdateData, setBulkUpdateData] = useState({ week: '', page: '', bookId: '' });
+  const [bulkUpdateData, setBulkUpdateData] = useState({ week: '', day: '', page: '', bookId: '' });
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -80,7 +81,7 @@ export default function KanjiManager() {
   // Drag-and-drop reorder state
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
-  const [manualOrder, setManualOrder] = useState([]); 
+  const [manualOrder, setManualOrder] = useState([]);
   const [hasUnsavedOrder, setHasUnsavedOrder] = useState(false);
   const [isSavingOrder, setIsSavingOrder] = useState(false);
 
@@ -104,7 +105,7 @@ export default function KanjiManager() {
     } catch (err) {
       console.warn('BroadcastChannel failed to initialize:', err);
     }
-    
+
     const handleGlobalDataChanged = () => fetchData();
     window.addEventListener('GLOBAL_DATA_CHANGED', handleGlobalDataChanged);
 
@@ -127,6 +128,9 @@ export default function KanjiManager() {
     }
     if (selectedLesson && selectedLesson !== "") {
       data = data.filter(k => k.week?.toString() === selectedLesson.toString());
+    }
+    if (selectedDay && selectedDay !== "") {
+      data = data.filter(k => k.day?.toString() === selectedDay.toString());
     }
     // Duplicate detection for Kanji
     const kanjiCounts = {};
@@ -169,7 +173,7 @@ export default function KanjiManager() {
     }
 
     return result;
-  }, [kanjis, selectedBookId, selectedLesson, showDuplicatesOnly]);
+  }, [kanjis, selectedBookId, selectedLesson, selectedDay, showDuplicatesOnly]);
 
   // Apply manual order to filtered kanjis
   const orderedKanjis = React.useMemo(() => {
@@ -181,11 +185,10 @@ export default function KanjiManager() {
     return [...ordered, ...rest];
   }, [manualOrder, filteredKanjis]);
 
-  // Reset manual order when filters change
   React.useEffect(() => {
     setManualOrder(filteredKanjis.map(k => k.id));
     setHasUnsavedOrder(false);
-  }, [filteredKanjis.length, selectedBookId, selectedLesson, showDuplicatesOnly]);
+  }, [filteredKanjis.length, selectedBookId, selectedLesson, selectedDay, showDuplicatesOnly]);
 
   const uniqueLessons = React.useMemo(() => {
     let data = kanjis || [];
@@ -201,6 +204,24 @@ export default function KanjiManager() {
     });
     return Array.from(lessons).sort((a, b) => a - b);
   }, [kanjis, selectedBookId]);
+
+  const uniqueDays = React.useMemo(() => {
+    let data = kanjis || [];
+    if (selectedBookId && selectedBookId !== "") {
+      data = data.filter(k => {
+        const kBookId = k.bookId || k.book?.id;
+        return kBookId?.toString() === selectedBookId.toString();
+      });
+    }
+    if (selectedLesson && selectedLesson !== "") {
+      data = data.filter(k => k.week?.toString() === selectedLesson.toString());
+    }
+    const days = new Set();
+    data.forEach(k => {
+      if (k.day) days.add(k.day);
+    });
+    return Array.from(days).sort((a, b) => a - b);
+  }, [kanjis, selectedBookId, selectedLesson]);
 
   const fetchData = async () => {
     try {
@@ -379,6 +400,7 @@ export default function KanjiManager() {
       await Promise.all(selectedIds.map(id =>
         kanjiService.update(id, {
           week: bulkUpdateData.week || undefined,
+          day: bulkUpdateData.day || undefined,
           page: bulkUpdateData.page || undefined,
           book: bulkUpdateData.bookId ? { id: parseInt(bulkUpdateData.bookId) } : undefined
         })
@@ -409,7 +431,7 @@ export default function KanjiManager() {
       : 'tất cả hệ thống';
 
     Modal.confirm({
-      title: 'Xác nhận Xóa Hàng Loạt ⚠️',
+      title: 'Xác nhận Xóa Hàng Loạt ',
       content: `Bạn có chắc chắn muốn xóa toàn bộ Hán tự thuộc ${bookTitle}? Hành động này KHÔNG THỂ khôi phục!`,
       okText: 'Tôi đồng ý, Xóa tất cả',
       okType: 'danger',
@@ -522,7 +544,7 @@ export default function KanjiManager() {
 
           <Select
             value={selectedBookId}
-            onChange={(value) => { setSelectedBookId(value); setSelectedLesson(''); setCurrentPage(1); }}
+            onChange={(value) => { setSelectedBookId(value); setSelectedLesson(''); setSelectedDay(''); setCurrentPage(1); }}
             placeholder="Tất cả giáo trình"
             className="w-72 custom-select text-sm font-semibold"
             variant="borderless"
@@ -536,7 +558,7 @@ export default function KanjiManager() {
           />
           <Select
             value={selectedLesson}
-            onChange={(value) => { setSelectedLesson(value); setCurrentPage(1); }}
+            onChange={(value) => { setSelectedLesson(value); setSelectedDay(''); setCurrentPage(1); }}
             placeholder="Tất cả bài"
             className="w-40 custom-select text-sm font-semibold"
             variant="borderless"
@@ -548,9 +570,23 @@ export default function KanjiManager() {
               ...uniqueLessons.map(l => ({ value: l.toString(), label: `Bài ${l}` }))
             ]}
           />
-          {(selectedBookId || selectedLesson || showDuplicatesOnly) && (
+          <Select
+            value={selectedDay}
+            onChange={(value) => { setSelectedDay(value); setCurrentPage(1); }}
+            placeholder="Tất cả ngày"
+            className="w-40 custom-select text-sm font-semibold"
+            variant="borderless"
+            classNames={{
+              popup: 'custom-select-popup'
+            }}
+            options={[
+              { value: '', label: 'Tất cả ngày' },
+              ...uniqueDays.map(d => ({ value: d.toString(), label: `Ngày ${d}` }))
+            ]}
+          />
+          {(selectedBookId || selectedLesson || selectedDay || showDuplicatesOnly) && (
             <button
-              onClick={() => { setSelectedBookId(''); setSelectedLesson(''); setShowDuplicatesOnly(false); }}
+              onClick={() => { setSelectedBookId(''); setSelectedLesson(''); setSelectedDay(''); setShowDuplicatesOnly(false); }}
               className="px-3 py-1.5 text-sm font-semibold text-slate-400 hover:text-red-500 transition-colors"
             >
               Xóa lọc

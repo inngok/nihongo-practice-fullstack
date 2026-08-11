@@ -9,6 +9,8 @@ const VocabFlashcardMode = React.lazy(() => import('./components/VocabFlashcardM
 const VocabQuizMode = React.lazy(() => import('./components/VocabQuizMode'));
 const VocabMultipleChoiceMode = React.lazy(() => import('./components/VocabMultipleChoiceMode'));
 const VocabResultsModal = React.lazy(() => import('./components/VocabResultsModal'));
+const VocabStudyHeader = React.lazy(() => import('./components/VocabStudyHeader'));
+const VocabStudyControls = React.lazy(() => import('./components/VocabStudyControls'));
 
 export default function VocabStudy() {
   const navigate = useNavigate();
@@ -23,6 +25,7 @@ export default function VocabStudy() {
   const [activeMode, setActiveMode] = useState('list');
   const [selectedUnit, setSelectedUnit] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDay, setSelectedDay] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [userInput, setUserInput] = useState('');
@@ -91,11 +94,22 @@ export default function VocabStudy() {
         
       if (stored.some(i => i.id === vocabItem.id)) return;
       
-      stored.push({
-        ...vocabItem,
-        reviewAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-      });
-      localStorage.setItem('vocab_review_failed', JSON.stringify(stored));
+      const newStored = [
+        ...stored,
+        {
+          ...vocabItem,
+          reviewAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        }
+      ];
+      localStorage.setItem('vocab_review_failed', JSON.stringify(newStored));
+
+      if (currentUser) {
+        fetchWithAuth(`${API_BASE_URL}/progress/vocab_review_failed`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: JSON.stringify(newStored) })
+        }).catch(() => {});
+      }
     } catch (e) {
       console.error(e);
     }
@@ -105,7 +119,21 @@ export default function VocabStudy() {
     if (bookId) {
       fetchVocab();
     }
-  }, [bookId]);
+    
+    // Sync vocab_review_failed from backend
+    if (currentUser) {
+      fetchWithAuth(`${API_BASE_URL}/progress/vocab_review_failed`)
+        .then(res => res.json())
+        .then(resData => {
+          if (resData.data) {
+            try {
+              const state = JSON.parse(resData.data);
+              localStorage.setItem('vocab_review_failed', JSON.stringify(state));
+            } catch(e) {}
+          }
+        }).catch(() => {});
+    }
+  }, [bookId, currentUser]);
 
   useEffect(() => {
     const handleDataChanged = () => {
@@ -154,12 +182,28 @@ export default function VocabStudy() {
     }))].sort((a, b) => a - b);
   }, [vocabData]);
 
+  const uniqueDays = useMemo(() => {
+    if (!Array.isArray(vocabData)) return [];
+    let data = vocabData.filter(i => {
+      const val = i.week ?? i.unit ?? i.lesson ?? 1;
+      return parseInt(val) === parseInt(selectedUnit);
+    });
+    const days = new Set();
+    data.forEach(g => {
+      if (g.day) days.add(g.day);
+    });
+    return Array.from(days).sort((a, b) => parseInt(a) - parseInt(b));
+  }, [vocabData, selectedUnit]);
+
   const activeData = useMemo(() => {
     if (!Array.isArray(vocabData)) return [];
     let data = vocabData.filter(i => {
       const val = i.week ?? i.unit ?? i.lesson ?? 1;
       return parseInt(val) === parseInt(selectedUnit);
     });
+    if (selectedDay) {
+      data = data.filter(i => String(i.day) === String(selectedDay));
+    }
     // sort by sortOrder (admin-defined), fall back to id (insertion order)
     data = [...data].sort((a, b) => {
       const sa = a.sortOrder != null ? a.sortOrder : (a.id || 0);
@@ -168,7 +212,7 @@ export default function VocabStudy() {
     });
     if (isShuffle) return [...data].sort(() => Math.random() - 0.5);
     return data;
-  }, [vocabData, selectedUnit, isShuffle]);
+  }, [vocabData, selectedUnit, selectedDay, isShuffle]);
 
   useEffect(() => {
     if (!activeData.length || !bookId) return;
@@ -208,7 +252,7 @@ export default function VocabStudy() {
   useEffect(() => {
     if (!currentUser || activeData.length === 0 || !bookId) return;
     
-    fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`)
+    fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}?t=${Date.now()}`)
       .then(res => res.json())
       .then(resData => {
         if (!resData.data) return;
@@ -217,6 +261,8 @@ export default function VocabStudy() {
           if (state.currentIndex !== undefined && state.currentIndex < activeData.length) {
             setCurrentIndex(state.currentIndex);
           }
+          if (state.score !== undefined) setScore(state.score);
+          if (state.completedIds !== undefined) setCompletedIds(state.completedIds);
         } catch (e) { }
       }).catch(() => { });
   }, [bookId, selectedUnit, activeData.length, currentUser]);
@@ -226,7 +272,7 @@ export default function VocabStudy() {
     
     // debounce: only save progress 2s after the user stops changing state
     const timer = setTimeout(() => {
-      const state = { currentIndex, activeMode };
+      const state = { currentIndex, activeMode, score, completedIds };
       fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -235,7 +281,7 @@ export default function VocabStudy() {
     }, 2000);
     
     return () => clearTimeout(timer);
-  }, [currentIndex, activeMode, bookId, selectedUnit, currentUser]);
+  }, [currentIndex, activeMode, score, completedIds, bookId, selectedUnit, currentUser]);
 
   useEffect(() => {
     if (studyData.length > 0 && currentIndex >= studyData.length) {
@@ -263,25 +309,29 @@ export default function VocabStudy() {
       userInput.trim() === currentItem.meaning;
 
     if (isCorrect) {
-      setScore(prev => prev + 1);
       setFeedback('correct');
-      if (!completedIds.includes(currentItem.id)) {
-        setCompletedIds(prev => [...prev, currentItem.id]);
-      }
+      handleCorrectAnswer(currentItem.id);
     } else {
       setFeedback('incorrect');
     }
   };
+
+  const handleCorrectAnswer = useCallback((itemId) => {
+    setCompletedIds(prev => {
+      if (!prev.includes(itemId)) {
+        setScore(s => s + 1);
+        return [...prev, itemId];
+      }
+      return prev;
+    });
+  }, []);
 
   const handleSwipe = (direction) => {
     if (!studyData[currentIndex]) return;
     const currentItem = studyData[currentIndex];
 
     if (direction === 'right') {
-      setScore(prev => prev + 1);
-      if (!completedIds.includes(currentItem.id)) {
-        setCompletedIds(prev => [...prev, currentItem.id]);
-      }
+      handleCorrectAnswer(currentItem.id);
     } else if (direction === 'left') {
       addToLocalReview(currentItem);
     }
@@ -415,74 +465,24 @@ export default function VocabStudy() {
           </div>
         ) : (
           <>
-            {/* Header */}
-            <div className="mb-8 md:mb-10">
-              <span className="text-[10px] font-black tracking-widest text-slate-400 dark:text-slate-500 uppercase block mb-3">HỌC TẬP & LUYỆN TẬP</span>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white uppercase leading-none">
-                  TỪ VỰNG - BÀI {selectedUnit}
-                </h1>
-                {vocabData[0]?.book?.title && (
-                  <span className="hidden sm:inline text-slate-300 dark:text-slate-700 text-lg">|</span>
-                )}
-                <span className="text-sm font-bold text-slate-500 dark:text-slate-400 leading-none">
-                  {vocabData[0]?.book?.title || ''}
-                </span>
-                <span className="px-2.5 py-1 bg-slate-950 text-white dark:bg-white dark:text-black rounded-lg text-[9px] font-black tracking-widest uppercase shadow-sm self-start sm:self-auto">
-                  {vocabData[0]?.book?.levelLabel || 'N3'}
-                </span>
-              </div>
-            </div>
-
-            {/* Controls Bar */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 border-t border-slate-50 dark:border-slate-900 pt-10">
-              <div className="space-y-4 w-full md:w-auto">
-                <div className="flex justify-between items-center w-full">
-                  <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.2em]">CHỌN BÀI HỌC</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {uniqueUnits.map(unit => (
-                    <button
-                      key={unit}
-                      onClick={() => {
-                        setSelectedUnit(unit);
-                        setCurrentIndex(0);
-                        setIsFlipped(false);
-                      }}
-                      className={`px-5 py-2 rounded-xl text-[11px] font-black transition-all ${selectedUnit === unit
-                        ? 'bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105'
-                        : 'bg-slate-50 text-slate-400 dark:bg-slate-900 dark:text-slate-600 hover:text-slate-900 dark:hover:text-white'
-                        }`}
-                    >
-                      BÀI {unit}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-6">
-
-                <div className="flex items-center bg-slate-50/50 dark:bg-slate-900/50 p-1 rounded-2xl shadow-inner border border-slate-100 dark:border-slate-800 w-full sm:w-auto justify-between sm:justify-start">
-                  {[
-                    { id: 'list', label: 'Danh sách' },
-                    { id: 'flashcard', label: 'Flashcard' },
-                    { id: 'multiple_choice', label: 'Trắc nghiệm' },
-                    { id: 'quiz', label: 'Luyện tập' }
-                  ].map(m => (
-                    <button
-                      key={m.id}
-                      onClick={() => setActiveMode(m.id)}
-                      className={`flex-1 sm:flex-none px-3 sm:px-6 py-2.5 sm:py-3 rounded-xl text-[9px] sm:text-[10px] font-black tracking-widest uppercase transition-all whitespace-nowrap text-center ${activeMode === m.id
-                        ? 'bg-black text-white dark:bg-white dark:text-black shadow-xl'
-                        : 'text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white'
-                        }`}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <React.Suspense fallback={<div className="h-40 animate-pulse bg-slate-100 dark:bg-slate-900 rounded-3xl mb-8"></div>}>
+              <VocabStudyHeader
+                selectedUnit={selectedUnit}
+                vocabData={vocabData}
+              />
+              <VocabStudyControls
+                uniqueUnits={uniqueUnits}
+                selectedUnit={selectedUnit}
+                setSelectedUnit={setSelectedUnit}
+                uniqueDays={uniqueDays}
+                selectedDay={selectedDay}
+                setSelectedDay={setSelectedDay}
+                setCurrentIndex={setCurrentIndex}
+                setIsFlipped={setIsFlipped}
+                activeMode={activeMode}
+                setActiveMode={setActiveMode}
+              />
+            </React.Suspense>
 
             {/* Main Content */}
             <div className="pt-4 pb-20">
@@ -546,12 +546,16 @@ export default function VocabStudy() {
               {activeMode === 'multiple_choice' && (
                 <VocabMultipleChoiceMode
                   studyData={studyData}
+                  fullData={activeData}
                   currentIndex={currentIndex}
                   setCurrentIndex={setCurrentIndex}
                   handleResetProgress={handleResetProgress}
                   setShowResults={setShowResults}
                   isShuffle={isShuffle}
                   setIsShuffle={setIsShuffle}
+                  handleCorrectAnswer={handleCorrectAnswer}
+                  showVietnameseFirst={showVietnameseFirst}
+                  setShowVietnameseFirst={setShowVietnameseFirst}
                 />
               )}
               </React.Suspense>

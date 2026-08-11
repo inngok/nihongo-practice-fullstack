@@ -37,6 +37,7 @@ export default function VocabManager() {
   const [showDuplicatesOnly, setShowDuplicatesOnly] = useState(false);
   const [selectedBookId, setSelectedBookId] = useState(bookIdParam || '');
   const [selectedLesson, setSelectedLesson] = useState('');
+  const [selectedDay, setSelectedDay] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVocab, setEditingVocab] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -87,6 +88,7 @@ export default function VocabManager() {
     let data = Array.isArray(vocabs) ? vocabs : [];
     if (selectedBookId) data = data.filter(v => (v.bookId || v.book?.id)?.toString() === selectedBookId.toString());
     if (selectedLesson) data = data.filter(v => v.week?.toString() === selectedLesson.toString());
+    if (selectedDay) data = data.filter(v => v.day?.toString() === selectedDay.toString());
     if (searchTerm) {
       const s = searchTerm.toLowerCase();
       data = data.filter(v => v.word?.toLowerCase().includes(s) || v.reading?.toLowerCase().includes(s) || v.meaning?.toLowerCase().includes(s));
@@ -124,7 +126,7 @@ export default function VocabManager() {
       return sa - sb;
     });
     return result;
-  }, [vocabs, selectedBookId, selectedLesson, searchTerm, showDuplicatesOnly]);
+  }, [vocabs, selectedBookId, selectedLesson, selectedDay, searchTerm, showDuplicatesOnly]);
 
   // Apply manual drag order on top
   const orderedVocabs = useMemo(() => {
@@ -140,7 +142,7 @@ export default function VocabManager() {
   React.useEffect(() => {
     setManualOrder(filteredVocabs.map(v => v.id));
     setHasUnsavedOrder(false);
-  }, [filteredVocabs.length, selectedBookId, selectedLesson, showDuplicatesOnly]);
+  }, [filteredVocabs.length, selectedBookId, selectedLesson, selectedDay, showDuplicatesOnly]);
 
   const handleDragStart = (e, id) => {
     setDraggedId(id);
@@ -190,6 +192,15 @@ export default function VocabManager() {
     return Array.from(lessons).sort((a, b) => a - b);
   }, [vocabs, selectedBookId]);
 
+  const uniqueDays = useMemo(() => {
+    let data = Array.isArray(vocabs) ? vocabs : [];
+    if (selectedBookId) data = data.filter(v => (v.bookId || v.book?.id)?.toString() === selectedBookId.toString());
+    if (selectedLesson) data = data.filter(v => v.week?.toString() === selectedLesson.toString());
+    const days = new Set();
+    data.forEach(v => { if (v.day) days.add(v.day); });
+    return Array.from(days).sort((a, b) => a - b);
+  }, [vocabs, selectedBookId, selectedLesson]);
+
   const openAddModal = useCallback(() => { setEditingVocab(null); setIsModalOpen(true); }, []);
   const openEditModal = useCallback((v) => { setEditingVocab(v); setIsModalOpen(true); }, []);
 
@@ -213,6 +224,7 @@ export default function VocabManager() {
     let data = Array.isArray(vocabs) ? vocabs : [];
     if (selectedBookId) data = data.filter(v => (v.bookId || v.book?.id)?.toString() === selectedBookId.toString());
     if (selectedLesson) data = data.filter(v => v.week?.toString() === selectedLesson.toString());
+    if (selectedDay) data = data.filter(v => v.day?.toString() === selectedDay.toString());
 
     const vCounts = {};
     data.forEach(v => {
@@ -256,7 +268,7 @@ export default function VocabManager() {
         }
       }
     });
-  }, [vocabs, selectedBookId, selectedLesson, fetchData]);
+  }, [vocabs, selectedBookId, selectedLesson, selectedDay, fetchData]);
 
   const toggleSelectOne = useCallback((id) => {
     setSelectedIds(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id]);
@@ -271,6 +283,7 @@ export default function VocabManager() {
       for (const id of selectedIds) {
         await vocabService.update(id, {
           week: bulkUpdateData.week || undefined,
+          day: bulkUpdateData.day || undefined,
           book: bulkUpdateData.bookId ? { id: parseInt(bulkUpdateData.bookId) } : undefined
         });
       }
@@ -376,7 +389,7 @@ export default function VocabManager() {
             <FilterOutlined className="text-slate-400 text-xs" />
             <Select
               value={selectedBookId}
-              onChange={v => { setSelectedBookId(v); setSelectedLesson(''); setCurrentPage(1); }}
+              onChange={v => { setSelectedBookId(v); setSelectedLesson(''); setSelectedDay(''); setCurrentPage(1); }}
               className="flex-grow custom-select text-sm font-semibold"
               variant="borderless"
               popupClassName="custom-select-popup"
@@ -388,7 +401,7 @@ export default function VocabManager() {
           <div className="flex items-center gap-2 px-4 border-l border-slate-200 dark:border-slate-800 min-w-[140px]">
             <Select
               value={selectedLesson}
-              onChange={v => { setSelectedLesson(v); setCurrentPage(1); }}
+              onChange={v => { setSelectedLesson(v); setSelectedDay(''); setCurrentPage(1); }}
               className="flex-grow custom-select text-sm font-semibold"
               variant="borderless"
               popupClassName="custom-select-popup"
@@ -397,9 +410,21 @@ export default function VocabManager() {
             />
           </div>
 
-          {(selectedBookId || selectedLesson || showDuplicatesOnly) && (
+          <div className="flex items-center gap-2 px-4 border-l border-slate-200 dark:border-slate-800 min-w-[140px]">
+            <Select
+              value={selectedDay}
+              onChange={v => { setSelectedDay(v); setCurrentPage(1); }}
+              className="flex-grow custom-select text-sm font-semibold"
+              variant="borderless"
+              popupClassName="custom-select-popup"
+              placeholder="Chọn ngày"
+              options={[{ value: '', label: 'Tất cả ngày' }, ...uniqueDays.map(d => ({ value: d.toString(), label: `Ngày ${d}` }))]}
+            />
+          </div>
+
+          {(selectedBookId || selectedLesson || selectedDay || showDuplicatesOnly) && (
             <button
-              onClick={() => { setSelectedBookId(''); setSelectedLesson(''); setShowDuplicatesOnly(false); }}
+              onClick={() => { setSelectedBookId(''); setSelectedLesson(''); setSelectedDay(''); setShowDuplicatesOnly(false); }}
               className="px-3 py-1.5 text-sm font-semibold text-slate-400 hover:text-red-500 transition-colors"
             >
               Xóa lọc

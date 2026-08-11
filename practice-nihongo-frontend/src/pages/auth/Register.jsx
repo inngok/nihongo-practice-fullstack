@@ -13,8 +13,10 @@ export default function Register() {
   const [jlptLevel, setJlptLevel] = useState('N3');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [otp, setOtp] = useState('');
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, verifyEmail } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,10 +29,29 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      await register(name, email, password, jlptLevel);
-      navigate('/');
+      const result = await register(name, email, password, jlptLevel);
+      if (result && result.requiresVerification) {
+        setShowOtpInput(true);
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.message || 'Đã có lỗi xảy ra khi đăng ký.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      await verifyEmail(email, otp);
+      navigate('/');
+    } catch (err) {
+      setError(err.message || 'Mã xác thực không hợp lệ.');
     } finally {
       setIsLoading(false);
     }
@@ -45,146 +66,194 @@ export default function Register() {
 
         <div className="relative z-10">
           <h2 className="mt-2 text-center text-3xl font-black uppercase tracking-tighter text-slate-900">
-            Tạo tài khoản mới
+            {showOtpInput ? 'Xác thực Email' : 'Tạo tài khoản mới'}
           </h2>
           <p className="mt-2 text-center text-sm text-slate-500 font-medium">
-            Bắt đầu hành trình chinh phục tiếng Nhật ngay hôm nay
+            {showOtpInput 
+              ? 'Vui lòng kiểm tra email và nhập mã xác thực (OTP) gồm 6 chữ số'
+              : 'Bắt đầu hành trình chinh phục tiếng Nhật ngay hôm nay'}
           </p>
         </div>
 
-        <form className="mt-8 space-y-6 relative z-10" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm font-medium text-center border border-red-100">
-              {error}
-            </div>
-          )}
-          
-          <div className="space-y-4">
+        {showOtpInput ? (
+          <form className="mt-8 space-y-6 relative z-10" onSubmit={handleVerifyOtp}>
+            {error && (
+              <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm font-medium text-center border border-red-100">
+                {error}
+              </div>
+            )}
             <div>
               <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                Họ và Tên
+                Mã xác thực (OTP)
               </label>
               <input
-                id="name"
-                name="name"
+                id="otp"
+                name="otp"
                 type="text"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="mt-1 appearance-none rounded-xl relative block w-full px-4 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
-                placeholder="Nhập tên của bạn"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                className="mt-1 appearance-none rounded-xl relative block w-full px-4 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all text-center tracking-[1em] font-black text-2xl"
+                placeholder="------"
               />
             </div>
             <div>
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                Trình độ JLPT Mục tiêu
-              </label>
-              <select
-                id="jlptLevel"
-                name="jlptLevel"
-                value={jlptLevel}
-                onChange={(e) => setJlptLevel(e.target.value)}
-                className="mt-1 block w-full rounded-xl px-4 py-3.5 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm bg-white cursor-pointer transition-all font-bold"
+              <button
+                type="submit"
+                disabled={isLoading || otp.length !== 6}
+                className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-black hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-widest"
               >
-                <option value="N1">N1 (Thượng cấp)</option>
-                <option value="N2">N2 (Trung - Thượng cấp)</option>
-                <option value="N3">N3 (Trung cấp)</option>
-                <option value="N4">N4 (Sơ - Trung cấp)</option>
-                <option value="N5">N5 (Sơ cấp)</option>
-              </select>
+                {isLoading ? 'Đang xác thực...' : 'Xác nhận'}
+              </button>
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 appearance-none rounded-xl relative block w-full px-4 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
-                placeholder="Nhập email của bạn"
-              />
+            <div className="mt-6 text-center text-sm font-medium text-slate-600">
+              Chưa nhận được mã?{' '}
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="font-bold text-black hover:text-slate-700 transition-colors bg-transparent border-none p-0 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Gửi lại mã
+              </button>
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                Mật khẩu
-              </label>
-              <div className="relative mt-1 flex items-center">
+          </form>
+        ) : (
+          <form className="mt-8 space-y-6 relative z-10" onSubmit={handleSubmit}>
+            {error && (
+              <div className="bg-red-50 text-red-500 p-3 rounded-xl text-sm font-medium text-center border border-red-100">
+                {error}
+              </div>
+            )}
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                  Họ và Tên
+                </label>
                 <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
+                  id="name"
+                  name="name"
+                  type="text"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none rounded-xl relative block w-full px-4 pr-10 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
-                  placeholder="Tạo mật khẩu"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="mt-1 appearance-none rounded-xl relative block w-full px-4 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
+                  placeholder="Nhập tên của bạn"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 text-slate-400 hover:text-slate-700 text-xs focus:outline-none flex items-center justify-center cursor-pointer transition-colors"
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                  Trình độ JLPT Mục tiêu
+                </label>
+                <select
+                  id="jlptLevel"
+                  name="jlptLevel"
+                  value={jlptLevel}
+                  onChange={(e) => setJlptLevel(e.target.value)}
+                  className="mt-1 block w-full rounded-xl px-4 py-3.5 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm bg-white cursor-pointer transition-all font-bold"
                 >
-                  {showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-                </button>
+                  <option value="N1">N1 (Thượng cấp)</option>
+                  <option value="N2">N2 (Trung - Thượng cấp)</option>
+                  <option value="N3">N3 (Trung cấp)</option>
+                  <option value="N4">N4 (Sơ - Trung cấp)</option>
+                  <option value="N5">N5 (Sơ cấp)</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 appearance-none rounded-xl relative block w-full px-4 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
+                  placeholder="Nhập email của bạn"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                  Mật khẩu
+                </label>
+                <div className="relative mt-1 flex items-center">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="appearance-none rounded-xl relative block w-full px-4 pr-10 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
+                    placeholder="Tạo mật khẩu"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 text-slate-400 hover:text-slate-700 text-xs focus:outline-none flex items-center justify-center cursor-pointer transition-colors"
+                  >
+                    {showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
+                  Xác nhận mật khẩu
+                </label>
+                <div className="relative mt-1 flex items-center">
+                  <input
+                    id="confirm-password"
+                    name="confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="appearance-none rounded-xl relative block w-full px-4 pr-10 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
+                    placeholder="Nhập lại mật khẩu"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 text-slate-400 hover:text-slate-700 text-xs focus:outline-none flex items-center justify-center cursor-pointer transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                  </button>
+                </div>
               </div>
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">
-                Xác nhận mật khẩu
-              </label>
-              <div className="relative mt-1 flex items-center">
-                <input
-                  id="confirm-password"
-                  name="confirm-password"
-                  type={showConfirmPassword ? "text" : "password"}
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="appearance-none rounded-xl relative block w-full px-4 pr-10 py-3 border border-slate-200 placeholder-slate-400 text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-black sm:text-sm transition-all"
-                  placeholder="Nhập lại mật khẩu"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 text-slate-400 hover:text-slate-700 text-xs focus:outline-none flex items-center justify-center cursor-pointer transition-colors"
-                >
-                  {showConfirmPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
-                </button>
-              </div>
-            </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-black hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-widest"
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Đang xử lý...
-                </span>
-              ) : (
-                'Đăng ký'
-              )}
-            </button>
-          </div>
-          
-          <div className="mt-6 text-center text-sm font-medium text-slate-600">
-            Đã có tài khoản?{' '}
-            <Link to="/login" className="font-bold text-black hover:text-slate-700 transition-colors">
-              Đăng nhập
-            </Link>
-          </div>
-        </form>
+            <div>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-black hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all disabled:opacity-70 disabled:cursor-not-allowed uppercase tracking-widest"
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Đang xử lý...
+                  </span>
+                ) : (
+                  'Đăng ký'
+                )}
+              </button>
+            </div>
+            
+            <div className="mt-6 text-center text-sm font-medium text-slate-600">
+              Đã có tài khoản?{' '}
+              <Link to="/login" className="font-bold text-black hover:text-slate-700 transition-colors">
+                Đăng nhập
+              </Link>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

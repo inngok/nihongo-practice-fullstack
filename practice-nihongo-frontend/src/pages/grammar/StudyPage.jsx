@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Search, ArrowLeft, Volume2, ChevronDown } from 'lucide-react';
 import grammarService from '../../api/grammarService';
@@ -9,7 +9,7 @@ import FlashcardMode from './components/FlashcardMode';
 import QuizMode from './components/QuizMode';
 import MultipleChoiceMode from './components/MultipleChoiceMode';
 import ListeningMode from './components/ListeningMode';
-import { getQuizSentence, prepareActiveData } from './utils/grammarHelpers';
+import { prepareActiveData } from './utils/grammarHelpers';
 
 export default function StudyPage() {
   const { bookId } = useParams();
@@ -27,6 +27,7 @@ export default function StudyPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const unitParam = searchParams.get('unit');
   const [selectedLesson, setSelectedLesson] = useState(unitParam || '');
+  const [selectedDay, setSelectedDay] = useState('');
 
   const uniqueLessons = useMemo(() => {
     const lessons = new Set();
@@ -36,9 +37,19 @@ export default function StudyPage() {
     return Array.from(lessons).sort((a, b) => a - b);
   }, [grammarData]);
 
+  const uniqueDays = useMemo(() => {
+    const days = new Set();
+    grammarData.forEach(g => {
+      if (!selectedLesson || String(g.unit) === String(selectedLesson)) {
+        if (g.day) days.add(g.day);
+      }
+    });
+    return Array.from(days).sort((a, b) => parseInt(a) - parseInt(b));
+  }, [grammarData, selectedLesson]);
+
   const activeData = useMemo(() => {
-    return prepareActiveData(grammarData, selectedLesson, activeMode, isShuffle);
-  }, [grammarData, isShuffle, selectedLesson, activeMode]);
+    return prepareActiveData(grammarData, selectedLesson, selectedDay, activeMode, isShuffle);
+  }, [grammarData, isShuffle, selectedLesson, selectedDay, activeMode]);
 
   useEffect(() => {
     fetchGrammar();
@@ -86,15 +97,21 @@ export default function StudyPage() {
     }
   }, [targetBookId, activeData.length, currentUser]);
 
+  // Debounce progress save — chỉ lưu sau 1.5s kể từ lần cuối thay đổi, tránh gọi API mỗi lần click Next/Prev
+  const progressSaveTimer = useRef(null);
   useEffect(() => {
     if (currentUser && targetBookId && activeMode !== 'menu' && activeMode !== 'list') {
-      const state = { currentIndex, activeMode };
-      fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: JSON.stringify(state) })
-      }).catch(() => { });
+      if (progressSaveTimer.current) clearTimeout(progressSaveTimer.current);
+      progressSaveTimer.current = setTimeout(() => {
+        const state = { currentIndex, activeMode };
+        fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: JSON.stringify(state) })
+        }).catch(() => { });
+      }, 1500);
     }
+    return () => { if (progressSaveTimer.current) clearTimeout(progressSaveTimer.current); };
   }, [currentIndex, activeMode, targetBookId, currentUser]);
 
 
@@ -104,7 +121,7 @@ export default function StudyPage() {
     return () => window.removeEventListener('GLOBAL_DATA_CHANGED', handleDataChanged);
   }, [targetBookId]);
 
-  const fetchGrammar = async (isBackground = false) => {
+  const fetchGrammar = useCallback(async (isBackground = false) => {
     try {
       // Don't show loading spinner for background syncs
       if (!isBackground) setLoading(true);
@@ -132,7 +149,7 @@ export default function StudyPage() {
       console.error(error);
       if (!isBackground) setLoading(false);
     }
-  };
+  }, [targetBookId, currentUser]);
 
   const toggleExpand = useCallback((id) => {
     setExpandedId(prev => prev === id ? null : id);
@@ -227,6 +244,9 @@ export default function StudyPage() {
                   uniqueLessons={uniqueLessons}
                   selectedLesson={selectedLesson}
                   setSelectedLesson={setSelectedLesson}
+                  uniqueDays={uniqueDays}
+                  selectedDay={selectedDay}
+                  setSelectedDay={setSelectedDay}
                   searchTerm={searchTerm}
                   setSearchTerm={setSearchTerm}
                   toggleExpand={toggleExpand}
@@ -254,7 +274,6 @@ export default function StudyPage() {
                   handleResetProgress={handleResetProgress}
                   handlePrev={handlePrev}
                   handleNext={handleNext}
-                  getQuizSentence={getQuizSentence}
                 />
               ) : activeMode === 'multiple_choice' ? (
                 <MultipleChoiceMode
@@ -267,7 +286,6 @@ export default function StudyPage() {
                   handleResetProgress={handleResetProgress}
                   handlePrev={handlePrev}
                   handleNext={handleNext}
-                  getQuizSentence={getQuizSentence}
                 />
               ) : activeMode === 'listening' ? (
                 <ListeningMode
@@ -279,7 +297,6 @@ export default function StudyPage() {
                   handleResetProgress={handleResetProgress}
                   handlePrev={handlePrev}
                   handleNext={handleNext}
-                  getQuizSentence={getQuizSentence}
                 />
               ) : (
                 <div className="py-40 text-center space-y-6">

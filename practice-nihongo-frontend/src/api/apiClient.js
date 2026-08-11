@@ -29,8 +29,8 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If we receive a 401 Unauthorized, and this request hasn't been retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // If we receive a 401 Unauthorized or 403 Forbidden, and this request hasn't been retried yet
+    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem('nihongo_refresh_token');
@@ -51,14 +51,11 @@ apiClient.interceptors.response.use(
         }
       } catch (refreshError) {
         console.error('Auto token refresh failed:', refreshError);
-        // Only log out if the server explicitly rejected the refresh token (e.g. 400, 401, 403)
-        // If it was a network error (no response) or 503/500 server error, don't log the user out.
-        if (refreshError.response && refreshError.response.status >= 400 && refreshError.response.status < 500) {
-          localStorage.removeItem('nihongo_user');
-          localStorage.removeItem('nihongo_token');
-          localStorage.removeItem('nihongo_refresh_token');
-          window.location.href = '/login';
-        }
+        // Force logout on ANY refresh failure to prevent stuck states
+        localStorage.removeItem('nihongo_user');
+        localStorage.removeItem('nihongo_token');
+        localStorage.removeItem('nihongo_refresh_token');
+        window.location.href = '/login';
       }
     }
 

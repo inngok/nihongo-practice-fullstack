@@ -13,6 +13,12 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
@@ -23,6 +29,9 @@ public class SecurityConfig {
 
     @Autowired
     private JwtAuthenticationFilter jwtRequestFilter;
+
+    @Value("${FRONTEND_URL:http://localhost:5173}")
+    private String frontendUrl;
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
@@ -43,12 +52,38 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", frontendUrl));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
-            .cors(cors -> {}) // Enable default CORS configuration
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .anyRequest().permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/news/**", "/api/grammars/**", "/api/vocabs/**", "/api/kanjis/**", "/api/books/**", "/api/jlpt-vocabs/**", "/api/confusing-grammars/**", "/api/notifications/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/news/**", "/api/grammars/**", "/api/vocabs/**", "/api/kanjis/**", "/api/books/**", "/api/jlpt-vocabs/**", "/api/confusing-grammars/**", "/api/notifications/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/news/**", "/api/grammars/**", "/api/vocabs/**", "/api/kanjis/**", "/api/books/**", "/api/jlpt-vocabs/**", "/api/confusing-grammars/**", "/api/notifications/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/news/**", "/api/grammars/**", "/api/vocabs/**", "/api/kanjis/**", "/api/books/**", "/api/jlpt-vocabs/**", "/api/confusing-grammars/**", "/api/notifications/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
+            )
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.deny())
+                .contentSecurityPolicy(csp -> csp.policyDirectives("script-src 'self'"))
+            )
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint((request, response, authException) -> 
+                    response.sendError(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED, authException.getMessage())
+                )
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

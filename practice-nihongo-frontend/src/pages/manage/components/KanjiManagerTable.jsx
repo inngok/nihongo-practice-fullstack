@@ -42,6 +42,7 @@ export default function KanjiManagerTable({
             <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">Âm ON/KUN</th>
             <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">Ý nghĩa</th>
             <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500 text-center">Bài</th>
+            <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500 text-center">Ngày</th>
             <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500">Giáo trình</th>
             <th className="px-6 py-4 text-[11px] font-medium uppercase tracking-wider text-slate-400 dark:text-slate-500 text-right">Hành động</th>
           </tr>
@@ -103,6 +104,11 @@ export default function KanjiManagerTable({
               <td className="px-6 py-5 text-center">
                 <div className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-tight">
                   {item.week ? `Bài ${item.week}` : '-'}
+                </div>
+              </td>
+              <td className="px-6 py-5 text-center">
+                <div className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-tight">
+                  {item.day ? `Ngày ${item.day}` : '-'}
                 </div>
               </td>
               <td className="px-6 py-5">

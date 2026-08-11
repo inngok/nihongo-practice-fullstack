@@ -31,7 +31,7 @@ export default function KanjiCanvasInfo({
 
           <div className="space-y-1">
             <span className="text-[9px] font-black text-indigo-600 uppercase tracking-widest block">HÁN VIỆT</span>
-            <h2 className="text-2xl font-black text-slate-950 uppercase tracking-wide leading-none">
+            <h2 className="text-2xl font-black text-slate-950 uppercase tracking-wide leading-normal">
               {currentKanji.hanviet || 'CHƯA CÓ'}
             </h2>
             <p className="text-sm text-slate-500 font-bold italic">

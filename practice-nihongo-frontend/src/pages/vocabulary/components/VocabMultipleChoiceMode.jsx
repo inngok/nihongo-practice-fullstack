@@ -3,12 +3,16 @@ import { Check, X, Eye, Volume2, VolumeX } from 'lucide-react';
 
 export default function VocabMultipleChoiceMode({
   studyData,
+  fullData,
   currentIndex,
   setCurrentIndex,
   handleResetProgress,
   setShowResults,
   isShuffle,
-  setIsShuffle
+  setIsShuffle,
+  handleCorrectAnswer,
+  showVietnameseFirst,
+  setShowVietnameseFirst
 }) {
   const [selectedOption, setSelectedOption] = useState(null);
   const [showReading, setShowReading] = useState(false);
@@ -19,7 +23,8 @@ export default function VocabMultipleChoiceMode({
   const options = useMemo(() => {
     if (!currentItem || studyData.length === 0) return [];
     
-    const wrongOptions = studyData.filter(item => item.id !== currentItem.id);
+    const pool = (fullData && fullData.length > 3) ? fullData : studyData;
+    const wrongOptions = pool.filter(item => item.id !== currentItem.id);
     const shuffledWrongPool = [...wrongOptions];
     for (let i = shuffledWrongPool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -39,12 +44,48 @@ export default function VocabMultipleChoiceMode({
     }
     
     return shuffledCombined;
-  }, [currentIndex, currentItem, studyData]);
+  }, [currentIndex, currentItem, studyData, fullData]);
 
   useEffect(() => {
     setSelectedOption(null);
     setShowReading(false);
   }, [currentIndex]);
+
+  const playAudio = (customText = null) => {
+    const text = customText || currentItem.reading || currentItem.hiragana || currentItem.word;
+    if (!text) return;
+    
+    try {
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ja&q=${encodeURIComponent(text)}`;
+      const audio = new Audio(url);
+      audio.playbackRate = 0.85;
+      
+      audio.play().catch(e => {
+        console.warn("Google TTS failed, fallback to speechSynthesis:", e);
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'ja-JP';
+          utterance.rate = 0.85;
+          const voices = window.speechSynthesis.getVoices();
+          const jaVoice = voices.find(v => v.lang === 'ja-JP' && (v.name.includes('Google') || v.name.includes('Premium')));
+          if (jaVoice) utterance.voice = jaVoice;
+          window.speechSynthesis.speak(utterance);
+        }
+      });
+    } catch (error) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ja-JP';
+        utterance.rate = 0.85;
+        const voices = window.speechSynthesis.getVoices();
+        const jaVoice = voices.find(v => v.lang === 'ja-JP' && (v.name.includes('Google') || v.name.includes('Premium')));
+        if (jaVoice) utterance.voice = jaVoice;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+  };
 
   const handleSelect = (option) => {
     if (selectedOption) return;
@@ -53,15 +94,12 @@ export default function VocabMultipleChoiceMode({
 
     setShowReading(true);
     
+    if (option.isCorrect && handleCorrectAnswer) {
+      handleCorrectAnswer(option.id);
+    }
+    
     if (autoPlayAudio) {
-      const text = currentItem.word;
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'ja-JP';
-        utterance.rate = 0.9;
-        window.speechSynthesis.speak(utterance);
-      }
+      playAudio(showVietnameseFirst ? (option.reading || option.hiragana || option.word) : null);
     }
   };
 
@@ -78,8 +116,8 @@ export default function VocabMultipleChoiceMode({
   return (
     <div className="flex flex-col gap-4 sm:gap-8 animate-in fade-in duration-500 max-w-4xl mx-auto w-full">
       {/* Control Buttons */}
-      <div className="flex justify-between items-center gap-4 px-2 sticky bottom-4 z-20 bg-white/90 dark:bg-slate-950/90 backdrop-blur-md py-3 sm:py-0 rounded-2xl sm:static sm:bg-transparent sm:backdrop-blur-none shadow-sm sm:shadow-none border border-slate-100 dark:border-slate-800 sm:border-none">
-        <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-2 w-full">
+        <div className="flex flex-wrap items-center justify-center gap-3 w-full sm:w-auto">
           <button
             onClick={() => setAutoPlayAudio(!autoPlayAudio)}
             className={`p-2 rounded-lg transition-all border ${autoPlayAudio ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 border-indigo-100 dark:border-indigo-900' : 'bg-slate-50 dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-slate-800 hover:text-slate-600'}`}
@@ -103,24 +141,58 @@ export default function VocabMultipleChoiceMode({
             HỌC LẠI
           </button>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-0">
-          <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">XÁO TRỘN</span>
-          <button
-            onClick={() => setIsShuffle(!isShuffle)}
-            className={`relative shrink-0 w-8 sm:w-11 h-4 sm:h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-          >
-            <div className={`absolute top-0.5 sm:top-1 w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-300 ${isShuffle ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
-          </button>
+        
+        <div className="flex items-center justify-center gap-4 w-full sm:w-auto bg-slate-50 dark:bg-slate-900/50 p-2 sm:p-0 rounded-xl sm:bg-transparent">
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">VIỆT <span className="lowercase">v</span> NHẬT</span>
+            <button
+              onClick={() => setShowVietnameseFirst(!showVietnameseFirst)}
+              className={`relative shrink-0 w-9 sm:w-11 h-5 sm:h-6 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+              title="Đổi chiều Việt - Nhật"
+            >
+              <div className={`absolute top-0.5 sm:top-1 w-4 h-4 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
+            </button>
+          </div>
+          
+          <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">XÁO TRỘN</span>
+            <button
+              onClick={() => setIsShuffle(!isShuffle)}
+              className={`relative shrink-0 w-9 sm:w-11 h-5 sm:h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
+            >
+              <div className={`absolute top-0.5 sm:top-1 w-4 h-4 rounded-full transition-all duration-300 ${isShuffle ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-3xl sm:rounded-[3rem] p-4 sm:p-12 text-center shadow-sm">
         <div className="mb-6 sm:mb-10 space-y-2 sm:space-y-4">
-          <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">Chọn nghĩa đúng của từ sau</span>
-          <h2 className="text-3xl sm:text-5xl md:text-6xl font-medium font-kanji text-slate-900 dark:text-white select-all break-all whitespace-pre-wrap leading-tight">
-            {currentItem.word}
-          </h2>
-          {currentItem.reading && (
+          <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">
+            {showVietnameseFirst ? 'Chọn từ đúng cho nghĩa sau' : 'Chọn nghĩa đúng của từ sau'}
+          </span>
+          <div className="flex items-center justify-center">
+            <div className="relative">
+              <h2 className={`font-medium text-slate-900 dark:text-white select-all break-all whitespace-pre-wrap leading-tight ${showVietnameseFirst ? 'text-2xl sm:text-4xl md:text-5xl italic font-sans' : 'text-3xl sm:text-5xl md:text-6xl font-kanji'}`}>
+                {showVietnameseFirst ? currentItem.meaning : currentItem.word}
+              </h2>
+              {!showVietnameseFirst && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playAudio();
+                  }}
+                  className={`absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-3 p-2 sm:p-3 shrink-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-all duration-300 ${selectedOption ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}
+                  title="Nghe phát âm"
+                >
+                  <Volume2 size={24} className="sm:w-7 sm:h-7" />
+                </button>
+              )}
+            </div>
+          </div>
+          {!showVietnameseFirst && currentItem.reading && (
              <div className="flex justify-center pt-2">
                <button 
                  onClick={() => setShowReading(!showReading)}
@@ -177,9 +249,16 @@ export default function VocabMultipleChoiceMode({
                      selectedOption && isSelected && !isCorrectOption ? <X size={14} className="text-white" /> :
                      <span className="text-[9px] sm:text-[10px] font-black">{String.fromCharCode(65 + idx)}</span>}
                   </div>
-                  <span className="text-sm sm:text-lg font-bold">
-                    {option.meaning?.normalize('NFC')}
-                  </span>
+                  <div className="flex flex-col items-start gap-1">
+                    <span className={`font-bold ${showVietnameseFirst ? 'text-xl sm:text-2xl font-kanji' : 'text-sm sm:text-lg'}`}>
+                      {showVietnameseFirst ? option.word : option.meaning?.normalize('NFC')}
+                    </span>
+                    {showVietnameseFirst && showReading && selectedOption && option.reading && (
+                      <span className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 font-medium">
+                        {option.reading}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </button>
             );

@@ -100,6 +100,17 @@ export const AuthProvider = ({ children }) => {
       }
 
       const data = await response.json();
+      
+      if (data.requiresVerification) {
+        messageApi.success({
+          content: data.message || 'Vui lòng kiểm tra email để nhận mã xác thực.',
+          duration: 3,
+          style: { marginTop: '10vh' }
+        });
+        return data; // Return data so frontend can show OTP screen
+      }
+      
+      // Fallback for old behavior (if no email verification)
       const user = { id: data.id, name: data.name, email: data.email, role: data.role, jlptLevel: data.jlptLevel || 'N3' };
 
       setCurrentUser(user);
@@ -109,6 +120,38 @@ export const AuthProvider = ({ children }) => {
 
       messageApi.success({
         content: `Đăng ký thành công! Chào ${user.name}`,
+        duration: 3,
+        style: { marginTop: '10vh' }
+      });
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const verifyEmail = async (email, otp) => {
+    try {
+      const response = await fetch(`${API_URL}/verify-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Xác thực thất bại');
+      }
+
+      const data = await response.json();
+      const user = { id: data.id, name: data.name, email: data.email, role: data.role, jlptLevel: data.jlptLevel || 'N3' };
+
+      setCurrentUser(user);
+      localStorage.setItem('nihongo_user', JSON.stringify(user));
+      localStorage.setItem('nihongo_token', data.token);
+      localStorage.setItem('nihongo_refresh_token', data.refreshToken);
+
+      messageApi.success({
+        content: `Xác thực thành công! Chào mừng ${user.name}`,
         duration: 3,
         style: { marginTop: '10vh' }
       });
@@ -128,6 +171,44 @@ export const AuthProvider = ({ children }) => {
       duration: 2,
       style: { marginTop: '10vh' }
     });
+  };
+
+  const forgotPassword = async (email) => {
+    try {
+      const response = await fetch(`${API_URL}/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Yêu cầu khôi phục mật khẩu thất bại');
+      }
+      const data = await response.json();
+      messageApi.success(data.message || 'OTP đã được gửi');
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const resetPassword = async (email, otp, newPassword) => {
+    try {
+      const response = await fetch(`${API_URL}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp, newPassword }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Đặt lại mật khẩu thất bại');
+      }
+      const data = await response.json();
+      messageApi.success(data.message || 'Đặt lại mật khẩu thành công');
+      return true;
+    } catch (error) {
+      throw error;
+    }
   };
 
   const updateProfile = async (name, password, jlptLevel) => {
@@ -264,12 +345,11 @@ export const AuthProvider = ({ children }) => {
     let token = localStorage.getItem('nihongo_token');
 
     const headers = {
-      'Cache-Control': 'no-cache',
       ...options.headers,
       'Authorization': `Bearer ${token}`
     };
 
-    let response = await fetch(url, { cache: 'no-store', ...options, headers });
+    let response = await fetch(url, { ...options, headers });
 
     if (response.status === 401) {
       try {
@@ -289,7 +369,10 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     login,
     register,
+    verifyEmail,
     logout,
+    forgotPassword,
+    resetPassword,
     updateProfile,
     fetchWithAuth
   };

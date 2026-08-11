@@ -163,7 +163,7 @@ export default function VocabSingleForm({ onSuccess, editingVocab, books, initia
             <input type="text" name="exampleMeaning" value={formData.exampleMeaning} onChange={handleInputChange} className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm italic outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-2">
             <label className="text-[10px] font-medium uppercase tracking-widest text-slate-400 px-1 block">Giáo trình</label>
             <Select value={formData.bookId} onChange={v => setFormData(p => ({ ...p, bookId: v }))} className="w-full custom-select-form" variant="borderless" popupClassName="custom-select-popup" dropdownClassName="custom-select-popup" style={{ borderBottom: '1px solid #f1f5f9' }} options={books.map(b => ({ value: b.id.toString(), label: b.title }))} />
@@ -171,6 +171,10 @@ export default function VocabSingleForm({ onSuccess, editingVocab, books, initia
           <div className="space-y-2">
             <label className="text-[10px] font-medium uppercase tracking-widest text-slate-400 px-1">Bài số (Week)</label>
             <input type="number" min="1" name="week" value={formData.week} onChange={handleInputChange} placeholder="VD: 1, 2..." className="w-full px-1 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-xs outline-none transition-all" />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-medium uppercase tracking-widest text-slate-400 px-1">Ngày (Day)</label>
+            <input type="number" min="1" name="day" value={formData.day} onChange={handleInputChange} placeholder="VD: 1, 2..." className="w-full px-1 py-1 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-xs outline-none transition-all" />
           </div>
         </div>
         <div className="pt-4">
