@@ -77,7 +77,7 @@ export default function NewsList() {
   const handleCrawl = async () => {
     setCrawling(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/news/crawl`, { method: 'POST' });
+      const response = await fetchWithAuth(`${API_BASE_URL}/news/crawl`, { method: 'POST' });
       if (response.ok) {
         message.success('Đang lấy tin mới, hệ thống sẽ tự tải lại...');
         // Refresh list after a delay
@@ -97,7 +97,7 @@ export default function NewsList() {
   const handleCrawlHistory = async (pages) => {
     setCrawlingHistory(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/news/crawl-history?pages=${pages}`, { method: 'POST' });
+      const response = await fetchWithAuth(`${API_BASE_URL}/news/crawl-history?pages=${pages}`, { method: 'POST' });
       if (response.ok) {
         message.success(`Đang lấy ${pages} trang báo cũ chạy ngầm. Quá trình này có thể tốn vài phút!`);
       } else {
