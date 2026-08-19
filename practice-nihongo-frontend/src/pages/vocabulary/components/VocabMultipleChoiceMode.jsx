@@ -203,7 +203,7 @@ export default function VocabMultipleChoiceMode({
                  }`}
                >
                  {showReading ? (
-                   <span className="font-medium tracking-widest">{currentItem.reading}</span>
+                   <span className="font-medium tracking-widest text-lg sm:text-xl">{currentItem.reading}</span>
                  ) : (
                    <>
                      <Eye size={14} />

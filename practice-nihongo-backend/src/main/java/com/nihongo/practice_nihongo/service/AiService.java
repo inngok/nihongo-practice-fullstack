@@ -11,6 +11,10 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import com.nihongo.practice_nihongo.model.User;
+import com.nihongo.practice_nihongo.exception.AiLimitExceededException;
 
 @Service
 public class AiService {
@@ -22,10 +26,12 @@ public class AiService {
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final AiUsageRepository aiUsageRepository;
+    private final com.nihongo.practice_nihongo.repository.UserRepository userRepository;
     private final java.util.concurrent.atomic.AtomicInteger keyIndex = new java.util.concurrent.atomic.AtomicInteger(0);
 
-    public AiService(AiUsageRepository aiUsageRepository) {
+    public AiService(AiUsageRepository aiUsageRepository, com.nihongo.practice_nihongo.repository.UserRepository userRepository) {
         this.aiUsageRepository = aiUsageRepository;
+        this.userRepository = userRepository;
     }
 
     private List<String> getApiKeys() {
@@ -97,6 +103,67 @@ public class AiService {
 
             String prompt = buildPrompt(rawData, type);
             String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res;
+        } catch (Exception e) {
+            recordAiUsage(false);
+            throw e;
+        }
+    }
+
+    public String generateParagraphForTranslation(String level) throws Exception {
+        try {
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
+                throw new RuntimeException("No API key configured for AI.");
+            }
+            String prompt = "You are a Japanese teacher. Generate a short, natural Vietnamese paragraph (3-4 sentences) that is suitable for a student studying at the JLPT " + level + " level to translate into Japanese. The content should be about daily life, work, or Japanese culture.\n" +
+                            "Return the response STRICTLY as a JSON array of objects, where each object represents one sentence pair:\n" +
+                            "[\n" +
+                            "  {\n" +
+                            "    \"vietnamese\": \"(A single Vietnamese sentence)\",\n" +
+                            "    \"japanese\": \"(The accurate and natural Japanese translation of this sentence)\"\n" +
+                            "  }\n" +
+                            "]\n" +
+                            "Do not include any formatting, markdown, or other text except the clean JSON array.";
+            String res = callGemini(prompt);
+            recordAiUsage(true);
+            return res.trim();
+        } catch (Exception e) {
+            recordAiUsage(false);
+            throw e;
+        }
+    }
+
+    public String evaluateTranslation(String originalText, String userTranslation, String targetGrammar, String level) throws Exception {
+        try {
+            checkAndConsumeUserAiLimit();
+            List<String> keys = getApiKeys();
+            if (keys.isEmpty()) {
+                throw new RuntimeException("No API key configured for AI.");
+            }
+            StringBuilder promptBuilder = new StringBuilder();
+            promptBuilder.append("You are a professional Japanese teacher. Please evaluate the student's Japanese translation of the following Vietnamese text.\n");
+            promptBuilder.append("Vietnamese Text: ").append(originalText).append("\n");
+            promptBuilder.append("Student's Japanese Translation: ").append(userTranslation).append("\n");
+            
+            if (targetGrammar != null && !targetGrammar.isEmpty()) {
+                promptBuilder.append("Required Grammar Structure: ").append(targetGrammar).append("\n");
+            }
+            if (level != null && !level.isEmpty()) {
+                promptBuilder.append("Target JLPT Level: ").append(level).append("\n");
+            }
+            
+            promptBuilder.append("\nEvaluate the translation based on correctness, naturalness, and usage of the required grammar (if any). ");
+            promptBuilder.append("Return the response STRICTLY as a JSON object with the following keys:\n");
+            promptBuilder.append("{\n");
+            promptBuilder.append("  \"score\": (integer from 1 to 10),\n");
+            promptBuilder.append("  \"feedback\": \"(Detailed feedback in Vietnamese explaining what is good and what needs improvement)\",\n");
+            promptBuilder.append("  \"correctedSentence\": \"(The most natural and correct Japanese translation)\"\n");
+            promptBuilder.append("}\n");
+            promptBuilder.append("Do not include any formatting, markdown, or other text except the clean JSON object.");
+            
+            String res = callGemini(promptBuilder.toString());
             recordAiUsage(true);
             return res;
         } catch (Exception e) {
@@ -313,10 +380,12 @@ public class AiService {
                "13. KANJI EXAMPLES PRIORITY: Always place user-provided vocabulary FIRST in the \"examples\" field. Only add AI-generated supplementary entries AFTER the user-provided ones if the total is still less than 3 entries. Never produce fewer example entries than what the user explicitly listed in their input.\n" +
                "14. KNOWLEDGE CORRECTION RULE: You are an expert. If the user provides INCORRECT knowledge (e.g. wrong meaning, wrong grammar usage, or wrong reading), you MUST CORRECT it to be academically accurate. DO NOT blindly copy incorrect information into the output.\n" +
                "15. STRICT NO-MARKDOWN RULE: DO NOT use any markdown formatting (like **bold**, *italics*), tables, or horizontal lines/separators (like ---, |||) inside any of the JSON values. Provide ONLY pure plain text.\n" +
-               "16. SPLIT MULTIPLE ITEMS: If a single string, line, or row contains MULTIPLE distinct vocabulary words (e.g. '17 締め切った 20 ぞろぞろ' or '食べる ăn 飲む uống'), you MUST split them into SEPARATE JSON objects. DO NOT combine them into a single 'word' field. Identify distinct items based on numbers, spacing, or alternating languages.";
+               "16. SPLIT MULTIPLE ITEMS: If a single string, line, or row contains MULTIPLE distinct vocabulary words (e.g. '17 締め切った 20 ぞろぞろ' or '食べる ăn 飲む uống'), you MUST split them into SEPARATE JSON objects. DO NOT combine them into a single 'word' field. Identify distinct items based on numbers, spacing, or alternating languages.\n" +
+               "17. CRITICAL FOR GRAMMAR - PRESERVE USER DATA: If the input data provides a Vietnamese meaning or a conjugation formula (e.g., 'Cấu trúc: V/A/N + ても／なくても' or 'Dù... hay không...'), you MUST preserve its core content and intent. You MUST convert their formula into the required [[ || ]] block format (from Rule 9) using their exact logic. If they provide a meaning, keep it exactly in the 'meaning' field. Only add or correct information if it is missing or academically incorrect.";
     }
 
     private String callGemini(String prompt) throws Exception {
+        checkAndConsumeUserAiLimit();
         List<String> keys = getApiKeys();
         if (keys.isEmpty()) {
             throw new Exception("No Gemini API keys configured");
@@ -612,5 +681,34 @@ public class AiService {
             log.error("AI Error generating confusing grammar from prompt: " + e.getMessage());
             throw e;
         }
+    }
+
+    private void checkAndConsumeUserAiLimit() throws AiLimitExceededException {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
+            return;
+        }
+
+        String email = auth.getName();
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user == null) return;
+
+        if ("ADMIN".equalsIgnoreCase(user.getRole())) {
+            return;
+        }
+
+        LocalDate today = LocalDate.now();
+        if (user.getLastAiUsageDate() == null || !user.getLastAiUsageDate().isEqual(today)) {
+            user.setAiUsageCount(0);
+            user.setLastAiUsageDate(today);
+        }
+
+        int DAILY_LIMIT = 10;
+        if (user.getAiUsageCount() >= DAILY_LIMIT) {
+            throw new AiLimitExceededException("Bạn đã hết lượt sử dụng AI hôm nay (Giới hạn: " + DAILY_LIMIT + " lượt/ngày). Vui lòng nâng cấp để sử dụng thêm hoặc quay lại vào ngày mai!");
+        }
+
+        user.setAiUsageCount(user.getAiUsageCount() + 1);
+        userRepository.save(user);
     }
 }

@@ -64,4 +64,15 @@ public class GrammarService {
     public List<Grammar> getByLevel(String level) {
         return grammarRepository.findByLevel(level);
     }
+
+    public List<Grammar> getByBookId(Long bookId) {
+        return grammarRepository.findByBookId(bookId);
+    }
+
+    public Grammar getRandomGrammarPractice(String level, Long bookId) {
+        if (bookId != null) {
+            return grammarRepository.findRandomGrammarWithExampleByBookId(bookId);
+        }
+        return grammarRepository.findRandomGrammarWithExampleByLevel(level);
+    }
 }

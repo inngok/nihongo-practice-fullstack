@@ -361,7 +361,18 @@ export const AuthProvider = ({ children }) => {
       }
     }
 
-    return response;
+      if (response.status === 429) {
+        try {
+          const errorText = await response.clone().text();
+          messageApi.error({
+            content: errorText || 'Bạn đã vượt quá giới hạn sử dụng AI hôm nay!',
+            duration: 5,
+            style: { marginTop: '10vh' }
+          });
+        } catch (err) {}
+      }
+
+      return response;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshAccessToken]);
 

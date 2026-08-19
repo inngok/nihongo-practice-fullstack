@@ -60,6 +60,24 @@ public class GrammarController {
         return grammarService.getByLevel(level);
     }
 
+    @GetMapping("/book/{bookId}")
+    @Operation(summary = "Lấy ngữ pháp theo sách", description = "Lọc danh sách ngữ pháp theo ID sách")
+    public List<Grammar> getByBookId(@PathVariable Long bookId) {
+        return grammarService.getByBookId(bookId);
+    }
+
+    @GetMapping("/random-practice")
+    @Operation(summary = "Lấy ngữ pháp ngẫu nhiên", description = "Lấy ngẫu nhiên 1 ngữ pháp có câu ví dụ để luyện dịch")
+    public ResponseEntity<Grammar> getRandomGrammarPractice(
+            @RequestParam(required = false) String level,
+            @RequestParam(required = false) Long bookId) {
+        Grammar grammar = grammarService.getRandomGrammarPractice(level, bookId);
+        if (grammar != null) {
+            return ResponseEntity.ok(grammar);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     @Operation(summary = "Xóa tất cả ngữ pháp hoặc theo sách")
     @DeleteMapping("/all")
     public ResponseEntity<Void> deleteAllGrammars(@RequestParam(required = false) Long bookId) {

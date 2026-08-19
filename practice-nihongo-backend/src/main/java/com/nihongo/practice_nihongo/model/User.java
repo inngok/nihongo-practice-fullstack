@@ -37,9 +37,15 @@ public class User {
         createdAt = LocalDateTime.now();
     }
 
+    @Column(name = "ai_usage_count", nullable = false, columnDefinition = "int default 0")
+    private int aiUsageCount = 0;
+
+    @Column(name = "last_ai_usage_date")
+    private java.time.LocalDate lastAiUsageDate;
+
     public User() {}
 
-    public User(Long id, String name, String email, String password, LocalDateTime createdAt, String role, String jlptLevel, boolean isVerified) {
+    public User(Long id, String name, String email, String password, LocalDateTime createdAt, String role, String jlptLevel, boolean isVerified, int aiUsageCount, java.time.LocalDate lastAiUsageDate) {
         this.id = id;
         this.name = name;
         this.email = email;
@@ -48,6 +54,8 @@ public class User {
         this.role = role;
         this.jlptLevel = jlptLevel;
         this.isVerified = isVerified;
+        this.aiUsageCount = aiUsageCount;
+        this.lastAiUsageDate = lastAiUsageDate;
     }
 
     // Manual Getters and Setters
@@ -67,6 +75,10 @@ public class User {
     public void setJlptLevel(String jlptLevel) { this.jlptLevel = jlptLevel; }
     public boolean isVerified() { return isVerified; }
     public void setVerified(boolean verified) { isVerified = verified; }
+    public int getAiUsageCount() { return aiUsageCount; }
+    public void setAiUsageCount(int aiUsageCount) { this.aiUsageCount = aiUsageCount; }
+    public java.time.LocalDate getLastAiUsageDate() { return lastAiUsageDate; }
+    public void setLastAiUsageDate(java.time.LocalDate lastAiUsageDate) { this.lastAiUsageDate = lastAiUsageDate; }
 
     public static class UserBuilder {
         private Long id;
@@ -77,6 +89,8 @@ public class User {
         private String role = "STUDENT";
         private String jlptLevel = "N3";
         private boolean isVerified = false;
+        private int aiUsageCount = 0;
+        private java.time.LocalDate lastAiUsageDate;
 
         public UserBuilder id(Long id) { this.id = id; return this; }
         public UserBuilder name(String name) { this.name = name; return this; }
@@ -86,9 +100,11 @@ public class User {
         public UserBuilder role(String role) { this.role = role; return this; }
         public UserBuilder jlptLevel(String jlptLevel) { this.jlptLevel = jlptLevel; return this; }
         public UserBuilder isVerified(boolean isVerified) { this.isVerified = isVerified; return this; }
+        public UserBuilder aiUsageCount(int aiUsageCount) { this.aiUsageCount = aiUsageCount; return this; }
+        public UserBuilder lastAiUsageDate(java.time.LocalDate lastAiUsageDate) { this.lastAiUsageDate = lastAiUsageDate; return this; }
 
         public User build() {
-            return new User(id, name, email, password, createdAt, role, jlptLevel, isVerified);
+            return new User(id, name, email, password, createdAt, role, jlptLevel, isVerified, aiUsageCount, lastAiUsageDate);
         }
     }
 

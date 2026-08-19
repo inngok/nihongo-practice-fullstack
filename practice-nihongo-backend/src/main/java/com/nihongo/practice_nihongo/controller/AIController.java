@@ -1,6 +1,8 @@
 package com.nihongo.practice_nihongo.controller;
 
 import com.nihongo.practice_nihongo.service.AiService;
+import com.nihongo.practice_nihongo.exception.AiLimitExceededException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
@@ -13,6 +15,11 @@ public class AIController {
 
     public AIController(AiService aiService) {
         this.aiService = aiService;
+    }
+
+    @ExceptionHandler(AiLimitExceededException.class)
+    public ResponseEntity<String> handleAiLimitExceeded(AiLimitExceededException e) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(e.getMessage());
     }
 
     @PostMapping({"/format-import", "/generate-bulk"})
@@ -119,5 +126,29 @@ public class AIController {
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getStats() {
         return ResponseEntity.ok(aiService.getAiUsageStats());
+    }
+
+    @PostMapping("/translation-practice/evaluate")
+    public ResponseEntity<String> evaluateTranslation(@RequestBody Map<String, String> request) {
+        try {
+            String originalText = request.get("originalText");
+            String userTranslation = request.get("userTranslation");
+            String targetGrammar = request.get("targetGrammar");
+            String level = request.get("level");
+            String result = aiService.evaluateTranslation(originalText, userTranslation, targetGrammar, level);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/translation-practice/paragraph")
+    public ResponseEntity<String> generateParagraph(@RequestParam String level) {
+        try {
+            String result = aiService.generateParagraphForTranslation(level);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
     }
 }
