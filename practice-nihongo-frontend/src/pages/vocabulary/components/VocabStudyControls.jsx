@@ -78,11 +78,12 @@ export default function VocabStudyControls({
         )}
       </div>
 
-      <div className="flex items-center gap-6">
-        <div className="flex items-center bg-slate-50/50 dark:bg-slate-900/50 p-1 rounded-2xl shadow-inner border border-slate-100 dark:border-slate-800 w-full sm:w-auto justify-between sm:justify-start">
+      <div className="flex items-center gap-6 w-full md:w-auto">
+        <div className="flex items-center bg-slate-50/50 dark:bg-slate-900/50 p-1 rounded-2xl shadow-inner border border-slate-100 dark:border-slate-800 w-full sm:w-auto overflow-x-auto hide-scrollbar">
           {[
             { id: 'list', label: 'Danh sách' },
             { id: 'flashcard', label: 'Flashcard' },
+            { id: 'matching', label: 'Nối từ' },
             { id: 'multiple_choice', label: 'Trắc nghiệm' },
             { id: 'quiz', label: 'Luyện tập' }
           ].map(m => (

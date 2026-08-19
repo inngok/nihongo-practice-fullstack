@@ -11,6 +11,7 @@ const VocabMultipleChoiceMode = React.lazy(() => import('./components/VocabMulti
 const VocabResultsModal = React.lazy(() => import('./components/VocabResultsModal'));
 const VocabStudyHeader = React.lazy(() => import('./components/VocabStudyHeader'));
 const VocabStudyControls = React.lazy(() => import('./components/VocabStudyControls'));
+const VocabMatchingMode = React.lazy(() => import('./components/VocabMatchingMode'));
 
 export default function VocabStudy() {
   const navigate = useNavigate();
@@ -525,6 +526,13 @@ export default function VocabStudy() {
                   setShowHanViet={setShowHanViet}
                   isShuffle={isShuffle}
                   setIsShuffle={setIsShuffle}
+                />
+              )}
+              {activeMode === 'matching' && (
+                <VocabMatchingMode
+                  studyData={studyData}
+                  setShowResults={setShowResults}
+                  handleResetProgress={handleResetProgress}
                 />
               )}
               {activeMode === 'quiz' && (

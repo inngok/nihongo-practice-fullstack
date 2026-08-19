@@ -91,7 +91,7 @@ const parseExamples = (examplesStr) => {
       const [bookRes, kanjiRes, dueRes] = await Promise.all([
         bookService.getById(bookId),
         kanjiService.getAll({ bookId }),
-        flashcardService.getDue().catch(() => ({ data: [] }))
+        currentUser ? flashcardService.getDue().catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
       ]);
       setBook(bookRes.data);
       
