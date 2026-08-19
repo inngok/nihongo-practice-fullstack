@@ -40,7 +40,10 @@ const TranslationPractice = () => {
       const loadBooks = async () => {
         try {
           const res = await bookService.getAll();
-          const grammarBooks = res.data.filter(b => b.type && b.type.includes('GRAMMAR'));
+          let grammarBooks = res.data.filter(b => b.type && b.type.includes('GRAMMAR'));
+          if (!isAdmin) {
+            grammarBooks = grammarBooks.filter(b => b.publishGrammar !== false);
+          }
           setBooks(grammarBooks);
           if (grammarBooks.length > 0) {
             setSelectedBook(grammarBooks[0].id);

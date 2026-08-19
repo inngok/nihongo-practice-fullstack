@@ -1,5 +1,5 @@
-import React from 'react';
-import { Check, X } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Check, X, Settings2 } from 'lucide-react';
 
 export default function VocabFlashcardMode({
   studyData,
@@ -71,35 +71,54 @@ export default function VocabFlashcardMode({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 px-4">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">XÁO TRỘN</span>
-          <button
-            onClick={() => setIsShuffle(!isShuffle)}
-            className={`relative shrink-0 w-8 sm:w-11 h-4 sm:h-6 rounded-full transition-all duration-300 ${isShuffle ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-          >
-            <div className={`absolute top-0.5 sm:top-1 w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-300 ${isShuffle ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
-          </button>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">HÁN VIỆT</span>
-          <button
-            onClick={() => setShowHanViet(!showHanViet)}
-            className={`relative shrink-0 w-8 sm:w-11 h-4 sm:h-6 rounded-full transition-all duration-300 ${showHanViet ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-          >
-            <div className={`absolute top-0.5 sm:top-1 w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-300 ${showHanViet ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
-          </button>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">VIỆT → NHẬT</span>
-          <button
-            onClick={() => { setShowVietnameseFirst(!showVietnameseFirst); setIsFlipped(false); }}
-            className={`relative shrink-0 w-8 sm:w-11 h-4 sm:h-6 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-          >
-            <div className={`absolute top-0.5 sm:top-1 w-3 sm:w-4 h-3 sm:h-4 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
-          </button>
-        </div>
-      </div>
+      {/* Settings button - replaces the open toggle row */}
+      {(() => {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const [open, setOpen] = useState(false);
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        const ref = useRef(null);
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        useEffect(() => {
+          const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+          document.addEventListener('mousedown', handler);
+          return () => document.removeEventListener('mousedown', handler);
+        }, []);
+        const Toggle = ({ label, value, onChange }) => (
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest whitespace-nowrap">{label}</span>
+            <button
+              onClick={onChange}
+              className={`relative shrink-0 w-11 h-6 rounded-full transition-all duration-300 ${value ? 'bg-slate-800 dark:bg-slate-200' : 'bg-slate-200 dark:bg-slate-700'}`}
+            >
+              <div className={`absolute top-1 w-4 h-4 rounded-full transition-all duration-300 ${value ? 'left-6 bg-white dark:bg-slate-900' : 'left-1 bg-white dark:bg-slate-400'}`} />
+            </button>
+          </div>
+        );
+        return (
+          <div className="flex justify-end px-4" ref={ref}>
+            <div className="relative">
+              <button
+                onClick={() => setOpen(o => !o)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
+                  open
+                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-slate-900 dark:border-white'
+                    : 'bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500'
+                }`}
+              >
+                <Settings2 size={13} />
+                Cài đặt
+              </button>
+              {open && (
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl p-4 flex flex-col gap-4 z-50">
+                  <Toggle label="Xáo trộn" value={isShuffle} onChange={() => setIsShuffle(!isShuffle)} />
+                  <Toggle label="Hán Việt" value={showHanViet} onChange={() => setShowHanViet(!showHanViet)} />
+                  <Toggle label="Việt → Nhật" value={showVietnameseFirst} onChange={() => { setShowVietnameseFirst(!showVietnameseFirst); setIsFlipped(false); }} />
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {flashcardSubMode === 'memorize' ? (
         /* MEMORIZE (SWIPE CARD) MODE */

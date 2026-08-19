@@ -72,7 +72,11 @@ const HeaderComponent = () => {
                   {notif.title}
                 </h4>
                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 mt-1 block uppercase tracking-wider">
-                  {new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(notif.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                  {(() => {
+                    const d = new Date(notif.timestamp);
+                    if (isNaN(d)) return '';
+                    return `${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} – ${d.toLocaleDateString('vi-VN', { day: 'numeric', month: 'short' })}`;
+                  })()}
                 </span>
               </div>
             </div>
