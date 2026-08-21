@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { notification } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext();
 
-const STORAGE_KEY = 'nihongo_notifications_history';
-const DISMISSED_KEY = 'nihongo_notifications_dismissed';
+// Per-user storage keys — prevents notifications from leaking between accounts
+const storageKey = (userId) => `nihongo_notifications_history_${userId || 'guest'}`;
+const dismissedKey = (userId) => `nihongo_notifications_dismissed_${userId || 'guest'}`;
 
 // Parse timestamp from backend (LocalDateTime, no timezone) as UTC
 const parseTs = (ts) => {
@@ -23,9 +25,20 @@ export function NotificationProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const userId = currentUser?.id || null;
 
-  // Load from localStorage and merge with server history
+  // Reset & reload notifications whenever userId changes (login/logout/switch user)
   useEffect(() => {
+    const STORAGE_KEY = storageKey(userId);
+    const DISMISSED_KEY = dismissedKey(userId);
+
+    // Reset state immediately when user changes
+    setNotifications([]);
+    setUnreadCount(0);
+
+    // If no user (logged out), don't fetch anything
+    if (!userId) return;
     const saved = localStorage.getItem(STORAGE_KEY);
     let localNotifs = [];
     if (saved) {
@@ -48,6 +61,7 @@ export function NotificationProvider({ children }) {
       const d = localStorage.getItem(DISMISSED_KEY);
       if (d) dismissedUids = new Set(JSON.parse(d));
     } catch (e) {}
+
 
     // Fetch historical notifications from server
     fetch('/api/notifications')
@@ -96,9 +110,11 @@ export function NotificationProvider({ children }) {
         });
       })
       .catch(err => console.warn('Failed to fetch historical notifications:', err));
-  }, []);
+  }, [userId]);
 
   const addNotification = useCallback((notif) => {
+    const STORAGE_KEY = storageKey(userId);
+    const DISMISSED_KEY = dismissedKey(userId);
     const uid = notifUid(notif);
 
     // Check if already dismissed
@@ -129,9 +145,10 @@ export function NotificationProvider({ children }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const markAllAsRead = useCallback(() => {
+    const STORAGE_KEY = storageKey(userId);
     setNotifications(prev => {
       const updated = prev.map(n => ({ ...n, read: true }));
       setUnreadCount(0);
@@ -141,9 +158,10 @@ export function NotificationProvider({ children }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(savedAll.map(n => ({ ...n, read: true }))));
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const markAsRead = useCallback((id) => {
+    const STORAGE_KEY = storageKey(userId);
     setNotifications(prev => {
       const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
       setUnreadCount(updated.filter(n => !n.read).length);
@@ -153,9 +171,11 @@ export function NotificationProvider({ children }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(savedAll.map(n => n.id === id ? { ...n, read: true } : n)));
       return updated;
     });
-  }, []);
+  }, [userId]);
 
   const clearAll = useCallback(() => {
+    const STORAGE_KEY = storageKey(userId);
+    const DISMISSED_KEY = dismissedKey(userId);
     setNotifications(prev => {
       // Persist dismissed UIDs so server history doesn't resurrect them
       const uids = prev.map(n => n.uid || notifUid(n)).filter(Boolean);
@@ -175,7 +195,7 @@ export function NotificationProvider({ children }) {
       setUnreadCount(0);
       return [];
     });
-  }, []);
+  }, [userId]);
 
   // SSE subscription
   useEffect(() => {
