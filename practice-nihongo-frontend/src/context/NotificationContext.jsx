@@ -19,7 +19,10 @@ const parseTs = (ts) => {
 };
 
 // Stable unique key for a notification
-const notifUid = (n) => `${n.type}:${n.relatedId || n.referenceId || n.title || n.id}`;
+const notifUid = (n) => {
+  if (n.uid) return n.uid;
+  return `${n.type}:${n.relatedId || n.referenceId || n.id || n.title}`;
+};
 
 export function NotificationProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
@@ -44,11 +47,16 @@ export function NotificationProvider({ children }) {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Migrate old entries that lack uid
+        const uidsSeen = new Set();
+        // Migrate old entries that lack uid and dedup
         localNotifs = parsed.map(n => ({
           ...n,
-          uid: n.uid || notifUid({ type: n.type, relatedId: n.id, title: n.title }),
-        }));
+          uid: n.uid || notifUid({ type: n.type, relatedId: n.relatedId || n.id, title: n.title, id: n.id }),
+        })).filter(n => {
+          if (uidsSeen.has(n.uid)) return false;
+          uidsSeen.add(n.uid);
+          return true;
+        });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(localNotifs));
       } catch (e) {}
     }
@@ -86,6 +94,7 @@ export function NotificationProvider({ children }) {
             existingUids.add(uid);
             updatedLocal.push({
               id: serverNotif.relatedId || serverNotif.id,
+              relatedId: serverNotif.relatedId,
               uid,
               title: serverNotif.type === 'NEW_ARTICLE'
                 ? serverNotif.title.replace(/^Bài báo mới:\s*/i, '')

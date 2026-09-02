@@ -17,6 +17,13 @@ export default function VocabMultipleChoiceMode({
   const [selectedOption, setSelectedOption] = useState(null);
   const [showReading, setShowReading] = useState(false);
   const [autoPlayAudio, setAutoPlayAudio] = useState(false);
+  const [mcqMode, setMcqMode] = useState(() => {
+    return localStorage.getItem('vocab_mcq_mode') || (showVietnameseFirst ? 'vn-jp' : 'jp-vn');
+  });
+
+  useEffect(() => {
+    localStorage.setItem('vocab_mcq_mode', mcqMode);
+  }, [mcqMode]);
 
   const currentItem = studyData[currentIndex];
 
@@ -99,7 +106,7 @@ export default function VocabMultipleChoiceMode({
     }
     
     if (autoPlayAudio) {
-      playAudio(showVietnameseFirst ? (option.reading || option.hiragana || option.word) : null);
+      playAudio(mcqMode === 'vn-jp' ? (option.reading || option.hiragana || option.word) : null);
     }
   };
 
@@ -116,8 +123,8 @@ export default function VocabMultipleChoiceMode({
   return (
     <div className="flex flex-col gap-4 sm:gap-8 animate-in fade-in duration-500 max-w-4xl mx-auto w-full">
       {/* Control Buttons */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-2 w-full">
-        <div className="flex flex-wrap items-center justify-center gap-3 w-full sm:w-auto">
+      <div className="flex flex-col xl:flex-row justify-between items-center gap-4 px-2 w-full">
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-center gap-3 w-full xl:w-auto">
           <button
             onClick={() => setAutoPlayAudio(!autoPlayAudio)}
             className={`p-2 rounded-lg transition-all border ${autoPlayAudio ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 border-indigo-100 dark:border-indigo-900' : 'bg-slate-50 dark:bg-slate-900 text-slate-400 border-slate-100 dark:border-slate-800 hover:text-slate-600'}`}
@@ -142,16 +149,25 @@ export default function VocabMultipleChoiceMode({
           </button>
         </div>
         
-        <div className="flex items-center justify-center gap-4 w-full sm:w-auto bg-slate-50 dark:bg-slate-900/50 p-2 sm:p-0 rounded-xl sm:bg-transparent">
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">VIỆT <span className="lowercase">v</span> NHẬT</span>
-            <button
-              onClick={() => setShowVietnameseFirst(!showVietnameseFirst)}
-              className={`relative shrink-0 w-9 sm:w-11 h-5 sm:h-6 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'bg-black dark:bg-white' : 'bg-slate-200 dark:bg-slate-800'}`}
-              title="Đổi chiều Việt - Nhật"
-            >
-              <div className={`absolute top-0.5 sm:top-1 w-4 h-4 rounded-full transition-all duration-300 ${showVietnameseFirst ? 'left-[18px] sm:left-6 bg-white dark:bg-black' : 'left-0.5 sm:left-1 bg-white dark:bg-slate-400'}`} />
-            </button>
+        <div className="flex items-center justify-center gap-4 w-full xl:w-auto bg-slate-50 dark:bg-slate-900/50 p-2 sm:p-0 rounded-xl sm:bg-transparent">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-1 bg-slate-200/50 dark:bg-slate-800/50 p-1 rounded-xl">
+            {[
+              { id: 'jp-vn', label: 'NHẬT-VIỆT' },
+              { id: 'vn-jp', label: 'VIỆT-NHẬT' },
+              { id: 'jp-hira', label: 'HIRAGANA' }
+            ].map(m => (
+              <button
+                key={m.id}
+                onClick={() => setMcqMode(m.id)}
+                className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${
+                  mcqMode === m.id 
+                    ? 'bg-white dark:bg-slate-700 text-black dark:text-white shadow-sm' 
+                    : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300'
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
           </div>
           
           <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
@@ -171,14 +187,14 @@ export default function VocabMultipleChoiceMode({
       <div className="bg-white dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800 rounded-3xl sm:rounded-[3rem] p-4 sm:p-12 text-center shadow-sm">
         <div className="mb-6 sm:mb-10 space-y-2 sm:space-y-4">
           <span className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest">
-            {showVietnameseFirst ? 'Chọn từ đúng cho nghĩa sau' : 'Chọn nghĩa đúng của từ sau'}
+            {mcqMode === 'vn-jp' ? 'Chọn từ đúng cho nghĩa sau' : mcqMode === 'jp-hira' ? 'Chọn cách đọc đúng cho từ sau' : 'Chọn nghĩa đúng của từ sau'}
           </span>
           <div className="flex items-center justify-center">
             <div className="relative">
-              <h2 className={`font-medium text-slate-900 dark:text-white select-all break-all whitespace-pre-wrap leading-tight ${showVietnameseFirst ? 'text-2xl sm:text-4xl md:text-5xl italic font-sans' : 'text-3xl sm:text-5xl md:text-6xl font-kanji'}`}>
-                {showVietnameseFirst ? currentItem.meaning : currentItem.word}
+              <h2 className={`font-medium text-slate-900 dark:text-white select-all break-all whitespace-pre-wrap leading-tight ${mcqMode === 'vn-jp' ? 'text-2xl sm:text-4xl md:text-5xl italic font-sans' : 'text-3xl sm:text-5xl md:text-6xl font-kanji'}`}>
+                {mcqMode === 'vn-jp' ? currentItem.meaning : currentItem.word}
               </h2>
-              {!showVietnameseFirst && (
+              {mcqMode !== 'vn-jp' && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -192,25 +208,32 @@ export default function VocabMultipleChoiceMode({
               )}
             </div>
           </div>
-          {!showVietnameseFirst && currentItem.reading && (
-             <div className="flex justify-center pt-2">
-               <button 
-                 onClick={() => setShowReading(!showReading)}
-                 className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs sm:text-sm font-medium ${
-                   showReading 
-                     ? 'text-slate-500 dark:text-slate-400' 
-                     : 'bg-slate-50 dark:bg-slate-800/50 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                 }`}
-               >
-                 {showReading ? (
-                   <span className="font-medium tracking-widest text-lg sm:text-xl">{currentItem.reading}</span>
-                 ) : (
-                   <>
-                     <Eye size={14} />
-                     <span>Xem cách đọc</span>
-                   </>
-                 )}
-               </button>
+          {mcqMode === 'jp-vn' && (currentItem.reading || currentItem.hanviet) && (
+             <div className="flex flex-col items-center gap-1 pt-2">
+               {currentItem.reading && (
+                 <button 
+                   onClick={() => setShowReading(!showReading)}
+                   className={`flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs sm:text-sm font-medium ${
+                     showReading 
+                       ? 'text-slate-500 dark:text-slate-400' 
+                       : 'bg-slate-50 dark:bg-slate-800/50 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                   }`}
+                 >
+                   {showReading ? (
+                     <span className="font-medium tracking-widest text-lg sm:text-xl">{currentItem.reading}</span>
+                   ) : (
+                     <>
+                       <Eye size={14} />
+                       <span>Xem cách đọc</span>
+                     </>
+                   )}
+                 </button>
+               )}
+               {selectedOption && currentItem.hanviet && (
+                 <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mt-1">
+                   {currentItem.hanviet}
+                 </span>
+               )}
              </div>
           )}
         </div>
@@ -250,13 +273,32 @@ export default function VocabMultipleChoiceMode({
                      <span className="text-[9px] sm:text-[10px] font-black">{String.fromCharCode(65 + idx)}</span>}
                   </div>
                   <div className="flex flex-col items-start gap-1">
-                    <span className={`font-bold ${showVietnameseFirst ? 'text-xl sm:text-2xl font-kanji' : 'text-sm sm:text-lg'}`}>
-                      {showVietnameseFirst ? option.word : option.meaning?.normalize('NFC')}
+                    <span className={`font-bold ${mcqMode === 'vn-jp' || mcqMode === 'jp-hira' ? 'text-xl sm:text-2xl font-kanji' : 'text-sm sm:text-lg'}`}>
+                      {mcqMode === 'vn-jp' ? option.word : mcqMode === 'jp-hira' ? option.reading || option.hiragana : option.meaning?.normalize('NFC')}
                     </span>
-                    {showVietnameseFirst && showReading && selectedOption && option.reading && (
-                      <span className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 font-medium">
-                        {option.reading}
-                      </span>
+                    {mcqMode === 'vn-jp' && selectedOption && option.reading && (
+                      <div className="flex flex-col gap-0.5 mt-0.5">
+                        <span className="text-xs sm:text-sm text-slate-400 dark:text-slate-500 font-medium">
+                          {option.reading}
+                        </span>
+                        {option.hanviet && (
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">
+                            {option.hanviet}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {mcqMode === 'jp-hira' && selectedOption && (
+                      <div className="flex flex-col gap-0.5 mt-0.5">
+                        <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium">
+                          {option.meaning?.normalize('NFC')}
+                        </span>
+                        {option.hanviet && (
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">
+                            {option.hanviet}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>

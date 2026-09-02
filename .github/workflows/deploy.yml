@@ -51,11 +51,11 @@ jobs:
             cd ~/nihongo-practice-fullstack
             
             # Stop current services
-            docker-compose down || true
+            docker compose down || true
             
             # Deep clean Docker to free up space and clear corrupted cache
             docker system prune -af || true
             docker builder prune -af || true
             
             # Start the application and database
-            docker-compose up -d --build
+            docker compose up -d --build

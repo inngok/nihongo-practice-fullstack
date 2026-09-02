@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, X, Settings2 } from 'lucide-react';
+import { Check, X, Settings2, Volume2 } from 'lucide-react';
 
 export default function VocabFlashcardMode({
   studyData,
@@ -27,6 +27,55 @@ export default function VocabFlashcardMode({
   isShuffle,
   setIsShuffle
 }) {
+  const [autoPlayAudio, setAutoPlayAudio] = useState(false);
+
+  const playAudio = (customText = null) => {
+    const currentItem = studyData[currentIndex];
+    if (!currentItem) return;
+    const text = customText || currentItem.reading || currentItem.hiragana || currentItem.word;
+    if (!text) return;
+    
+    try {
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ja&q=${encodeURIComponent(text)}`;
+      const audio = new Audio(url);
+      audio.playbackRate = 0.85;
+      
+      audio.play().catch(e => {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'ja-JP';
+          utterance.rate = 0.85;
+          const voices = window.speechSynthesis.getVoices();
+          const jaVoice = voices.find(v => v.lang === 'ja-JP' && (v.name.includes('Google') || v.name.includes('Premium')));
+          if (jaVoice) utterance.voice = jaVoice;
+          window.speechSynthesis.speak(utterance);
+        }
+      });
+    } catch (error) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ja-JP';
+        utterance.rate = 0.85;
+        const voices = window.speechSynthesis.getVoices();
+        const jaVoice = voices.find(v => v.lang === 'ja-JP' && (v.name.includes('Google') || v.name.includes('Premium')));
+        if (jaVoice) utterance.voice = jaVoice;
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (autoPlayAudio) {
+      if (!showVietnameseFirst && !isFlipped) {
+        playAudio();
+      } else if (showVietnameseFirst && isFlipped) {
+        playAudio();
+      }
+    }
+  }, [currentIndex, isFlipped, showVietnameseFirst, autoPlayAudio]);
+
   return (
     <div className="flex flex-col gap-8 animate-in fade-in duration-500 max-w-4xl mx-auto w-full">
       {/* Mode Indicator Bar */}
@@ -110,6 +159,7 @@ export default function VocabFlashcardMode({
               </button>
               {open && (
                 <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl p-4 flex flex-col gap-4 z-50">
+                  <Toggle label="Tự động đọc" value={autoPlayAudio} onChange={() => setAutoPlayAudio(!autoPlayAudio)} />
                   <Toggle label="Xáo trộn" value={isShuffle} onChange={() => setIsShuffle(!isShuffle)} />
                   <Toggle label="Hán Việt" value={showHanViet} onChange={() => setShowHanViet(!showHanViet)} />
                   <Toggle label="Việt → Nhật" value={showVietnameseFirst} onChange={() => { setShowVietnameseFirst(!showVietnameseFirst); setIsFlipped(false); }} />
@@ -157,9 +207,20 @@ export default function VocabFlashcardMode({
                 </div>
               )}
 
-              <h2 className={`font-medium mb-6 sm:mb-8 select-all break-all whitespace-pre-wrap leading-tight ${showVietnameseFirst ? 'text-2xl sm:text-3xl md:text-5xl italic text-slate-900 dark:text-white' : 'text-4xl sm:text-5xl md:text-7xl font-kanji text-slate-900 dark:text-white'}`}>
-                {showVietnameseFirst ? studyData[currentIndex]?.meaning : studyData[currentIndex]?.word}
-              </h2>
+              <div className="relative flex items-center justify-center mb-6 sm:mb-8">
+                <h2 className={`font-medium select-all break-all whitespace-pre-wrap leading-tight ${showVietnameseFirst ? 'text-2xl sm:text-3xl md:text-5xl italic text-slate-900 dark:text-white' : 'text-4xl sm:text-5xl md:text-7xl font-kanji text-slate-900 dark:text-white'}`}>
+                  {showVietnameseFirst ? studyData[currentIndex]?.meaning : studyData[currentIndex]?.word}
+                </h2>
+                {!showVietnameseFirst && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); playAudio(); }}
+                    className="absolute left-full ml-2 sm:ml-4 p-2 sm:p-3 shrink-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-all duration-300"
+                    title="Nghe phát âm"
+                  >
+                    <Volume2 size={24} className="sm:w-6 sm:h-6" />
+                  </button>
+                )}
+              </div>
               <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.4em]">NHẤN ĐỂ LẬT HOẶC QUẸT</p>
 
               <div className="flex gap-4 sm:gap-16 mt-8 sm:mt-12 text-slate-300 dark:text-slate-700 flex-wrap justify-center">
@@ -195,9 +256,20 @@ export default function VocabFlashcardMode({
                 {showVietnameseFirst ? studyData[currentIndex]?.meaning : studyData[currentIndex]?.word}
               </span>
               <div className="h-px w-12 bg-slate-100 dark:bg-slate-800 mb-8" />
-              <h3 className={`font-medium text-slate-900 dark:text-white mb-4 ${showVietnameseFirst ? 'text-3xl sm:text-4xl md:text-5xl font-kanji' : 'text-2xl sm:text-3xl md:text-4xl italic'}`}>
-                {showVietnameseFirst ? studyData[currentIndex]?.word : studyData[currentIndex]?.meaning}
-              </h3>
+              <div className="relative flex items-center justify-center mb-4">
+                <h3 className={`font-medium text-slate-900 dark:text-white ${showVietnameseFirst ? 'text-3xl sm:text-4xl md:text-5xl font-kanji' : 'text-2xl sm:text-3xl md:text-4xl italic'}`}>
+                  {showVietnameseFirst ? studyData[currentIndex]?.word : studyData[currentIndex]?.meaning}
+                </h3>
+                {showVietnameseFirst && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); playAudio(); }}
+                    className="absolute left-full ml-2 sm:ml-4 p-2 sm:p-3 shrink-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-all duration-300"
+                    title="Nghe phát âm"
+                  >
+                    <Volume2 size={24} className="sm:w-6 sm:h-6" />
+                  </button>
+                )}
+              </div>
               <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 tracking-wider">
                 {studyData[currentIndex]?.reading}
               </p>
@@ -220,9 +292,20 @@ export default function VocabFlashcardMode({
           <div key={currentIndex} className={`relative w-full h-full transition-all duration-700 preserve-3d shadow-2xl rounded-[3rem] ${isFlipped ? 'rotate-y-180' : 'hover:-translate-y-1 hover:shadow-3xl'}`}>
             {/* Front Face — challenge side, no hanviet hint here */}
             <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] flex flex-col items-center justify-center p-6 sm:p-12 text-center">
-              <h2 className={`font-medium mb-6 sm:mb-8 select-all break-all whitespace-pre-wrap leading-tight ${showVietnameseFirst ? 'text-2xl sm:text-3xl md:text-5xl italic text-slate-900 dark:text-white' : 'text-4xl sm:text-5xl md:text-7xl font-kanji text-slate-900 dark:text-white'}`}>
-                {showVietnameseFirst ? studyData[currentIndex]?.meaning : studyData[currentIndex]?.word}
-              </h2>
+              <div className="relative flex items-center justify-center mb-6 sm:mb-8">
+                <h2 className={`font-medium select-all break-all whitespace-pre-wrap leading-tight ${showVietnameseFirst ? 'text-2xl sm:text-3xl md:text-5xl italic text-slate-900 dark:text-white' : 'text-4xl sm:text-5xl md:text-7xl font-kanji text-slate-900 dark:text-white'}`}>
+                  {showVietnameseFirst ? studyData[currentIndex]?.meaning : studyData[currentIndex]?.word}
+                </h2>
+                {!showVietnameseFirst && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); playAudio(); }}
+                    className="absolute left-full ml-2 sm:ml-4 p-2 sm:p-3 shrink-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-all duration-300"
+                    title="Nghe phát âm"
+                  >
+                    <Volume2 size={24} className="sm:w-6 sm:h-6" />
+                  </button>
+                )}
+              </div>
               <p className="text-[10px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.4em] animate-pulse">NHẤN ĐỂ LẬT THẺ</p>
             </div>
 
@@ -232,9 +315,20 @@ export default function VocabFlashcardMode({
                 {showVietnameseFirst ? studyData[currentIndex]?.meaning : studyData[currentIndex]?.word}
               </span>
               <div className="h-px w-12 bg-slate-100 dark:bg-slate-800 mb-8" />
-              <h3 className={`font-medium text-slate-900 dark:text-white mb-4 ${showVietnameseFirst ? 'text-3xl sm:text-4xl md:text-5xl font-kanji' : 'text-2xl sm:text-3xl md:text-4xl italic'}`}>
-                {showVietnameseFirst ? studyData[currentIndex]?.word : studyData[currentIndex]?.meaning}
-              </h3>
+              <div className="relative flex items-center justify-center mb-4">
+                <h3 className={`font-medium text-slate-900 dark:text-white ${showVietnameseFirst ? 'text-3xl sm:text-4xl md:text-5xl font-kanji' : 'text-2xl sm:text-3xl md:text-4xl italic'}`}>
+                  {showVietnameseFirst ? studyData[currentIndex]?.word : studyData[currentIndex]?.meaning}
+                </h3>
+                {showVietnameseFirst && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); playAudio(); }}
+                    className="absolute left-full ml-2 sm:ml-4 p-2 sm:p-3 shrink-0 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-all duration-300"
+                    title="Nghe phát âm"
+                  >
+                    <Volume2 size={24} className="sm:w-6 sm:h-6" />
+                  </button>
+                )}
+              </div>
               <p className="text-sm sm:text-base md:text-lg font-normal text-slate-400 dark:text-slate-500 tracking-wider">
                 {studyData[currentIndex]?.reading}
               </p>
