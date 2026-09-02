@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import bookService from '../../api/bookService';
+import userService from '../../api/userService';
 import { Modal, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import BookAddModal from './components/BookAddModal';
@@ -24,6 +25,7 @@ export default function BookManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedLevel, setSelectedLevel] = useState('ALL');
+  const [users, setUsers] = useState([]);
   
   // Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -36,12 +38,23 @@ export default function BookManager() {
     types: ['VOCABULARY'],
     publishGrammar: true,
     publishVocab: true,
-    publishKanji: true
+    publishKanji: true,
+    allowedEmails: []
   });
 
   useEffect(() => {
     fetchBooks();
+    fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await userService.getAll();
+      setUsers(response.data);
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
+    }
+  };
 
   const fetchBooks = async () => {
     try {
@@ -71,7 +84,8 @@ export default function BookManager() {
       types: ['VOCABULARY'],
       publishGrammar: true,
       publishVocab: true,
-      publishKanji: true
+      publishKanji: true,
+      allowedEmails: []
     });
     setEditingId(null);
   };
@@ -100,7 +114,8 @@ export default function BookManager() {
       types: bookTypes,
       publishGrammar: book.publishGrammar !== false,
       publishVocab: book.publishVocab !== false,
-      publishKanji: book.publishKanji !== false
+      publishKanji: book.publishKanji !== false,
+      allowedEmails: book.allowedEmails ? book.allowedEmails.split(',').map(e => e.trim()).filter(Boolean) : []
     });
     setEditingId(book.id);
     setIsModalOpen(true);
@@ -117,7 +132,8 @@ export default function BookManager() {
         type: formData.types.join(','),
         publishGrammar: formData.publishGrammar,
         publishVocab: formData.publishVocab,
-        publishKanji: formData.publishKanji
+        publishKanji: formData.publishKanji,
+        allowedEmails: formData.allowedEmails ? formData.allowedEmails.join(',') : ''
       };
 
       if (editingId) {
@@ -302,6 +318,7 @@ export default function BookManager() {
         setFormData={setFormData}
         handleSubmit={handleSubmit}
         handleInputChange={handleInputChange}
+        users={users}
       />
     </div>
   );

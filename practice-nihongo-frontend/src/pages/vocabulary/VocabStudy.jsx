@@ -152,7 +152,14 @@ export default function VocabStudy() {
       
       const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin' || currentUser?.role === 'ROLE_ADMIN';
       if (!isAdmin) {
-        data = data.filter(item => item.publish !== false);
+        data = data.filter(item => {
+          if (item.publish === false) return false;
+          if (item.book) {
+            const isAllowed = item.book.allowedEmails && currentUser?.email && item.book.allowedEmails.split(',').map(e => e.trim()).includes(currentUser.email);
+            if (item.book.publishVocab === false && !isAllowed) return false;
+          }
+          return true;
+        });
       }
 
       setVocabData(data);

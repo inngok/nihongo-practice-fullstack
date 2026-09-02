@@ -76,6 +76,7 @@ public class BookService {
         book.setPublishGrammar(bookDetails.getPublishGrammar() != null ? bookDetails.getPublishGrammar() : true);
         book.setPublishVocab(bookDetails.getPublishVocab() != null ? bookDetails.getPublishVocab() : true);
         book.setPublishKanji(bookDetails.getPublishKanji() != null ? bookDetails.getPublishKanji() : true);
+        book.setAllowedEmails(bookDetails.getAllowedEmails());
         return bookRepository.save(book);
     }
 

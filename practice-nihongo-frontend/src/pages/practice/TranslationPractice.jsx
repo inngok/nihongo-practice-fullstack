@@ -42,7 +42,10 @@ const TranslationPractice = () => {
           const res = await bookService.getAll();
           let grammarBooks = res.data.filter(b => b.type && b.type.includes('GRAMMAR'));
           if (!isAdmin) {
-            grammarBooks = grammarBooks.filter(b => b.publishGrammar !== false);
+            grammarBooks = grammarBooks.filter(b => {
+              const isAllowed = b.allowedEmails && currentUser?.email && b.allowedEmails.split(',').map(e => e.trim()).includes(currentUser.email);
+              return b.publishGrammar !== false || isAllowed;
+            });
           }
           setBooks(grammarBooks);
           if (grammarBooks.length > 0) {
