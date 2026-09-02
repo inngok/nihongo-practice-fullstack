@@ -130,7 +130,14 @@ export default function StudyPage() {
       
       const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'ROLE_ADMIN';
       if (!isAdmin) {
-        data = data.filter(item => item.publish !== false && (!item.book || item.book.publishGrammar !== false));
+        data = data.filter(item => {
+          if (item.publish === false) return false;
+          if (item.book) {
+            const isAllowed = item.book.allowedEmails && currentUser?.email && item.book.allowedEmails.split(',').map(e => e.trim()).includes(currentUser.email);
+            if (item.book.publishGrammar === false && !isAllowed) return false;
+          }
+          return true;
+        });
       }
 
       if (targetBookId) {

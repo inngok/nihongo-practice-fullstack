@@ -151,7 +151,7 @@ export default function NewsDetail() {
   const handleExtractVocab = async () => {
     setExtracting(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/news/${id}/extract-vocab`, { method: 'POST' });
+      const response = await fetchWithAuth(`${API_BASE_URL}/news/${id}/extract-vocab`, { method: 'POST' });
       if (response.ok) {
         const data = await response.json();
         setArticle(data);
@@ -179,7 +179,7 @@ export default function NewsDetail() {
   const handleTranslate = async () => {
     setTranslating(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/news/${id}/translate`, { method: 'POST' });
+      const response = await fetchWithAuth(`${API_BASE_URL}/news/${id}/translate`, { method: 'POST' });
       if (response.ok) {
         const data = await response.json();
         setArticle(data);
@@ -197,7 +197,7 @@ export default function NewsDetail() {
   const handleGenerateQuiz = async () => {
     setGeneratingQuiz(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/news/${id}/generate-quiz`, { method: 'POST' });
+      const response = await fetchWithAuth(`${API_BASE_URL}/news/${id}/generate-quiz`, { method: 'POST' });
       if (response.ok) {
         const data = await response.json();
         setArticle(data);
@@ -269,7 +269,7 @@ export default function NewsDetail() {
     if (!selectedText) return;
     setIsQuickTranslating(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/ai/translate`, {
+      const response = await fetchWithAuth(`${API_BASE_URL}/ai/translate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: selectedText })

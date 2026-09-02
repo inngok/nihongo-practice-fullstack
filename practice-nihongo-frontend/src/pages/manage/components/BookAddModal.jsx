@@ -1,5 +1,5 @@
 import React from 'react';
-import { message } from 'antd';
+import { message, Select } from 'antd';
 
 export default function BookAddModal({
   isModalOpen,
@@ -8,7 +8,8 @@ export default function BookAddModal({
   formData,
   setFormData,
   handleSubmit,
-  handleInputChange
+  handleInputChange,
+  users
 }) {
   if (!isModalOpen) return null;
 
@@ -159,6 +160,22 @@ export default function BookAddModal({
               </label>
             </div>
           )}
+
+          <div className="space-y-2 pt-4">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">Quyền truy cập (Khi không công khai)</label>
+            <Select
+              mode="tags"
+              style={{ width: '100%' }}
+              placeholder="Nhập email học viên..."
+              value={formData.allowedEmails || []}
+              onChange={(value) => setFormData(prev => ({ ...prev, allowedEmails: value }))}
+              options={(users || []).map(u => ({ value: u.email, label: `${u.email} (${u.name})` }))}
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              className="h-12"
+            />
+          </div>
 
           <div className="pt-4 flex gap-4">
             <button

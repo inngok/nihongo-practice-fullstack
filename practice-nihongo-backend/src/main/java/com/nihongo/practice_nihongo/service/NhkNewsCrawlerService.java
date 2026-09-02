@@ -36,7 +36,7 @@ public class NhkNewsCrawlerService {
     public void crawlDailyNhkNews() {
         log.info("Bắt đầu crawl tin tức từ nhkeasier.com...");
         try {
-            Document homeDoc = Jsoup.connect(NHK_EASIER_URL).userAgent("Mozilla/5.0").get();
+            Document homeDoc = fetchDocument(NHK_EASIER_URL);
             Elements articles = homeDoc.select("article");
             
             int count = 0;
@@ -89,7 +89,7 @@ public class NhkNewsCrawlerService {
                 }
                 
                 log.info("Đang quét trang danh sách ({} / {}): {}", i, maxPages, currentUrl);
-                Document doc = Jsoup.connect(currentUrl).userAgent("Mozilla/5.0").get();
+                Document doc = fetchDocument(currentUrl);
                 Elements articles = doc.select("article");
                 
                 for (Element articleElement : articles) {
@@ -143,7 +143,7 @@ public class NhkNewsCrawlerService {
     private void crawlAndSaveArticle(String newsId, String fallbackTitle, String articleUrl, boolean skipAi) {
         try {
             log.info("Đang crawl bài báo NHKEasier: " + articleUrl);
-            Document doc = Jsoup.connect(articleUrl).userAgent("Mozilla/5.0").get();
+            Document doc = fetchDocument(articleUrl);
 
             Element titleElement = doc.selectFirst("article h3");
             String title = fallbackTitle;
@@ -244,5 +244,13 @@ public class NhkNewsCrawlerService {
         } catch (Exception e) {
             log.error("Lỗi khi crawl bài báo ID: " + newsId, e);
         }
+    }
+
+    private Document fetchDocument(String url) throws Exception {
+        return Jsoup.connect(url)
+                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                .header("Accept-Language", "en-US,en;q=0.9,ja;q=0.8")
+                .timeout(15000)
+                .get();
     }
 }

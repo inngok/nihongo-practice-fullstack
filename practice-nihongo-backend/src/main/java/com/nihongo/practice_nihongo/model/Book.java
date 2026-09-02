@@ -36,9 +36,12 @@ public class Book {
     @Column(nullable = false, columnDefinition = "boolean default true")
     private Boolean publishKanji = true;
 
+    @Column(name = "allowed_emails", columnDefinition = "TEXT")
+    private String allowedEmails;
+
     public Book() {}
 
-    public Book(Long id, String title, String japaneseTitle, String levelLabel, String num, String type, List<Grammar> grammars, Boolean publishGrammar, Boolean publishVocab, Boolean publishKanji) {
+    public Book(Long id, String title, String japaneseTitle, String levelLabel, String num, String type, List<Grammar> grammars, Boolean publishGrammar, Boolean publishVocab, Boolean publishKanji, String allowedEmails) {
         this.id = id;
         this.title = title;
         this.japaneseTitle = japaneseTitle;
@@ -49,6 +52,7 @@ public class Book {
         this.publishGrammar = publishGrammar != null ? publishGrammar : true;
         this.publishVocab = publishVocab != null ? publishVocab : true;
         this.publishKanji = publishKanji != null ? publishKanji : true;
+        this.allowedEmails = allowedEmails;
     }
 
     // Manual Getters and Setters
@@ -72,6 +76,8 @@ public class Book {
     public void setPublishVocab(Boolean publishVocab) { this.publishVocab = publishVocab; }
     public Boolean getPublishKanji() { return publishKanji; }
     public void setPublishKanji(Boolean publishKanji) { this.publishKanji = publishKanji; }
+    public String getAllowedEmails() { return allowedEmails; }
+    public void setAllowedEmails(String allowedEmails) { this.allowedEmails = allowedEmails; }
 
     public static class BookBuilder {
         private Long id;
@@ -84,6 +90,7 @@ public class Book {
         private Boolean publishGrammar = true;
         private Boolean publishVocab = true;
         private Boolean publishKanji = true;
+        private String allowedEmails;
 
         public BookBuilder id(Long id) { this.id = id; return this; }
         public BookBuilder title(String title) { this.title = title; return this; }
@@ -95,9 +102,10 @@ public class Book {
         public BookBuilder publishGrammar(Boolean publishGrammar) { this.publishGrammar = publishGrammar; return this; }
         public BookBuilder publishVocab(Boolean publishVocab) { this.publishVocab = publishVocab; return this; }
         public BookBuilder publishKanji(Boolean publishKanji) { this.publishKanji = publishKanji; return this; }
+        public BookBuilder allowedEmails(String allowedEmails) { this.allowedEmails = allowedEmails; return this; }
 
         public Book build() {
-            return new Book(id, title, japaneseTitle, levelLabel, num, type, grammars, publishGrammar, publishVocab, publishKanji);
+            return new Book(id, title, japaneseTitle, levelLabel, num, type, grammars, publishGrammar, publishVocab, publishKanji, allowedEmails);
         }
     }
 

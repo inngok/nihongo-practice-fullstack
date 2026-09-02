@@ -46,7 +46,8 @@ export default function Grammar() {
   const filteredBooks = React.useMemo(() => {
     if (!Array.isArray(books)) return [];
     return books.filter(book => {
-      if (!isAdmin && book.publishGrammar === false) return false;
+      const isAllowed = book.allowedEmails && currentUser?.email && book.allowedEmails.split(',').map(e => e.trim()).includes(currentUser.email);
+      if (!isAdmin && book.publishGrammar === false && !isAllowed) return false;
       
       if (isAdmin) return true;
       

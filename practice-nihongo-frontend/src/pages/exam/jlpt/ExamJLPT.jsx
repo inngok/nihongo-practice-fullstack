@@ -26,6 +26,13 @@ const examModules = [
     description: "Luyện nghe tiếng Nhật nghe và đọc đoạn script.",
     path: "/exam-jlpt/listening",
     status: "ready"
+  },
+  {
+    id: 'translation-practice',
+    title: "Luyện dịch câu",
+    description: "Luyện dịch Việt-Nhật.",
+    path: "/translation-practice",
+    status: "ready"
   }
 ];
 
@@ -53,7 +60,7 @@ export default function ExamJLPT() {
           <div className="space-y-4">
             <span className="text-[10px] tracking-[0.4em] font-bold text-slate-300 uppercase">Chương trình luyện thi</span>
             <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter leading-tight italic uppercase">
-              Ôn thi
+              Ôn tập
             </h1>
             <p className="text-slate-400 font-medium text-sm md:text-base max-w-xl italic leading-relaxed">
               Tổng hợp cấu trúc và kỹ năng làm các dạng bài đặc thù trong kỳ thi năng lực tiếng Nhật JLPT N3.

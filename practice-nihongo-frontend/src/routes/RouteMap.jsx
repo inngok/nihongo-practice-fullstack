@@ -42,6 +42,7 @@ const Profile = lazy(() => import("../pages/profile/Profile"));
 const JlptPastVocab = lazy(() => import("../pages/exam/jlpt/JlptPastVocab"));
 const NewsList = lazy(() => import("../pages/news/NewsList"));
 const NewsDetail = lazy(() => import("../pages/news/NewsDetail"));
+const TranslationPractice = lazy(() => import("../pages/practice/TranslationPractice"));
 
 
 // Admin Management
@@ -233,6 +234,7 @@ export default function RouteMap() {
             <Route path="listening" element={<ListeningDemo />} />
           </Route>
 
+          <Route path="translation-practice" element={<TranslationPractice />} />
 
           <Route path="tips" element={<Tips />} />
           <Route path="flashcards" element={<Flashcards />} />

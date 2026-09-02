@@ -72,7 +72,11 @@ const HeaderComponent = () => {
                   {notif.title}
                 </h4>
                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 mt-1 block uppercase tracking-wider">
-                  {new Date(notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(notif.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                  {(() => {
+                    const d = new Date(notif.timestamp);
+                    if (isNaN(d)) return '';
+                    return `${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} – ${d.toLocaleDateString('vi-VN', { day: 'numeric', month: 'short' })}`;
+                  })()}
                 </span>
               </div>
             </div>
@@ -91,15 +95,17 @@ const HeaderComponent = () => {
 
         {/* Right side controls on mobile */}
         <div className="flex items-center gap-3 md:gap-6">
-          <div className="md:hidden">
-            <Dropdown dropdownRender={() => notificationDropdown} trigger={['click']} placement="bottomRight">
-              <div className="relative w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer text-slate-650 dark:text-slate-350 transition-all select-none shadow-sm">
-                <Badge count={unreadCount} size="small" offset={[2, -2]} overflowCount={10}>
-                  <BellOutlined className="text-base" />
-                </Badge>
-              </div>
-            </Dropdown>
-          </div>
+          {currentUser && (
+            <div className="md:hidden">
+              <Dropdown dropdownRender={() => notificationDropdown} trigger={['click']} placement="bottomRight">
+                <div className="relative w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer text-slate-650 dark:text-slate-350 transition-all select-none shadow-sm">
+                  <Badge count={unreadCount} size="small" offset={[2, -2]} overflowCount={10}>
+                    <BellOutlined className="text-base" />
+                  </Badge>
+                </div>
+              </Dropdown>
+            </div>
+          )}
 
           {isAdmin && (
             <Dropdown
@@ -201,13 +207,15 @@ const HeaderComponent = () => {
       </nav>
 
       <div className="hidden md:flex flex-1 items-center justify-end gap-4 text-xs font-bold uppercase tracking-widest">
-        <Dropdown dropdownRender={() => notificationDropdown} trigger={['click']} placement="bottomRight">
-          <div className="relative w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer text-slate-655 dark:text-slate-355 transition-all select-none shadow-sm">
-            <Badge count={unreadCount} size="small" offset={[2, -2]} overflowCount={10}>
-              <BellOutlined className="text-base" />
-            </Badge>
-          </div>
-        </Dropdown>
+        {currentUser && (
+          <Dropdown dropdownRender={() => notificationDropdown} trigger={['click']} placement="bottomRight">
+            <div className="relative w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer text-slate-655 dark:text-slate-355 transition-all select-none shadow-sm">
+              <Badge count={unreadCount} size="small" offset={[2, -2]} overflowCount={10}>
+                <BellOutlined className="text-base" />
+              </Badge>
+            </div>
+          </Dropdown>
+        )}
 
         {currentUser ? (
           <Dropdown

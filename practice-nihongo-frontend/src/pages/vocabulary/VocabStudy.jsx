@@ -11,6 +11,7 @@ const VocabMultipleChoiceMode = React.lazy(() => import('./components/VocabMulti
 const VocabResultsModal = React.lazy(() => import('./components/VocabResultsModal'));
 const VocabStudyHeader = React.lazy(() => import('./components/VocabStudyHeader'));
 const VocabStudyControls = React.lazy(() => import('./components/VocabStudyControls'));
+const VocabMatchingMode = React.lazy(() => import('./components/VocabMatchingMode'));
 
 export default function VocabStudy() {
   const navigate = useNavigate();
@@ -151,7 +152,14 @@ export default function VocabStudy() {
       
       const isAdmin = currentUser?.role === 'ADMIN' || currentUser?.role === 'admin' || currentUser?.role === 'ROLE_ADMIN';
       if (!isAdmin) {
-        data = data.filter(item => item.publish !== false);
+        data = data.filter(item => {
+          if (item.publish === false) return false;
+          if (item.book) {
+            const isAllowed = item.book.allowedEmails && currentUser?.email && item.book.allowedEmails.split(',').map(e => e.trim()).includes(currentUser.email);
+            if (item.book.publishVocab === false && !isAllowed) return false;
+          }
+          return true;
+        });
       }
 
       setVocabData(data);
@@ -525,6 +533,13 @@ export default function VocabStudy() {
                   setShowHanViet={setShowHanViet}
                   isShuffle={isShuffle}
                   setIsShuffle={setIsShuffle}
+                />
+              )}
+              {activeMode === 'matching' && (
+                <VocabMatchingMode
+                  studyData={studyData}
+                  setShowResults={setShowResults}
+                  handleResetProgress={handleResetProgress}
                 />
               )}
               {activeMode === 'quiz' && (
