@@ -9,6 +9,7 @@ import FlashcardMode from './components/FlashcardMode';
 import QuizMode from './components/QuizMode';
 import MultipleChoiceMode from './components/MultipleChoiceMode';
 import ListeningMode from './components/ListeningMode';
+import StarQuizMode from './components/StarQuizMode';
 import { prepareActiveData } from './utils/grammarHelpers';
 
 export default function StudyPage() {
@@ -259,6 +260,7 @@ export default function StudyPage() {
                   toggleExpand={toggleExpand}
                   expandedId={expandedId}
                   playAudio={playAudio}
+                  currentUser={currentUser}
                 />
               ) : activeMode === 'flashcard' || activeMode === 'cards' ? (
                 <FlashcardMode
@@ -296,6 +298,17 @@ export default function StudyPage() {
                 />
               ) : activeMode === 'listening' ? (
                 <ListeningMode
+                  activeData={activeData}
+                  currentIndex={currentIndex}
+                  setActiveMode={setActiveMode}
+                  isShuffle={isShuffle}
+                  handleToggleShuffle={handleToggleShuffle}
+                  handleResetProgress={handleResetProgress}
+                  handlePrev={handlePrev}
+                  handleNext={handleNext}
+                />
+              ) : activeMode === 'starQuiz' ? (
+                <StarQuizMode
                   activeData={activeData}
                   currentIndex={currentIndex}
                   setActiveMode={setActiveMode}

@@ -135,17 +135,19 @@ export default function ConfusingGrammar() {
                             {item.nuance}
                           </span>
                           
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 h-1 bg-slate-100 dark:bg-slate-850 rounded-full overflow-hidden hidden md:block">
-                              <div
-                                className="h-full bg-slate-400 dark:bg-slate-550 rounded-full"
-                                style={{ width: `${item.similarityPercentage || 50}%` }}
-                              />
+                          {item.similarityPercentage != null && (
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 h-1 bg-slate-100 dark:bg-slate-850 rounded-full overflow-hidden hidden md:block">
+                                <div
+                                  className="h-full bg-slate-400 dark:bg-slate-550 rounded-full"
+                                  style={{ width: `${item.similarityPercentage}%` }}
+                                />
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-650 min-w-[28px] text-right">
+                                {item.similarityPercentage}%
+                              </span>
                             </div>
-                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-650 min-w-[28px] text-right">
-                              {item.similarityPercentage || 50}%
-                            </span>
-                          </div>
+                          )}
                         </div>
                       </div>
                     ))}

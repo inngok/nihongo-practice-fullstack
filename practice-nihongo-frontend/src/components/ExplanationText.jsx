@@ -5,10 +5,16 @@ export default function ExplanationText({ text, className = "" }) {
 
   const renderInline = (str) => {
     if (!str) return null;
-    const tokens = str.split(/(~~.*?~~)/g);
+    const tokens = str.split(/(~~.*?~~|\*\*.*?\*\*|\*.*?\*)/g);
     return tokens.map((part, i) => {
       if (part.startsWith('~~') && part.endsWith('~~')) {
         return <span key={i} className="line-through opacity-50 decoration-slate-500 mx-[1px]">{part.slice(2, -2)}</span>;
+      }
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-black text-slate-900 dark:text-white">{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+        return <em key={i} className="italic">{part.slice(1, -1)}</em>;
       }
       return part;
     });
@@ -28,7 +34,7 @@ export default function ExplanationText({ text, className = "" }) {
       let textBefore = text.slice(lastIndex, match.index);
       textBefore = textBefore.replace(/\n+$/, ' ');
       if (textBefore) {
-        parts.push(<span key={`text-${lastIndex}`}>{textBefore}</span>);
+        parts.push(<span key={`text-${lastIndex}`}>{renderInline(textBefore)}</span>);
       }
     }
     
@@ -63,9 +69,7 @@ export default function ExplanationText({ text, className = "" }) {
   if (lastIndex < text.length) {
     let remainingText = text.slice(lastIndex);
     if (remainingText) {
-      // Ensure there's a newline before "Giải thích" if it doesn't already have one, 
-      // but usually the AI generates \nGiải thích:
-      parts.push(<span key={`text-${lastIndex}`}>{remainingText}</span>);
+      parts.push(<span key={`text-${lastIndex}`}>{renderInline(remainingText)}</span>);
     }
   }
 

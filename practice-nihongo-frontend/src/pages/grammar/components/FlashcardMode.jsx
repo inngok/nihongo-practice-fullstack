@@ -13,9 +13,11 @@ export default function FlashcardMode({
   handleNext
 }) {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     setIsFlipped(false);
+    setShowDetails(false);
   }, [currentIndex]);
 
   useEffect(() => {
@@ -67,6 +69,7 @@ export default function FlashcardMode({
             onClick={() => {
               handleResetProgress();
               setIsFlipped(false);
+              setShowDetails(false);
             }}
             className="px-3 py-1 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
           >
@@ -82,67 +85,84 @@ export default function FlashcardMode({
         />
       </div>
 
-      <div className="perspective h-[380px] sm:h-[420px]">
+      <div className="perspective w-full">
         <div
           key={currentIndex}
-          onClick={() => setIsFlipped(!isFlipped)}
-          className={`relative w-full h-full duration-700 preserve-3d shadow-xl rounded-[2.5rem] cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
+          onClick={(e) => {
+            if (e.target.closest('.no-flip')) return;
+            setIsFlipped(!isFlipped);
+          }}
+          className={`grid w-full duration-700 preserve-3d shadow-xl rounded-[2.5rem] cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
         >
-          <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center p-5 sm:p-8 text-center shadow-inner">
+          <div className="[grid-area:1/1] backface-hidden bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center p-8 sm:p-12 text-center shadow-inner min-h-[380px] sm:min-h-[420px]">
             <span className="px-4 py-1.5 bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 rounded-full text-[9px] font-black uppercase tracking-wider mb-6 border border-slate-100 dark:border-slate-900">
               {activeData[currentIndex]?.level || 'N3'}
             </span>
-            <h2 className="text-3xl sm:text-5xl font-black text-slate-955 dark:text-white mb-6 tracking-tight leading-relaxed">
+            <h2 className="text-3xl sm:text-5xl font-black text-slate-955 dark:text-white mb-6 tracking-tight leading-relaxed break-words max-w-full">
               {activeData[currentIndex]?.pattern}
             </h2>
             <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em] animate-pulse mt-4">NHẤN ĐỂ LẬT THẺ</p>
           </div>
 
           {/* Back Face */}
-          <div className="absolute inset-0 backface-hidden rotate-y-180 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-start sm:justify-center p-5 sm:p-8 text-center shadow-inner overflow-y-auto py-8 sm:py-8">
+          <div className="[grid-area:1/1] backface-hidden rotate-y-180 bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[2.5rem] flex flex-col items-center justify-center p-8 sm:p-12 text-center shadow-inner min-h-[380px] sm:min-h-[420px]">
             <span className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest mb-4">
               CẤU TRÚC: {activeData[currentIndex]?.pattern}
             </span>
 
             <div className="h-px w-12 bg-slate-100 dark:bg-slate-800 mb-6" />
 
-            <h3 className="text-xl sm:text-2xl font-black italic text-slate-950 dark:text-white mb-4">
+            <h3 className="text-xl sm:text-2xl font-black italic text-slate-950 dark:text-white mb-6 break-words max-w-full">
               {activeData[currentIndex]?.meaning}
             </h3>
 
-            {activeData[currentIndex]?.explanation && (
-              <div className="text-sm font-medium text-slate-600 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
-                <ExplanationText text={activeData[currentIndex]?.explanation} />
+            {!showDetails ? (
+              <button
+                className="no-flip mt-4 px-5 py-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border border-slate-200 dark:border-slate-700 shadow-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDetails(true);
+                }}
+              >
+                XEM GIẢI THÍCH & VÍ DỤ
+              </button>
+            ) : (
+              <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-top-4 duration-500 mt-2">
+                {activeData[currentIndex]?.explanation && (
+                  <div className="text-sm font-medium text-slate-600 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
+                    <ExplanationText text={activeData[currentIndex]?.explanation} />
+                  </div>
+                )}
+
+                {activeData[currentIndex]?.exampleSentence && (() => {
+                   let normalizedJp = activeData[currentIndex].exampleSentence.replace(/\\n/g, '\n');
+                   normalizedJp = normalizedJp.replace(/(。|！|？)(\s*)/g, '$1\n');
+                   const jpLines = normalizedJp.split('\n').map(s => s.trim()).filter(Boolean);
+
+                   let normalizedVn = activeData[currentIndex].exampleMeaning ? activeData[currentIndex].exampleMeaning.replace(/\\n/g, '\n') : '';
+                   normalizedVn = normalizedVn.replace(/(\.|!|\?)(\s+)/g, '$1\n');
+                   const vnLines = normalizedVn.split('\n').map(s => s.trim()).filter(Boolean);
+                   return (
+                     <div className="bg-slate-50 dark:bg-slate-950/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-900 text-left w-full max-w-md space-y-2">
+                       <span className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest block mb-1">VÍ DỤ</span>
+                       <div className="space-y-2">
+                         {jpLines.map((jpLine, lineIdx) => {
+                           const vnLine = vnLines[lineIdx] || '';
+                           return (
+                             <div key={lineIdx} className="space-y-0.5 border-l-2 border-slate-200 dark:border-slate-800 pl-2">
+                               <p className="text-sm font-bold text-slate-900 dark:text-white leading-relaxed">{jpLine}</p>
+                               {vnLine && (
+                                 <p className="text-xs italic text-slate-400 dark:text-slate-500 leading-relaxed">{vnLine}</p>
+                               )}
+                             </div>
+                           );
+                         })}
+                       </div>
+                     </div>
+                   );
+                 })()}
               </div>
             )}
-
-            {activeData[currentIndex]?.exampleSentence && (() => {
-               let normalizedJp = activeData[currentIndex].exampleSentence.replace(/\\n/g, '\n');
-               normalizedJp = normalizedJp.replace(/(。|！|？)(\s*)/g, '$1\n');
-               const jpLines = normalizedJp.split('\n').map(s => s.trim()).filter(Boolean);
-
-               let normalizedVn = activeData[currentIndex].exampleMeaning ? activeData[currentIndex].exampleMeaning.replace(/\\n/g, '\n') : '';
-               normalizedVn = normalizedVn.replace(/(\.|!|\?)(\s+)/g, '$1\n');
-               const vnLines = normalizedVn.split('\n').map(s => s.trim()).filter(Boolean);
-               return (
-                 <div className="bg-slate-50 dark:bg-slate-950/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-900 text-left w-full max-w-md space-y-2">
-                   <span className="text-[9px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-widest block mb-1">VÍ DỤ</span>
-                   <div className="space-y-2">
-                     {jpLines.map((jpLine, lineIdx) => {
-                       const vnLine = vnLines[lineIdx] || '';
-                       return (
-                         <div key={lineIdx} className="space-y-0.5 border-l-2 border-slate-200 dark:border-slate-800 pl-2">
-                           <p className="text-sm font-bold text-slate-900 dark:text-white leading-relaxed">{jpLine}</p>
-                           {vnLine && (
-                             <p className="text-xs italic text-slate-400 dark:text-slate-500 leading-relaxed">{vnLine}</p>
-                           )}
-                         </div>
-                       );
-                     })}
-                   </div>
-                 </div>
-               );
-             })()}
           </div>
         </div>
       </div>

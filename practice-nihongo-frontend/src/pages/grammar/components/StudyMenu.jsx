@@ -18,7 +18,8 @@ export default function StudyMenu({
   setSearchTerm,
   toggleExpand,
   expandedId,
-  playAudio
+  playAudio,
+  currentUser
 }) {
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -37,20 +38,21 @@ export default function StudyMenu({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="flex flex-wrap justify-center gap-3">
           {[
-            { id: 'cards', label: 'FLASHCARD' },
-            { id: 'quiz', label: 'LUYỆN TẬP' },
-            { id: 'multiple_choice', label: 'TRẮC NGHIỆM' },
-            { id: 'listening', label: 'NGHE ĐIỀN' }
-          ].map(m => (
+            { id: 'cards', label: 'FLASHCARD', requireAuth: false },
+            { id: 'quiz', label: 'LUYỆN TẬP', requireAuth: true },
+            { id: 'multiple_choice', label: 'TRẮC NGHIỆM', requireAuth: false },
+            { id: 'listening', label: 'NGHE ĐIỀN', requireAuth: true },
+            { id: 'starQuiz', label: 'ĐIỀN SAO', requireAuth: true }
+          ].filter(m => currentUser || !m.requireAuth).map(m => (
             <button
               key={m.id}
               onClick={() => {
                 setActiveMode(m.id);
                 setCurrentIndex(0);
               }}
-              className="flex items-center justify-center py-4 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-black dark:hover:border-white hover:bg-white dark:hover:bg-slate-950 transition-all duration-300 hover:shadow-md active:scale-95 group"
+              className="flex-1 min-w-[140px] flex items-center justify-center py-4 px-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl hover:border-black dark:hover:border-white hover:bg-white dark:hover:bg-slate-950 transition-all duration-300 hover:shadow-md active:scale-95 group"
             >
               <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 group-hover:text-black dark:group-hover:text-white">{m.label}</span>
             </button>

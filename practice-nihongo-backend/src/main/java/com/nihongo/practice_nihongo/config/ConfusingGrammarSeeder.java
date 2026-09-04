@@ -6,7 +6,7 @@ import com.nihongo.practice_nihongo.repository.ConfusingGrammarGroupRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-@Component
+// @Component
 public class ConfusingGrammarSeeder implements CommandLineRunner {
 
     private final ConfusingGrammarGroupRepository repository;

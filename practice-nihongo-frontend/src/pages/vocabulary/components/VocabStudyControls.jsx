@@ -10,7 +10,8 @@ export default function VocabStudyControls({
   setCurrentIndex,
   setIsFlipped,
   activeMode,
-  setActiveMode
+  setActiveMode,
+  currentUser
 }) {
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 border-t border-slate-50 dark:border-slate-900 pt-10">
@@ -81,12 +82,12 @@ export default function VocabStudyControls({
       <div className="flex items-center gap-6 w-full md:w-auto">
         <div className="flex items-center bg-slate-50/50 dark:bg-slate-900/50 p-1 rounded-2xl shadow-inner border border-slate-100 dark:border-slate-800 w-full sm:w-auto overflow-x-auto hide-scrollbar">
           {[
-            { id: 'list', label: 'Danh sách' },
-            { id: 'flashcard', label: 'Flashcard' },
-            { id: 'matching', label: 'Nối từ' },
-            { id: 'multiple_choice', label: 'Trắc nghiệm' },
-            { id: 'quiz', label: 'Luyện tập' }
-          ].map(m => (
+            { id: 'list', label: 'Danh sách', requireAuth: false },
+            { id: 'flashcard', label: 'Flashcard', requireAuth: false },
+            { id: 'matching', label: 'Nối từ', requireAuth: true },
+            { id: 'multiple_choice', label: 'Trắc nghiệm', requireAuth: true },
+            { id: 'quiz', label: 'Luyện tập', requireAuth: true }
+          ].filter(m => currentUser || !m.requireAuth).map(m => (
             <button
               key={m.id}
               onClick={() => setActiveMode(m.id)}

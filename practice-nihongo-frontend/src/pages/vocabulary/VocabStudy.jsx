@@ -489,6 +489,7 @@ export default function VocabStudy() {
                 setIsFlipped={setIsFlipped}
                 activeMode={activeMode}
                 setActiveMode={setActiveMode}
+                currentUser={currentUser}
               />
             </React.Suspense>
 
