@@ -129,13 +129,13 @@ export const prepareActiveData = (grammarData, selectedLesson, selectedDay, acti
     const unitB = parseInt(b.unit) || 0;
     if (unitA !== unitB) return unitA - unitB;
 
-    const sortA = typeof a.sortOrder === 'number' ? a.sortOrder : 0;
-    const sortB = typeof b.sortOrder === 'number' ? b.sortOrder : 0;
-    if (sortA !== sortB) return sortA - sortB;
-
     const dayA = parseInt(a.day) || 0;
     const dayB = parseInt(b.day) || 0;
-    return dayA - dayB;
+    if (dayA !== dayB) return dayA - dayB;
+
+    const sortA = typeof a.sortOrder === 'number' ? a.sortOrder : (parseInt(a.num) || 0);
+    const sortB = typeof b.sortOrder === 'number' ? b.sortOrder : (parseInt(b.num) || 0);
+    return sortA - sortB;
   });
 
   if (activeMode === 'quiz' || activeMode === 'multiple_choice' || activeMode === 'listening') {

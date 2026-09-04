@@ -15,9 +15,9 @@ export default function BookAddModal({
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-        <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 w-full max-w-xl max-h-[90vh] flex flex-col rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
             {editingId ? 'Chỉnh sửa giáo trình' : 'Thêm giáo trình mới'}
           </h2>
           <button 
@@ -30,9 +30,10 @@ export default function BookAddModal({
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="md:col-span-1 space-y-2">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="p-6 space-y-6 overflow-y-auto flex-1 custom-scrollbar">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="md:col-span-1 space-y-2">
               <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 px-1">STT</label>
               <input
                 type="text"
@@ -177,17 +178,18 @@ export default function BookAddModal({
             />
           </div>
 
-          <div className="pt-4 flex gap-4">
+          </div>
+          <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex gap-4 shrink-0 bg-slate-50/50 dark:bg-slate-900/50">
             <button
               type="button"
               onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-6 py-4 border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+              className="flex-1 px-6 py-3 border border-slate-200 dark:border-slate-700 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
             >
               Hủy
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-4 bg-black dark:bg-white text-white dark:text-black rounded-2xl font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-xl shadow-black/10 dark:shadow-none"
+              className="flex-1 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-lg shadow-black/10 dark:shadow-none"
             >
               {editingId ? 'Cập nhật' : 'Lưu dữ liệu'}
             </button>
