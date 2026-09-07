@@ -164,7 +164,7 @@ export default function NewsList() {
               Báo Nhật Mỗi Ngày
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base max-w-xl font-medium">
-              Tin tức cập nhật tự động từ NHK News mỗi ngày.
+              Tin tức cập nhật tự động từ News mỗi ngày.
             </p>
           </div>
           <div className="mt-4 md:mt-0 flex flex-col sm:flex-row gap-2 w-full md:w-auto">

@@ -5,16 +5,43 @@ export default function ExplanationText({ text, className = "" }) {
 
   const renderInline = (str) => {
     if (!str) return null;
-    const tokens = str.split(/(~~.*?~~|\*\*.*?\*\*|\*.*?\*)/g);
+    const tokens = str.split(/(~~.*?~~|\*\*.*?\*\*|\*.*?\*|\(bỏ ます\)|\(bỏ な\)|\(bỏ い\)|\(bỏ だ\))/gi);
     return tokens.map((part, i) => {
+      if (!part) return null;
       if (part.startsWith('~~') && part.endsWith('~~')) {
-        return <span key={i} className="line-through opacity-50 decoration-slate-500 mx-[1px]">{part.slice(2, -2)}</span>;
+        const inner = part.slice(2, -2).trim();
+        if (inner === 'ます') {
+          return <span key={i} className="inline-block bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 px-1.5 py-[2px] rounded md:rounded-md text-[9px] md:text-[10px] font-black uppercase tracking-wider ml-1 -translate-y-[1px] md:-translate-y-[2px]">Bỏ MASU</span>;
+        }
+        if (inner === 'な') {
+          return <span key={i} className="inline-block bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400 px-1.5 py-[2px] rounded md:rounded-md text-[9px] md:text-[10px] font-black uppercase tracking-wider ml-1 -translate-y-[1px] md:-translate-y-[2px]">Bỏ NA</span>;
+        }
+        if (inner === 'い') {
+          return <span key={i} className="inline-block bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 px-1.5 py-[2px] rounded md:rounded-md text-[9px] md:text-[10px] font-black uppercase tracking-wider ml-1 -translate-y-[1px] md:-translate-y-[2px]">Bỏ I</span>;
+        }
+        if (inner === 'だ') {
+          return <span key={i} className="inline-block bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 px-1.5 py-[2px] rounded md:rounded-md text-[9px] md:text-[10px] font-black uppercase tracking-wider ml-1 -translate-y-[1px] md:-translate-y-[2px]">Bỏ DA</span>;
+        }
+        return <span key={i} className="line-through opacity-50 decoration-slate-500 mx-[1px]">{inner}</span>;
       }
       if (part.startsWith('**') && part.endsWith('**')) {
         return <strong key={i} className="font-black text-slate-900 dark:text-white">{part.slice(2, -2)}</strong>;
       }
       if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
         return <em key={i} className="italic">{part.slice(1, -1)}</em>;
+      }
+      const lowerPart = part.toLowerCase();
+      if (lowerPart === '(bỏ ます)') {
+        return <span key={i} className="inline-block bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400 px-1.5 py-[2px] rounded md:rounded-md text-[9px] md:text-[10px] font-black uppercase tracking-wider ml-1 -translate-y-[1px] md:-translate-y-[2px]">Bỏ MASU</span>;
+      }
+      if (lowerPart === '(bỏ な)') {
+        return <span key={i} className="inline-block bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-400 px-1.5 py-[2px] rounded md:rounded-md text-[9px] md:text-[10px] font-black uppercase tracking-wider ml-1 -translate-y-[1px] md:-translate-y-[2px]">Bỏ NA</span>;
+      }
+      if (lowerPart === '(bỏ い)') {
+        return <span key={i} className="inline-block bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400 px-1.5 py-[2px] rounded md:rounded-md text-[9px] md:text-[10px] font-black uppercase tracking-wider ml-1 -translate-y-[1px] md:-translate-y-[2px]">Bỏ I</span>;
+      }
+      if (lowerPart === '(bỏ だ)') {
+        return <span key={i} className="inline-block bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 px-1.5 py-[2px] rounded md:rounded-md text-[9px] md:text-[10px] font-black uppercase tracking-wider ml-1 -translate-y-[1px] md:-translate-y-[2px]">Bỏ DA</span>;
       }
       return part;
     });
