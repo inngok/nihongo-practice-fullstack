@@ -26,10 +26,11 @@ const notifUid = (n) => {
 
 export function NotificationProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const userId = currentUser?.id || null;
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   // Reset & reload notifications whenever userId changes (login/logout/switch user)
   useEffect(() => {
@@ -38,10 +39,10 @@ export function NotificationProvider({ children }) {
 
     // Reset state immediately when user changes
     setNotifications([]);
-    setUnreadCount(0);
 
     // If no user (logged out), don't fetch anything
     if (!userId) return;
+    
     const saved = localStorage.getItem(STORAGE_KEY);
     let localNotifs = [];
     if (saved) {
@@ -61,7 +62,6 @@ export function NotificationProvider({ children }) {
       } catch (e) {}
     }
     setNotifications(localNotifs.filter(n => !n.hidden));
-    setUnreadCount(localNotifs.filter(n => !n.read && !n.hidden).length);
 
     // Get dismissed UIDs so we don't re-show cleared notifications
     let dismissedUids = new Set();
@@ -70,55 +70,58 @@ export function NotificationProvider({ children }) {
       if (d) dismissedUids = new Set(JSON.parse(d));
     } catch (e) {}
 
+    let isCancelled = false;
 
     // Fetch historical notifications from server
     fetch('/api/notifications')
       .then(res => res.json())
       .then(data => {
-        setNotifications(prev => {
-          // Build a map of existing UIDs from local state (including hidden)
-          const savedAll = (() => {
-            try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
-          })();
-          const existingUids = new Set(savedAll.map(n => notifUid(n)));
+        if (isCancelled) return;
+        
+        const savedAll = (() => {
+          try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+        })();
+        const existingUids = new Set(savedAll.map(n => notifUid(n)));
 
-          let updatedLocal = [...savedAll];
-          let hasNew = false;
+        let updatedLocal = [...savedAll];
+        let hasNew = false;
 
-          data.forEach(serverNotif => {
-            const uid = notifUid(serverNotif);
-            // Skip if already known OR if user has dismissed it
-            if (existingUids.has(uid) || dismissedUids.has(uid)) return;
+        data.forEach(serverNotif => {
+          const uid = notifUid(serverNotif);
+          // Skip if already known OR if user has dismissed it
+          if (existingUids.has(uid) || dismissedUids.has(uid)) return;
 
-            hasNew = true;
-            existingUids.add(uid);
-            updatedLocal.push({
-              id: serverNotif.relatedId || serverNotif.id,
-              relatedId: serverNotif.relatedId,
-              uid,
-              title: serverNotif.type === 'NEW_ARTICLE'
-                ? serverNotif.title.replace(/^Bài báo mới:\s*/i, '')
-                : serverNotif.title,
-              type: serverNotif.type,
-              timestamp: parseTs(serverNotif.createdAt).toISOString(),
-              read: false,
-              hidden: false,
-              imageUrl: null,
-            });
+          hasNew = true;
+          existingUids.add(uid);
+          updatedLocal.push({
+            id: serverNotif.relatedId || serverNotif.id,
+            relatedId: serverNotif.relatedId,
+            uid,
+            title: serverNotif.type === 'NEW_ARTICLE'
+              ? (serverNotif.title ? String(serverNotif.title).replace(/^Bài báo mới:\s*/i, '') : '')
+              : serverNotif.title || '',
+            type: serverNotif.type,
+            timestamp: parseTs(serverNotif.createdAt).toISOString(),
+            read: false,
+            hidden: false,
+            imageUrl: null,
           });
-
-          if (!hasNew) return prev;
-
-          updatedLocal.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-          updatedLocal = updatedLocal.slice(0, 30);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedLocal));
-
-          const visible = updatedLocal.filter(n => !n.hidden);
-          setUnreadCount(visible.filter(n => !n.read).length);
-          return visible;
         });
+
+        if (!hasNew) return;
+
+        updatedLocal.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        updatedLocal = updatedLocal.slice(0, 30);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedLocal));
+
+        const visible = updatedLocal.filter(n => !n.hidden);
+        setNotifications(visible);
       })
       .catch(err => console.warn('Failed to fetch historical notifications:', err));
+
+      return () => {
+        isCancelled = true;
+      };
   }, [userId]);
 
   const addNotification = useCallback((notif) => {
@@ -140,74 +143,66 @@ export function NotificationProvider({ children }) {
       hidden: false,
     };
 
-    setNotifications(prev => {
-      if (prev.some(n => n.uid === uid)) return prev;
-
-      const updated = [newNotif, ...prev.slice(0, 29)];
-      setUnreadCount(updated.filter(n => !n.read).length);
-
-      // Persist (include hidden) for dedup on next load
-      const savedAll = (() => {
-        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
-      })();
-      const merged = [newNotif, ...savedAll.filter(n => n.uid !== uid)].slice(0, 30);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-      return updated;
-    });
+    const savedAll = (() => {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+    })();
+    
+    if (savedAll.some(n => n.uid === uid)) return;
+    
+    const merged = [newNotif, ...savedAll.filter(n => n.uid !== uid)].slice(0, 30);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    
+    const visible = merged.filter(n => !n.hidden);
+    setNotifications(visible);
   }, [userId]);
 
   const markAllAsRead = useCallback(() => {
     const STORAGE_KEY = storageKey(userId);
-    setNotifications(prev => {
-      const updated = prev.map(n => ({ ...n, read: true }));
-      setUnreadCount(0);
-      const savedAll = (() => {
-        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
-      })();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedAll.map(n => ({ ...n, read: true }))));
-      return updated;
-    });
+    const savedAll = (() => {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+    })();
+    const updated = savedAll.map(n => ({ ...n, read: true }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    setNotifications(updated.filter(n => !n.hidden));
   }, [userId]);
 
   const markAsRead = useCallback((id) => {
     const STORAGE_KEY = storageKey(userId);
-    setNotifications(prev => {
-      const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
-      setUnreadCount(updated.filter(n => !n.read).length);
-      const savedAll = (() => {
-        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
-      })();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedAll.map(n => n.id === id ? { ...n, read: true } : n)));
-      return updated;
-    });
+    const savedAll = (() => {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+    })();
+    const updated = savedAll.map(n => n.id === id ? { ...n, read: true } : n);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    setNotifications(updated.filter(n => !n.hidden));
   }, [userId]);
 
   const clearAll = useCallback(() => {
     const STORAGE_KEY = storageKey(userId);
     const DISMISSED_KEY = dismissedKey(userId);
-    setNotifications(prev => {
-      // Persist dismissed UIDs so server history doesn't resurrect them
-      const uids = prev.map(n => n.uid || notifUid(n)).filter(Boolean);
-      try {
-        const existing = JSON.parse(localStorage.getItem(DISMISSED_KEY) || '[]');
-        const merged = [...new Set([...existing, ...uids])];
-        localStorage.setItem(DISMISSED_KEY, JSON.stringify(merged));
-      } catch (e) {}
+    
+    const savedAll = (() => {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
+    })();
 
-      // Mark all as hidden in storage
-      const savedAll = (() => {
-        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
-      })();
-      const updated = savedAll.map(n => ({ ...n, hidden: true, read: true }));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    // Persist dismissed UIDs so server history doesn't resurrect them
+    const uids = savedAll.map(n => n.uid || notifUid(n)).filter(Boolean);
+    try {
+      const existing = JSON.parse(localStorage.getItem(DISMISSED_KEY) || '[]');
+      const merged = [...new Set([...existing, ...uids])];
+      localStorage.setItem(DISMISSED_KEY, JSON.stringify(merged));
+    } catch (e) {}
 
-      setUnreadCount(0);
-      return [];
-    });
+    // Mark all as hidden in storage
+    const updated = savedAll.map(n => ({ ...n, hidden: true, read: true }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+    setNotifications([]);
   }, [userId]);
 
   // SSE subscription
   useEffect(() => {
+    if (!userId) return; // Do not connect SSE if not logged in
+
     const eventSource = new EventSource('/api/notifications/subscribe');
 
     eventSource.addEventListener('INIT', (event) => {
@@ -289,11 +284,11 @@ export function NotificationProvider({ children }) {
     });
 
     eventSource.onerror = () => {
-      // Silently retry — browser handles reconnect automatically
+      // Silently retry
     };
 
     return () => eventSource.close();
-  }, [navigate, addNotification]);
+  }, [navigate, addNotification, userId]);
 
   return (
     <NotificationContext.Provider value={{

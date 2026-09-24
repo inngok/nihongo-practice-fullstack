@@ -16,6 +16,10 @@ export default function AiReviewSidebar({
   selectedGrammarId,
   setSelectedGrammarId,
   hasErrorPattern,
+  newGrammarDataMap,
+  onBulkGenerate,
+  isBulkGenerating,
+  bulkProgress,
 }) {
   return (
     <div className="w-1/4 min-w-[250px] border-r border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 p-5 flex flex-col h-full">
@@ -39,6 +43,20 @@ export default function AiReviewSidebar({
         </select>
       </div>
 
+      {lessonGrammars.length > 0 && (
+        <div className="mb-4">
+          <button 
+             onClick={onBulkGenerate}
+             disabled={isBulkGenerating}
+             className="w-full py-2 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs font-bold transition-all hover:bg-indigo-100 dark:hover:bg-indigo-900/50 disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+          >
+             {isBulkGenerating 
+                ? `Đang chạy AI (${bulkProgress.current}/${bulkProgress.total})...` 
+                : 'Review cả Bài'}
+          </button>
+        </div>
+      )}
+
       {/* Grammar list */}
       <div className="flex-1 overflow-y-auto pr-1 space-y-2 pb-4">
         {lessonGrammars.length === 0 ? (
@@ -47,6 +65,8 @@ export default function AiReviewSidebar({
           lessonGrammars.map(g => {
             const isError = hasErrorPattern(g.explanation);
             const isSelected = selectedGrammarId === g.id.toString();
+            const isGenerated = !!newGrammarDataMap?.[g.id];
+            
             return (
               <div
                 key={g.id}
@@ -58,10 +78,17 @@ export default function AiReviewSidebar({
                 }`}
               >
                 <div className="flex items-start justify-between">
-                  <span className={`text-sm font-black ${isSelected ? 'text-white dark:text-black' : 'text-slate-700 dark:text-slate-200'}`}>
-                    {g.structure}
-                  </span>
-                  {isError && (
+                  <div className="flex flex-col gap-1">
+                     <span className={`text-sm font-black ${isSelected ? 'text-white dark:text-black' : 'text-slate-700 dark:text-slate-200'}`}>
+                       {g.structure}
+                     </span>
+                     {isGenerated && (
+                        <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded w-fit ${isSelected ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400'}`}>
+                           Đã Review
+                        </span>
+                     )}
+                  </div>
+                  {isError && !isGenerated && (
                     <Tooltip title="Nghi ngờ có lỗi (+な) hoặc (+だ)">
                       <div className="w-2 h-2 rounded-full bg-red-500 mt-1.5 animate-pulse" />
                     </Tooltip>

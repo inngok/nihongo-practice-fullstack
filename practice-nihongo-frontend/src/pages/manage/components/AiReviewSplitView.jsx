@@ -11,14 +11,30 @@ export default function AiReviewSplitView({
   loadingAi,
   saving,
   newGrammarData,
+  newGrammarDataMap,
   hasErrorPattern,
   onGenerateAI,
   onSave,
+  onBulkSave
 }) {
+  const generatedCount = Object.keys(newGrammarDataMap || {}).length;
+
   if (!selectedGrammar) {
     return (
-      <div className="flex-1 flex items-center justify-center text-slate-400 text-sm font-bold uppercase tracking-widest">
-        Hãy chọn một ngữ pháp bên trái để review
+      <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-4">
+        <div className="text-sm font-bold uppercase tracking-widest">
+          Hãy chọn một ngữ pháp bên trái để review
+        </div>
+        {generatedCount > 0 && (
+           <button
+             onClick={onBulkSave}
+             disabled={saving}
+             className="flex items-center gap-2 px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all bg-emerald-600 text-white hover:bg-emerald-700 shadow-xl disabled:opacity-50"
+           >
+             {saving ? <LoadingOutlined /> : <CheckCircleOutlined />}
+             Lưu {generatedCount} kết quả AI
+           </button>
+        )}
       </div>
     );
   }
@@ -40,6 +56,18 @@ export default function AiReviewSplitView({
             {loadingAi ? <LoadingOutlined /> : <SyncOutlined />}
             Chạy AI Fix
           </button>
+          
+          {generatedCount > 1 && (
+            <button
+              onClick={onBulkSave}
+              disabled={saving}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-bold transition-all bg-emerald-600 text-white hover:bg-emerald-700 shadow-xl disabled:opacity-50"
+            >
+              {saving ? <LoadingOutlined /> : <CheckCircleOutlined />}
+              Lưu tất cả ({generatedCount})
+            </button>
+          )}
+
           <button
             onClick={onSave}
             disabled={!newGrammarData || saving}
