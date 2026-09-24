@@ -392,7 +392,7 @@ public class AiService {
             throw new Exception("No Gemini API keys configured");
         }
 
-        List<String> modelPriority = List.of("gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-3-flash");
+        List<String> modelPriority = List.of("gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash");
         
         int maxRetries = keys.size();
         Exception lastException = null;

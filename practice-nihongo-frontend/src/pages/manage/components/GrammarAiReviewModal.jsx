@@ -69,9 +69,14 @@ export default function GrammarAiReviewModal({
       setLoadingAi(true);
       messageApi.loading({ content: 'AI đang phân tích và sửa lại ngữ pháp...', key: 'ai-gen' });
 
-      const jsonString = await aiService.generateGrammar(selectedGrammar.structure, selectedGrammar.exampleSentence);
-      const cleanedStr = jsonString.replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(cleanedStr);
+      const responseData = await aiService.generateGrammar(selectedGrammar.structure, selectedGrammar.exampleSentence);
+      let parsed;
+      if (typeof responseData === 'object') {
+        parsed = responseData;
+      } else {
+        const cleanedStr = responseData.replace(/```json/gi, '').replace(/```/g, '').trim();
+        parsed = JSON.parse(cleanedStr);
+      }
 
       setNewGrammarDataMap(prev => ({ ...prev, [selectedGrammar.id]: parsed }));
       messageApi.success({ content: 'Đã tạo xong dữ liệu mới!', key: 'ai-gen' });
@@ -84,29 +89,46 @@ export default function GrammarAiReviewModal({
   };
 
   const handleBulkGenerate = async () => {
-    if (lessonGrammars.length === 0) return;
+    const errorGrammars = lessonGrammars.filter(g => hasErrorPattern(g.explanation));
+    
+    if (errorGrammars.length === 0) {
+      messageApi.success({ content: 'Tuyệt vời! Không phát hiện lỗi định dạng nào trong bài này.', key: 'ai-bulk' });
+      return;
+    }
+
     setIsBulkGenerating(true);
-    setBulkProgress({ current: 0, total: lessonGrammars.length });
-    messageApi.loading({ content: 'Đang chạy AI cho cả bài...', key: 'ai-bulk', duration: 0 });
+    setBulkProgress({ current: 0, total: errorGrammars.length });
+    messageApi.loading({ content: `Đang chạy AI sửa lỗi (${errorGrammars.length} cấu trúc)...`, key: 'ai-bulk', duration: 0 });
 
     const newMap = { ...newGrammarDataMap };
     try {
-      for (let i = 0; i < lessonGrammars.length; i++) {
-        const g = lessonGrammars[i];
+      for (let i = 0; i < errorGrammars.length; i++) {
+        const g = errorGrammars[i];
         if (newMap[g.id]) continue; // Skip if already generated
 
-        setBulkProgress({ current: i + 1, total: lessonGrammars.length });
+        setBulkProgress({ current: i + 1, total: errorGrammars.length });
         
         try {
-          const jsonString = await aiService.generateGrammar(g.structure, g.exampleSentence);
-          const cleanedStr = jsonString.replace(/```json/g, '').replace(/```/g, '').trim();
-          const parsed = JSON.parse(cleanedStr);
+          const responseData = await aiService.generateGrammar(g.structure, g.exampleSentence);
+          let parsed;
+          if (typeof responseData === 'object') {
+            parsed = responseData;
+          } else {
+            const cleanedStr = responseData.replace(/```json/gi, '').replace(/```/g, '').trim();
+            parsed = JSON.parse(cleanedStr);
+          }
           newMap[g.id] = parsed;
           // Update state gradually so UI updates
           setNewGrammarDataMap({ ...newMap });
         } catch (err) {
           console.error(`Lỗi khi AI review ngữ pháp ${g.structure}:`, err);
           // Continue with the next one
+        }
+
+        // Add delay to prevent hitting Gemini's RPM limit (Rate Limit 429)
+        // 15 requests/minute = 1 request every 4 seconds. We wait 3.5s between requests.
+        if (i < errorGrammars.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 3500));
         }
       }
       messageApi.success({ content: 'Hoàn tất AI Review cả bài!', key: 'ai-bulk' });
