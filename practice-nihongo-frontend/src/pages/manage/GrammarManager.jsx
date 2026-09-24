@@ -11,6 +11,7 @@ import GrammarAddModal from './components/GrammarAddModal';
 import GrammarBulkUpdateModal from './components/GrammarBulkUpdateModal';
 import GrammarManagerTable from './components/GrammarManagerTable';
 import GrammarManagerFilterBar from './components/GrammarManagerFilterBar';
+import GrammarAiReviewModal from './components/GrammarAiReviewModal';
 const customSelectStyles = `
   .custom-select .ant-select-selector {
     padding: 0 !important;
@@ -75,6 +76,7 @@ export default function GrammarManager() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkUpdateOpen, setIsBulkUpdateOpen] = useState(false);
   const [bulkUpdateData, setBulkUpdateData] = useState({ week: '', day: '', bookId: '' });
+  const [isAiReviewModalOpen, setIsAiReviewModalOpen] = useState(false);
 
   // Drag-and-drop reorder state
   const [draggedId, setDraggedId] = useState(null);
@@ -151,7 +153,8 @@ export default function GrammarManager() {
       const lowerSearch = searchTerm.toLowerCase();
       data = data.filter(g => 
         (g.structure && g.structure.toLowerCase().includes(lowerSearch)) ||
-        (g.meaning && g.meaning.toLowerCase().includes(lowerSearch))
+        (g.meaning && g.meaning.toLowerCase().includes(lowerSearch)) ||
+        (g.explanation && g.explanation.toLowerCase().includes(lowerSearch))
       );
     }
 
@@ -531,6 +534,12 @@ export default function GrammarManager() {
               Giáo trình
             </button>
             <button
+              onClick={() => setIsAiReviewModalOpen(true)}
+              className="px-5 py-2.5 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all shadow-sm flex items-center gap-2"
+            >
+              ✨ AI Review
+            </button>
+            <button
               onClick={openAddModal}
               className="bg-black text-white dark:bg-white dark:text-black px-6 py-2.5 rounded-lg text-xs font-bold hover:opacity-80 transition-all shadow-xl flex items-center gap-2"
             >
@@ -667,6 +676,14 @@ export default function GrammarManager() {
         defaultBookId={selectedBookId}
         existingGrammars={grammars}
       />
+      <GrammarAiReviewModal
+        isOpen={isAiReviewModalOpen}
+        onClose={() => setIsAiReviewModalOpen(false)}
+        grammars={grammars}
+        books={books}
+        onUpdate={fetchData}
+      />
+
     </div>
   );
 }
