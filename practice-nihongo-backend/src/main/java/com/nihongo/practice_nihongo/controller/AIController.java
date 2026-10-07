@@ -151,4 +151,24 @@ public class AIController {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
+
+    @PostMapping("/format-explanation")
+    public ResponseEntity<String> formatExplanation(@RequestBody Map<String, String> request) {
+        try {
+            String text = request.get("text");
+            if (text == null || text.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Vui lòng cung cấp văn bản.");
+            }
+            String prompt = "Bạn là trợ lý AI định dạng văn bản ngữ pháp tiếng Nhật. Nhiệm vụ của bạn là định dạng lại các công thức/cấu trúc có trong văn bản thành dạng block `[[ Bên trái || Bên phải ]]`, VÀ BẮT BUỘC GIỮ NGUYÊN TOÀN BỘ CÁC ĐOẠN VĂN BẢN GIẢI THÍCH BÊN DƯỚI (KHÔNG ĐƯỢC XÓA BẤT KỲ CHỮ NÀO).\n\n" +
+                            "Quy tắc:\n" +
+                            "1. Chuyển đổi các dòng công thức ngữ pháp (VD: N + に向けて) thành: [[ N || に向けて ]].\n" +
+                            "2. TUYỆT ĐỐI KHÔNG ĐƯỢC XÓA hay tóm tắt phần giải thích ý nghĩa, cách dùng. Bạn phải giữ nguyên 100% nội dung giải thích và để nó bên dưới các block công thức.\n" +
+                            "3. Không tự ý thêm bớt nội dung. Chỉ trả về kết quả cuối cùng dưới dạng text thuần (không bọc trong ``` hay thêm lời chào).\n\n" +
+                            "Văn bản gốc:\n" + text;
+            String result = aiService.generateContent(prompt, 500);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+    }
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ThunderboltOutlined } from '@ant-design/icons';
+import ExplanationEditor from './ExplanationEditor';
 
 /**
  * GrammarSingleForm
@@ -31,9 +31,9 @@ export default function GrammarSingleForm({
               type="button"
               onClick={handleAiAutoFill}
               disabled={isAiProcessing}
-              className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-black dark:text-white text-[9px] font-black rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter flex items-center gap-1 disabled:opacity-50"
+              className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-black dark:text-white text-[9px] font-black rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter flex items-center justify-center disabled:opacity-50"
             >
-              <ThunderboltOutlined className="text-[10px]" /> AI ĐIỀN
+              AI ĐIỀN
             </button>
           </div>
           <input
@@ -61,17 +61,10 @@ export default function GrammarSingleForm({
       </div>
 
       {/* Explanation */}
-      <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-400 dark:text-slate-500 px-1">Giải thích</label>
-        <textarea
-          name="explanation"
-          value={formData.explanation}
-          onChange={handleInputChange}
-          rows="6"
-          placeholder="Cách dùng cấu trúc này..."
-          className="w-full px-1 py-1.5 bg-transparent border-b border-slate-100 dark:border-slate-800 focus:border-black dark:focus:border-white text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-200 dark:placeholder:text-slate-700"
-        />
-      </div>
+      <ExplanationEditor 
+        value={formData.explanation} 
+        onChange={handleInputChange} 
+      />
 
       {/* Examples List */}
       <div className="space-y-4 border-l-2 border-slate-100 dark:border-slate-800 pl-4 py-2">
