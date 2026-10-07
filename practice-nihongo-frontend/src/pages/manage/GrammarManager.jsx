@@ -12,6 +12,7 @@ import GrammarBulkUpdateModal from './components/GrammarBulkUpdateModal';
 import GrammarManagerTable from './components/GrammarManagerTable';
 import GrammarManagerFilterBar from './components/GrammarManagerFilterBar';
 import GrammarAiReviewModal from './components/GrammarAiReviewModal';
+import Fuse from 'fuse.js';
 const customSelectStyles = `
   .custom-select .ant-select-selector {
     padding: 0 !important;
@@ -150,12 +151,12 @@ export default function GrammarManager() {
     }
 
     if (searchTerm && searchTerm.trim() !== "") {
-      const lowerSearch = searchTerm.toLowerCase();
-      data = data.filter(g => 
-        (g.structure && g.structure.toLowerCase().includes(lowerSearch)) ||
-        (g.meaning && g.meaning.toLowerCase().includes(lowerSearch)) ||
-        (g.explanation && g.explanation.toLowerCase().includes(lowerSearch))
-      );
+      const fuse = new Fuse(data, {
+        keys: ['structure', 'meaning', 'explanation'],
+        threshold: 0.3,
+        ignoreLocation: true
+      });
+      data = fuse.search(searchTerm).map(result => result.item);
     }
 
     // Duplicate detection

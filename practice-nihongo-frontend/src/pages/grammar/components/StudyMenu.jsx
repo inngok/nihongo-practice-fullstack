@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Search, Volume2 } from 'lucide-react';
 import ExplanationText from '../../../components/ExplanationText';
+import Fuse from 'fuse.js';
 
 export default function StudyMenu({
   activeData,
@@ -21,6 +22,19 @@ export default function StudyMenu({
   playAudio,
   currentUser
 }) {
+  const filteredData = useMemo(() => {
+    if (!searchTerm.trim()) return activeData;
+    
+    const fuse = new Fuse(activeData, {
+      keys: ['pattern', 'meaning'],
+      threshold: 0.3,
+      ignoreLocation: true,
+      includeScore: true
+    });
+    
+    return fuse.search(searchTerm).map(result => result.item);
+  }, [activeData, searchTerm]);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       {/* Selection grid */}
@@ -159,7 +173,7 @@ export default function StudyMenu({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
-          {activeData.filter(i => i.pattern.toLowerCase().includes(searchTerm.toLowerCase())).map((item, idx) => (
+          {filteredData.map((item, idx) => (
             <div
               key={item.id}
               onClick={() => toggleExpand(item.id)}

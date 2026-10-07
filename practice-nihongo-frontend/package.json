@@ -13,6 +13,7 @@
     "@vercel/speed-insights": "^2.0.0",
     "antd": "^5.27.1",
     "axios": "^1.15.2",
+    "fuse.js": "^7.5.0",
     "lucide-react": "^1.6.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
