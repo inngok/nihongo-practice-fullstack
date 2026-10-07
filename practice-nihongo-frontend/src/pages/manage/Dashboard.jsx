@@ -87,8 +87,8 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* 4 Metric Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        {/* 6 Metric Cards Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
           {/* Card: Books */}
           <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
             <div className="flex justify-between items-center text-slate-400 dark:text-slate-500">
@@ -138,7 +138,7 @@ export default function Dashboard() {
           </div>
 
           {/* Card: Users */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-slate-700 transition-all col-span-1 sm:col-span-2 lg:col-span-1">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
             <div className="flex justify-between items-center text-slate-400 dark:text-slate-500">
               <span className="text-[10px] font-bold uppercase tracking-wider">Người dùng</span>
               <UserOutlined className="text-base text-slate-800 dark:text-slate-200" />
@@ -146,6 +146,17 @@ export default function Dashboard() {
             <div className="space-y-1">
               <h3 className="text-2xl font-black text-slate-900 dark:text-white">{stats?.usersCount || 0}</h3>
               <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Tài khoản thành viên</p>
+            </div>
+          </div>
+
+          {/* Card: Visits (No Icons) */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
+            <div className="flex justify-between items-center text-slate-400 dark:text-slate-500">
+              <span className="text-[10px] font-bold uppercase tracking-wider">Truy cập</span>
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white">{stats?.totalVisits || 0}</h3>
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Hôm nay: +{stats?.todayVisits || 0}</p>
             </div>
           </div>
         </div>

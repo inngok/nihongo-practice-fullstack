@@ -127,55 +127,104 @@ export default function GrammarAddModal({
     if (!formData.structure.trim()) return message.warning('Vui lòng nhập cấu trúc ngữ pháp trước!');
 
     setIsAiProcessing(true);
-    const hide = message.loading('AI đang phân tích ngữ pháp...', 0);
+    const hide = message.loading('AI đang phân tích và chuẩn hóa lại toàn bộ...', 0);
 
     try {
-      const currentSentences = examplesList.map(e => e.sentence).filter(s => s.trim() !== '').join('\n');
+      // Compile current form data into a single text block
+      let textChunk = `Ngữ pháp: ${formData.structure}\n`;
+      if (formData.meaning) textChunk += `Ý nghĩa: ${formData.meaning}\n`;
+      if (formData.explanation) textChunk += `Giải thích: ${formData.explanation}\n`;
+      
+      const currentSentences = examplesList.filter(e => e.sentence.trim() !== '');
+      if (currentSentences.length > 0) {
+        textChunk += `Ví dụ:\n`;
+        currentSentences.forEach((ex, idx) => {
+          textChunk += `${idx + 1}. ${ex.sentence} (${ex.meaning})\n`;
+        });
+      }
 
-      const response = await fetchWithAuth(`${API_BASE_URL}/ai/generate-grammar`, {
+      // Send the compiled chunk to generate-bulk to re-process and format properly
+      const response = await fetchWithAuth(`${API_BASE_URL}/ai/generate-bulk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          structure: formData.structure,
-          existingSentence: currentSentences
+          text: textChunk,
+          type: 'GRAMMAR'
         })
       });
+
       if (!response.ok) throw new Error('API Error');
       const data = await response.json();
 
-      setFormData(prev => ({
-        ...prev,
-        meaning: prev.meaning ? prev.meaning : (data.meaning || ''),
-        explanation: prev.explanation ? prev.explanation : (data.explanation || '')
-      }));
-
-      setExamplesList(prevList => {
-         if (!data.exampleSentence && !data.exampleMeaning) return prevList;
-         const newExamples = splitExamples(data.exampleSentence, data.exampleMeaning);
-         const merged = [...newExamples];
-         while (merged.length < prevList.length) {
-             merged.push({ sentence: '', meaning: '' });
-         }
-         return merged;
-      });
-
-      setQuizList(prev => {
-          if (!data.quizSentence) return prev;
-          const newQuiz = splitQuiz(data.quizSentence);
-          const merged = [...newQuiz];
-          while (merged.length < prev.length) {
-              merged.push('');
-          }
-          return merged;
-      });
-
-      message.success('AI đã điền xong!');
+      if (data && data.length > 0) {
+        const item = data[0];
+        setFormData(prev => ({
+          ...prev,
+          structure: item.structure || prev.structure,
+          meaning: item.meaning || prev.meaning,
+          explanation: item.explanation || prev.explanation,
+        }));
+        
+        if (item.exampleSentence || item.exampleMeaning) {
+          const newExamples = splitExamples(item.exampleSentence, item.exampleMeaning);
+          setExamplesList(newExamples);
+        }
+        if (item.quizSentence) {
+          setQuizList(splitQuiz(item.quizSentence));
+        }
+        message.success('AI đã chuẩn hóa và điền xong!');
+      } else {
+        message.warning('AI không tìm thấy ngữ pháp để xử lý!');
+      }
     } catch (err) {
       console.error(err);
       message.error('Lỗi khi gọi AI: ' + err.message);
     } finally {
       hide();
       setIsAiProcessing(false);
+    }
+  };
+
+  const handleSmartPaste = async (text) => {
+    if (!text.trim()) return message.warning('Vui lòng dán nội dung!');
+    setIsAiProcessing(true);
+    const hide = message.loading('AI đang đọc và điền dữ liệu...', 0);
+    try {
+      const res = await fetchWithAuth(`${API_BASE_URL}/ai/generate-bulk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: text,
+          type: 'GRAMMAR'
+        })
+      });
+      if (!res.ok) throw new Error('AI failed');
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const item = data[0];
+        setFormData(prev => ({
+          ...prev,
+          structure: item.structure || prev.structure,
+          meaning: item.meaning || prev.meaning,
+          explanation: item.explanation || prev.explanation,
+        }));
+        
+        if (item.exampleSentence || item.exampleMeaning) {
+          const newExamples = splitExamples(item.exampleSentence, item.exampleMeaning);
+          setExamplesList(newExamples);
+        }
+        if (item.quizSentence) {
+          setQuizList(splitQuiz(item.quizSentence));
+        }
+        message.success('Đã tự động điền thành công!');
+      } else {
+        message.warning('AI không tìm thấy ngữ pháp nào trong văn bản!');
+      }
+    } catch (err) {
+      message.error('Lỗi khi gọi AI: ' + err.message);
+    } finally {
+      setIsAiProcessing(false);
+      hide();
     }
   };
 
@@ -406,6 +455,7 @@ export default function GrammarAddModal({
             formData={formData}
             handleInputChange={handleInputChange}
             handleAiAutoFill={handleAiAutoFill}
+            handleSmartPaste={handleSmartPaste}
             isAiProcessing={isAiProcessing}
             examplesList={examplesList}
             setExamplesList={setExamplesList}

@@ -1,18 +1,18 @@
 # Nihongo Practice
 
-Ứng dụng Web Fullstack hỗ trợ học tiếng Nhật hiệu quả, kết hợp thuật toán Spaced-Repetition (SRS), AI và phân tích dữ liệu đề thi thực tế.
+Ứng dụng Web Fullstack hỗ trợ học tiếng Nhật toàn diện, kết hợp thuật toán Spaced-Repetition (SRS) và Trợ lý AI thông minh.
 
-## Tính năng chính
+## Tính năng dành cho người học
 
-- **Đọc báo tiếng Nhật:** Tích hợp đọc tin tức thực tế, tra từ vựng trực tiếp và luyện nghe chép chính tả (Dictation).
-- **Học Từ vựng & Ngữ pháp:** Đa dạng chế độ học (Trắc nghiệm, Luyện gõ, Flashcard) kết hợp giọng đọc chất lượng cao.
-- **Flashcard thông minh (SRS):** Tối ưu hóa thời gian ôn tập với thuật toán lặp lại ngắt quãng (SM-2).
-- **Trọng tâm JLPT:** Thống kê và lọc từ vựng theo tần suất xuất hiện trong các đề thi JLPT thực tế.
-- **Sổ tay cá nhân:** Quản lý từ vựng linh hoạt theo cây thư mục, hỗ trợ ghi chú chi tiết.
-- **Quản trị tự động:** Nhập dữ liệu (Import) hàng loạt từ Excel/CSV cực nhanh với hệ thống tự động ánh xạ cột.
+- Đọc báo & Tra từ: Cập nhật tin tức thực tế, tra từ vựng trực tiếp và luyện nghe chép chính tả (Dictation).
+- Ôn tập thông minh (SRS): Tối ưu hóa trí nhớ bằng thuật toán lặp lại ngắt quãng, nhắc nhở ôn tập đúng lúc.
+- Học Từ vựng, Ngữ pháp & Kanji: Đa dạng chế độ (Flashcard, Trắc nghiệm, Luyện gõ) với âm thanh chuẩn.
+- Luyện thi JLPT: Lọc và tập trung vào các từ vựng có tần suất xuất hiện cao trong các đề thi JLPT thực tế.
+- Trợ lý AI tiếng Nhật: Hỗ trợ giải đáp ngữ pháp, luyện hội thoại thực tế và chấm điểm dịch thuật.
+- Sổ tay cá nhân: Tự do lưu trữ, quản lý từ vựng và ghi chú theo thư mục.
 
 ## Công nghệ sử dụng
 
-- **Frontend:** React (Vite), Tailwind CSS, Ant Design
-- **Backend:** Java Spring Boot, Spring Security (JWT)
-- **Database & DevOps:** PostgreSQL, Docker, Docker Compose
+- Frontend: React (Vite), Tailwind CSS, Ant Design
+- Backend: Java Spring Boot, Spring Security
+- Database: PostgreSQL

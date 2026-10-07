@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ExplanationEditor from './ExplanationEditor';
 
 /**
@@ -10,6 +10,7 @@ export default function GrammarSingleForm({
   formData,
   handleInputChange,
   handleAiAutoFill,
+  handleSmartPaste,
   isAiProcessing,
   examplesList,
   setExamplesList,
@@ -20,8 +21,35 @@ export default function GrammarSingleForm({
   initialData,
   onSubmit,
 }) {
+  const [pasteText, setPasteText] = useState('');
+
   return (
     <form onSubmit={onSubmit} className="p-4 md:p-8 space-y-6 overflow-y-auto no-scrollbar">
+      {/* Smart Paste Section */}
+      <div className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-[0.1em] text-blue-500 block">AI ĐIỀN TỪ VĂN BẢN (SMART PASTE)</label>
+            <span className="text-[9px] text-slate-400 font-medium">Dán toàn bộ nội dung ngữ pháp vào đây, AI sẽ tự phân tích và điền vào form bên dưới.</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleSmartPaste(pasteText)}
+            disabled={isAiProcessing || !pasteText.trim()}
+            className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 text-[10px] font-black rounded-lg hover:bg-blue-600 hover:text-white transition-all uppercase tracking-tighter disabled:opacity-50"
+          >
+            PHÂN TÍCH VÀ ĐIỀN
+          </button>
+        </div>
+        <textarea
+          value={pasteText}
+          onChange={e => setPasteText(e.target.value)}
+          placeholder="Ví dụ: ~に向けて Ý nghĩa: Hướng tới, để chuẩn bị cho... Giải thích: Chỉ phương hướng..."
+          rows="3"
+          className="w-full px-3 py-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg focus:border-blue-500 dark:focus:border-blue-500 text-slate-900 dark:text-white text-sm outline-none transition-all placeholder:text-slate-300 dark:placeholder:text-slate-700"
+        />
+      </div>
+
       {/* Structure + Meaning */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         <div className="space-y-2">
@@ -32,8 +60,9 @@ export default function GrammarSingleForm({
               onClick={handleAiAutoFill}
               disabled={isAiProcessing}
               className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-black dark:text-white text-[9px] font-black rounded-full hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter flex items-center justify-center disabled:opacity-50"
+              title="Gửi toàn bộ nội dung hiện tại cho AI để tự động sửa lỗi và chuẩn hóa lại form"
             >
-              AI ĐIỀN
+              AI CHUẨN HÓA LẠI
             </button>
           </div>
           <input

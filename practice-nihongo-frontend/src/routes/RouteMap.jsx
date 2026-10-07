@@ -173,11 +173,18 @@ const Fallback = () => (
 
 import { ConfigProvider, theme as antdTheme } from "antd";
 import { useTheme } from "../context/ThemeContext";
+import { useEffect } from "react";
+import apiClient from "../api/apiClient";
 
 // --- Main Router ---
 
 export default function RouteMap() {
   const { isDark } = useTheme();
+
+  useEffect(() => {
+    // Record page visit on load
+    apiClient.post('/dashboard/visits').catch(() => {});
+  }, []);
 
   return (
     <ConfigProvider
