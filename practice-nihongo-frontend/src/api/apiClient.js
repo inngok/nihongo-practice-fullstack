@@ -55,7 +55,10 @@ apiClient.interceptors.response.use(
         localStorage.removeItem('nihongo_user');
         localStorage.removeItem('nihongo_token');
         localStorage.removeItem('nihongo_refresh_token');
-        window.location.href = '/login';
+        
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+          window.location.href = '/login';
+        }
       }
     }
 

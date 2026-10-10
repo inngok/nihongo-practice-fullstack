@@ -69,6 +69,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/dashboard/visits").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/news/**", "/api/grammars/**", "/api/vocabs/**", "/api/kanjis/**", "/api/books/**", "/api/jlpt-vocabs/**", "/api/confusing-grammars/**", "/api/notifications/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/news/**", "/api/grammars/**", "/api/vocabs/**", "/api/kanjis/**", "/api/books/**", "/api/jlpt-vocabs/**", "/api/confusing-grammars/**", "/api/notifications/**").hasRole("ADMIN")
