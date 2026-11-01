@@ -11,6 +11,7 @@ import MultipleChoiceMode from './components/MultipleChoiceMode';
 import ListeningMode from './components/ListeningMode';
 import StarQuizMode from './components/StarQuizMode';
 import { prepareActiveData } from './utils/grammarHelpers';
+import { playJapaneseWord } from '../../utils/tts';
 
 export default function StudyPage() {
   const { bookId } = useParams();
@@ -181,14 +182,8 @@ export default function StudyPage() {
   }, []);
 
   const playAudio = (e, text) => {
-    e.stopPropagation();
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ja-JP';
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
-    }
+    if (e && e.stopPropagation) e.stopPropagation();
+    playJapaneseWord(text, 0.9);
   };
 
 

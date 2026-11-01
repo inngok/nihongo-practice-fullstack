@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Check, X, Settings2, Volume2 } from 'lucide-react';
+import { playJapaneseWord, preloadJapaneseWord } from '../../../utils/tts';
 
 export default function VocabFlashcardMode({
   studyData,
@@ -33,38 +34,19 @@ export default function VocabFlashcardMode({
     const currentItem = studyData[currentIndex];
     if (!currentItem) return;
     const text = customText || currentItem.reading || currentItem.hiragana || currentItem.word;
-    if (!text) return;
-    
-    try {
-      const url = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ja&q=${encodeURIComponent(text)}`;
-      const audio = new Audio(url);
-      audio.playbackRate = 0.85;
-      
-      audio.play().catch(e => {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = 'ja-JP';
-          utterance.rate = 0.85;
-          const voices = window.speechSynthesis.getVoices();
-          const jaVoice = voices.find(v => v.lang === 'ja-JP' && (v.name.includes('Google') || v.name.includes('Premium')));
-          if (jaVoice) utterance.voice = jaVoice;
-          window.speechSynthesis.speak(utterance);
-        }
-      });
-    } catch (error) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'ja-JP';
-        utterance.rate = 0.85;
-        const voices = window.speechSynthesis.getVoices();
-        const jaVoice = voices.find(v => v.lang === 'ja-JP' && (v.name.includes('Google') || v.name.includes('Premium')));
-        if (jaVoice) utterance.voice = jaVoice;
-        window.speechSynthesis.speak(utterance);
-      }
-    }
+    playJapaneseWord(text);
   };
+
+  useEffect(() => {
+    const currentItem = studyData && studyData[currentIndex];
+    if (currentItem) {
+      preloadJapaneseWord(currentItem.reading || currentItem.hiragana || currentItem.word);
+    }
+    if (studyData && studyData[currentIndex + 1]) {
+      const next = studyData[currentIndex + 1];
+      preloadJapaneseWord(next.reading || next.hiragana || next.word);
+    }
+  }, [currentIndex, studyData]);
 
   useEffect(() => {
     if (autoPlayAudio) {
