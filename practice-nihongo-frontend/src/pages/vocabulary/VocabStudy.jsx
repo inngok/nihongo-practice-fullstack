@@ -19,14 +19,17 @@ export default function VocabStudy() {
   const [searchParams] = useSearchParams();
   const bookId = searchParams.get('bookId');
   const unitParam = searchParams.get('unit');
+  const dayParam = searchParams.get('day');
   const { fetchWithAuth, currentUser } = useAuth();
+
+  const isProgressLoading = useRef(false);
 
   const [vocabData, setVocabData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeMode, setActiveMode] = useState('list');
   const [selectedUnit, setSelectedUnit] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDay, setSelectedDay] = useState('');
+  const [selectedDay, setSelectedDay] = useState(dayParam || '');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [userInput, setUserInput] = useState('');
@@ -226,9 +229,11 @@ export default function VocabStudy() {
     if (!activeData.length || !bookId) return;
 
     const bookTitle = vocabData[0]?.book?.title || 'Từ vựng';
+    const dayLabel = (selectedDay !== '' && selectedDay != null) ? ` - Ngày ${selectedDay}` : '';
+    const dayQuery = (selectedDay !== '' && selectedDay != null) ? `&day=${selectedDay}` : '';
     const quickAccessData = {
-      title: `Từ vựng ${bookTitle} - Bài ${selectedUnit}`,
-      url: `/vocabulary/study?bookId=${bookId}&unit=${selectedUnit}`
+      title: `Từ vựng ${bookTitle} - Bài ${selectedUnit}${dayLabel}`,
+      url: `/vocabulary/study?bookId=${bookId}&unit=${selectedUnit}${dayQuery}`
     };
     
     localStorage.setItem('quickAccess', JSON.stringify(quickAccessData));
@@ -242,7 +247,7 @@ export default function VocabStudy() {
       body: JSON.stringify({ data: JSON.stringify(quickAccessData) })
     }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookId, selectedUnit, currentUser]);
+  }, [bookId, selectedUnit, selectedDay, currentUser, activeData.length]);
 
   useEffect(() => {
     if (activeMode !== 'list') {
@@ -254,32 +259,77 @@ export default function VocabStudy() {
   }, [activeData, activeMode]);
 
 
-  // Sync Progress to Backend
-  const progressKey = `vocab_${bookId}_${selectedUnit}`;
+  // Sync Progress to Backend - Scoped by Unit and Day
+  const progressKey = (selectedDay !== '' && selectedDay != null)
+    ? `vocab_${bookId}_${selectedUnit}_day_${selectedDay}`
+    : `vocab_${bookId}_${selectedUnit}`;
 
   useEffect(() => {
-    if (!currentUser || activeData.length === 0 || !bookId) return;
+    if (!currentUser || activeData.length === 0 || !bookId) {
+      setCurrentIndex(0);
+      setIsFlipped(false);
+      setScore(0);
+      setFeedback(null);
+      setUserInput('');
+      setCompletedIds([]);
+      return;
+    }
     
+    isProgressLoading.current = true;
     fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}?t=${Date.now()}`)
       .then(res => res.json())
       .then(resData => {
-        if (!resData.data) return;
-        try {
-          const state = JSON.parse(resData.data);
-          if (state.currentIndex !== undefined && state.currentIndex < activeData.length) {
-            setCurrentIndex(state.currentIndex);
-          }
-          if (state.score !== undefined) setScore(state.score);
-          if (state.completedIds !== undefined) setCompletedIds(state.completedIds);
-        } catch (e) { }
-      }).catch(() => { });
-  }, [bookId, selectedUnit, activeData.length, currentUser]);
+        isProgressLoading.current = false;
+        if (resData.data) {
+          try {
+            const state = JSON.parse(resData.data);
+            if (typeof state.currentIndex === 'number' && state.currentIndex >= 0 && state.currentIndex < activeData.length) {
+              setCurrentIndex(state.currentIndex);
+            } else {
+              setCurrentIndex(0);
+            }
+            if (typeof state.score === 'number') {
+              setScore(state.score);
+            } else {
+              setScore(0);
+            }
+            if (Array.isArray(state.completedIds)) {
+              setCompletedIds(state.completedIds);
+            } else {
+              setCompletedIds([]);
+            }
+            setIsFlipped(false);
+            setFeedback(null);
+            setUserInput('');
+            return;
+          } catch (e) { }
+        }
+
+        // Fallback to reset if no data or parse error
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setScore(0);
+        setFeedback(null);
+        setUserInput('');
+        setCompletedIds([]);
+      }).catch(() => {
+        isProgressLoading.current = false;
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setScore(0);
+        setFeedback(null);
+        setUserInput('');
+        setCompletedIds([]);
+      });
+  }, [progressKey, activeData.length, currentUser, bookId]);
 
   useEffect(() => {
-    if (!currentUser || !bookId || activeMode === 'list') return;
+    if (!currentUser || !bookId || activeMode === 'list' || isProgressLoading.current) return;
+    if (activeData.length === 0) return;
     
     // debounce: only save progress 2s after the user stops changing state
     const timer = setTimeout(() => {
+      if (isProgressLoading.current) return;
       const state = { currentIndex, activeMode, score, completedIds };
       fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
         method: 'POST',
@@ -289,7 +339,7 @@ export default function VocabStudy() {
     }, 2000);
     
     return () => clearTimeout(timer);
-  }, [currentIndex, activeMode, score, completedIds, bookId, selectedUnit, currentUser]);
+  }, [currentIndex, activeMode, score, completedIds, progressKey, currentUser, bookId, activeData.length]);
 
   useEffect(() => {
     if (studyData.length > 0 && currentIndex >= studyData.length) {

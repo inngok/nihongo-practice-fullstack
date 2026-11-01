@@ -92,12 +92,18 @@ export default function KanjiStudy() {
               const state = JSON.parse(resData.data);
               if (state.currentIndex !== undefined && state.currentIndex < activeData.length) {
                 setCurrentIndex(state.currentIndex);
+                return;
               }
             } catch (e) { }
           }
-        }).catch(() => { });
+          setCurrentIndex(0);
+        }).catch(() => {
+          setCurrentIndex(0);
+        });
+    } else {
+      setCurrentIndex(0);
     }
-  }, [bookId, selectedWeek, activeData.length, currentUser]);
+  }, [progressKey, activeData.length, currentUser, bookId]);
 
   useEffect(() => {
     if (currentUser && bookId && activeMode !== 'list') {

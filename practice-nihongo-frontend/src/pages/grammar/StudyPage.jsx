@@ -27,8 +27,10 @@ export default function StudyPage() {
   const [isShuffle, setIsShuffle] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const unitParam = searchParams.get('unit');
+  const dayParam = searchParams.get('day');
   const [selectedLesson, setSelectedLesson] = useState(unitParam || '');
-  const [selectedDay, setSelectedDay] = useState('');
+  const [selectedDay, setSelectedDay] = useState(dayParam || '');
+  const isProgressLoading = useRef(false);
 
   const uniqueLessons = useMemo(() => {
     const lessons = new Set();
@@ -61,9 +63,11 @@ export default function StudyPage() {
   useEffect(() => {
     if (activeData.length > 0 && targetBookId) {
       const bookTitle = grammarData[0]?.book?.title || 'Ngữ pháp';
+      const dayLabel = (selectedDay !== '' && selectedDay != null) ? ` - Ngày ${selectedDay}` : '';
+      const dayQuery = (selectedDay !== '' && selectedDay != null) ? `&day=${selectedDay}` : '';
       const quickAccessData = {
-        title: `Ngữ pháp ${bookTitle}${selectedLesson ? ` - Bài ${selectedLesson}` : ''}`,
-        url: `/grammar/study?bookId=${targetBookId}${selectedLesson ? `&unit=${selectedLesson}` : ''}`
+        title: `Ngữ pháp ${bookTitle}${selectedLesson ? ` - Bài ${selectedLesson}` : ''}${dayLabel}`,
+        url: `/grammar/study?bookId=${targetBookId}${selectedLesson ? `&unit=${selectedLesson}` : ''}${dayQuery}`
       };
 
       localStorage.setItem('quickAccess', JSON.stringify(quickAccessData));
@@ -76,34 +80,47 @@ export default function StudyPage() {
         }).catch(() => {});
       }
     }
-  }, [targetBookId, selectedLesson, activeData, grammarData, currentUser, fetchWithAuth]);
+  }, [targetBookId, selectedLesson, selectedDay, activeData, grammarData, currentUser, fetchWithAuth]);
 
   // Sync Progress to Backend
-  const progressKey = `grammar_${targetBookId}`;
+  const progressKey = (selectedDay !== '' && selectedDay != null)
+    ? `grammar_${targetBookId}_${selectedLesson}_day_${selectedDay}`
+    : (selectedLesson ? `grammar_${targetBookId}_${selectedLesson}` : `grammar_${targetBookId}`);
 
   useEffect(() => {
     if (currentUser && activeData.length > 0 && targetBookId) {
-      fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`)
+      isProgressLoading.current = true;
+      fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}?t=${Date.now()}`)
         .then(res => res.json())
         .then(resData => {
+          isProgressLoading.current = false;
           if (resData.data) {
             try {
               const state = JSON.parse(resData.data);
-              if (state.currentIndex !== undefined && state.currentIndex < activeData.length) {
+              if (typeof state.currentIndex === 'number' && state.currentIndex >= 0 && state.currentIndex < activeData.length) {
                 setCurrentIndex(state.currentIndex);
+                return;
               }
             } catch (e) { }
           }
-        }).catch(() => { });
+          setCurrentIndex(0);
+        }).catch(() => {
+          isProgressLoading.current = false;
+          setCurrentIndex(0);
+        });
+    } else {
+      setCurrentIndex(0);
     }
-  }, [targetBookId, activeData.length, currentUser]);
+  }, [progressKey, activeData.length, currentUser, targetBookId]);
 
   // Debounce progress save — chỉ lưu sau 1.5s kể từ lần cuối thay đổi, tránh gọi API mỗi lần click Next/Prev
   const progressSaveTimer = useRef(null);
   useEffect(() => {
-    if (currentUser && targetBookId && activeMode !== 'menu' && activeMode !== 'list') {
+    if (currentUser && targetBookId && activeMode !== 'menu' && activeMode !== 'list' && !isProgressLoading.current) {
+      if (activeData.length === 0) return;
       if (progressSaveTimer.current) clearTimeout(progressSaveTimer.current);
       progressSaveTimer.current = setTimeout(() => {
+        if (isProgressLoading.current) return;
         const state = { currentIndex, activeMode };
         fetchWithAuth(`${API_BASE_URL}/progress/${progressKey}`, {
           method: 'POST',
@@ -113,7 +130,7 @@ export default function StudyPage() {
       }, 1500);
     }
     return () => { if (progressSaveTimer.current) clearTimeout(progressSaveTimer.current); };
-  }, [currentIndex, activeMode, targetBookId, currentUser]);
+  }, [currentIndex, activeMode, progressKey, targetBookId, currentUser, activeData.length]);
 
 
   useEffect(() => {
